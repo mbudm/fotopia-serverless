@@ -1,5 +1,3 @@
-# Serverless directories
 .serverless
-
-# AWS creds
+node_modules
 credentials.csv

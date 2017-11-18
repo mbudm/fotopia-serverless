@@ -1,4 +1,8 @@
 # fotopia-web-app
+ Very much a WIP, looking at serverless framework
+
+
+# Notes
 
 ## Once chaos is tamed..
 Ideas for how to organise

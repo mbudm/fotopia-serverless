@@ -1,0 +1,65 @@
+{
+    "Table": {
+        "TableName": "fotopia-dev",
+        "KeySchema": [
+            {
+              "AttributeName": "id", // could just use the s3 object as the id? https://stackoverflow.com/questions/36214072/how-to-store-and-retrieve-url-of-photos-in-dynamodb-from-s3
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "birthtime",
+              "KeyType": "RANGE"
+            }
+        ],
+        "AttributeDefinitions": [
+            {
+              "AttributeName": "id",
+              "AttributeType": "S"
+            },
+            {
+              "AttributeName": "birthtime",
+              "AttributeType": "S"
+            },
+            {
+              "AttributeName": "tags",
+              "AttributeType": "S"
+            }
+        ],
+        "GlobalSecondaryIndexes": [{
+          "IndexName": "TagsIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "birthtime",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "tags",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        },
+        {
+          "IndexName": "PeopleIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "birthtime",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "people",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          }
+        }],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        }
+    }
+}

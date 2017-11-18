@@ -1,0 +1,5 @@
+{
+  "id": {"S": "someid"},
+  "birthtime": {"S": "2012-06-28T00:55:11.000Z"},
+  "tags": {"S": "blue,red"}
+}
