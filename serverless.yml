@@ -83,25 +83,11 @@ resources:
             AttributeType: S
           - AttributeName: birthtime
             AttributeType: N
-          - AttributeName: tags
-            AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
           - AttributeName: birthtime
             KeyType: RANGE
-        GlobalSecondaryIndexes:
-          - IndexName: TagsIndex
-            KeySchema:
-              - AttributeName: tags
-                KeyType: HASH
-              - AttributeName: birthtime
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1

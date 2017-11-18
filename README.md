@@ -60,3 +60,18 @@ https://github.com/serverless/examples/tree/master/aws-node-fetch-file-and-store
 https://github.com/serverless/examples/tree/master/aws-node-rest-api-with-dynamodb
 
 https://github.com/serverless/examples/tree/master/aws-node-rekognition-analysis-s3-image
+
+
+Took a while to work out serverless yml format, thought about just doing raw cloudformation then seemed to crack it so will contune with sls for a bit.
+
+Next job is to split the table - separate one for tags by id so that you can query by all tags
+So 
+ - get images for tag a, b & c in date range x to y
+ - query tags table get all object within date range (gsi?) equal to hash of tag
+  - - one query per tag
+ - filter ids out of that - merge results
+ - batch get ids from main table
+
+
+
+

@@ -5,30 +5,18 @@ const dynamodb = require('./dynamodb');
 module.exports.query = (event, context, callback) => {
 
   const data = JSON.parse(event.body);
-  // https://egkatzioura.com/2016/06/27/put-items-to-dynamodb-tables-using-node-js/
-  // https://egkatzioura.com/2016/07/02/query-dynamodb-items-with-node-js/
-  // https://github.com/gkatzioura/egkatzioura.wordpress.com/tree/master/DynamoDBTutorialNode
+
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
-    IndexName: "TagsIndex",
-    KeyConditionExpression: '#tags = :tags and #birthtime BETWEEN :from AND :to',
+    KeyConditionExpression: '#birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
-      "#tags":"tags",
       "#birthtime":"birthtime"
     },
     ExpressionAttributeValues: {
-      ':tags': data.tags,
       ":from": new Date(data.from).getTime(),
       ":to": new Date(data.to).getTime()
     }
   };
-
-  console.log('--',event);
-
-  // fetch all fotos from the database specified by query
-
-  // TODO: a dynamo db query instead
-  // http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
 
   dynamodb.query(params, (error, result) => {
 
@@ -44,10 +32,23 @@ module.exports.query = (event, context, callback) => {
     }
 
     // create a response
+    const filteredtems = filterItemsByCriteria(result.Items, data);
+
     const response = {
       statusCode: 200,
-      body: 'Yo!' + JSON.stringify(result.Items),
+      body: 'Yo!' + JSON.stringify(filteredItems),
     };
     callback(null, response);
   });
 };
+
+//export these for tests!
+function filterItemsByCriteria(items, data){
+  return items.filter((item) => {
+    return Object.keys(data.criteria).every(criteriaKey => passesCriteria(item, criteriaKey, data.criteria[criteriaKey]));
+  });
+}
+
+function filterByCriteria(item, criteriaKey, criteriaData){
+  return criteriaData.every(criteriaDataItem => item[criteriaKey].contains(criteriaDataItem));
+}
