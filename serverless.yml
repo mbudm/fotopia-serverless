@@ -79,12 +79,12 @@ resources:
       DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
-          - AttributeName: id
+          - AttributeName: userid
             AttributeType: S
           - AttributeName: birthtime
             AttributeType: N
         KeySchema:
-          - AttributeName: id
+          - AttributeName: userid
             KeyType: HASH
           - AttributeName: birthtime
             KeyType: RANGE

@@ -8,11 +8,13 @@ module.exports.query = (event, context, callback) => {
 
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
-    KeyConditionExpression: '#birthtime BETWEEN :from AND :to',
+    KeyConditionExpression: '#userid = :userid AND #birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
+      "#userid":"userid",
       "#birthtime":"birthtime"
     },
     ExpressionAttributeValues: {
+      ":userid": data.userid,
       ":from": new Date(data.from).getTime(),
       ":to": new Date(data.to).getTime()
     }
@@ -32,7 +34,7 @@ module.exports.query = (event, context, callback) => {
     }
 
     // create a response
-    const filteredtems = filterItemsByCriteria(result.Items, data);
+    const filteredItems = filterItemsByCriteria(result.Items, data);
 
     const response = {
       statusCode: 200,
@@ -45,10 +47,10 @@ module.exports.query = (event, context, callback) => {
 //export these for tests!
 function filterItemsByCriteria(items, data){
   return items.filter((item) => {
-    return Object.keys(data.criteria).every(criteriaKey => passesCriteria(item, criteriaKey, data.criteria[criteriaKey]));
+    return Object.keys(data.criteria).every(criteriaKey => filterByCriteria(item, criteriaKey, data.criteria[criteriaKey]));
   });
 }
 
 function filterByCriteria(item, criteriaKey, criteriaData){
-  return criteriaData.every(criteriaDataItem => item[criteriaKey].contains(criteriaDataItem));
+  return criteriaData.every(criteriaDataItem => item[criteriaKey].includes(criteriaDataItem));
 }
