@@ -8,9 +8,10 @@ module.exports.query = (event, context, callback) => {
 
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
-    KeyConditionExpression: '#birthtime BETWEEN :from AND :to',
+    KeyConditionExpression: '#id = :id AND #birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
-      "#birthtime":"birthtime"
+      "#birthtime":"birthtime",
+      "#id":"id"
     },
     ExpressionAttributeValues: {
       ":from": new Date(data.from).getTime(),
@@ -18,11 +19,13 @@ module.exports.query = (event, context, callback) => {
     }
   };
 
+  console.log('params: ',params);
+
   dynamodb.query(params, (error, result) => {
 
     // handle potential errors
     if (error) {
-      console.error(error);
+      console.error('err', error);
       callback(null, {
         statusCode: error.statusCode || 501,
         headers: { 'Content-Type': 'text/plain' },

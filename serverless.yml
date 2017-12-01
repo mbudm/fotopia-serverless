@@ -21,15 +21,10 @@ provider:
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
   iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      - Effect: "Allow"
+        Action:
+          - 'sdb:Select'
+        Resource: "arn:aws:sdb:${self:provider.region}:*:domain/fotopia"
 
 functions:
   create:
@@ -74,21 +69,7 @@ functions:
 
 resources:
   Resources:
-    FotopiaDynamoDbTable:
-      Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Retain
+    FotopiaSimpleDbTable:
+      Type: "AWS::SDB::Domain"
       Properties:
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-          - AttributeName: birthtime
-            AttributeType: N
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-          - AttributeName: birthtime
-            KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        Description: Fotopia db

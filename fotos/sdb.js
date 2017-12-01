@@ -12,6 +12,6 @@ if (process.env.IS_OFFLINE) {
   };
 }
 
-const client = new AWS.DynamoDB.DocumentClient(options);
+const client = new AWS.SimpleDB(options);
 
 module.exports = client;
