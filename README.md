@@ -73,5 +73,30 @@ So
  - batch get ids from main table
 
 
+Changed again - decided to simplify the table and do querying in the lambda. Will monitor this for perf once a POC is done
+
+Thought about moving to simple db but the lack of a nice off line option made sticking with dynamo seem sensible (side project - create a serverlees plugin for simple db...? Tempting)
+
+Next steps
+- refactor the handlers to make them more testable
+- add unit tests
+- add functional tests
+- do functional tests using serverless offline in a docker container?
+
+- s3 image object creation and store details in dynamo
+- delete also removes s3 object
+
+- bulk uploader, take gathering json and populate web app
+
+- ui for reviewing and deleting
+
+- ui for adding people and tags
+
+- amazon rekognition for photos not manually tagged with people
+
+- upload from phone
+
+
+
 
 
