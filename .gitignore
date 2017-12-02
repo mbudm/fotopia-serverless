@@ -1,3 +1,4 @@
 .serverless
+.webpack
 node_modules
 credentials.csv

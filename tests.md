@@ -17,3 +17,9 @@ More: http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.CLI.
 aws dynamodb put-item --table-name fotopia-web-app-dev --item file:///Users/steve/dev/fotopia/fotopia-web-app/awscli/put.json --endpoint-url http://localhost:8000
 
 aws dynamodb describe-table --table-name fotopia-web-app-dev --endpoint-url http://localhost:8000
+
+
+## killing the dynamodb local
+
+lsof -i:8000
+kill [pid]
