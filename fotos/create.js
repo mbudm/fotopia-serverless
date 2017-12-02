@@ -1,17 +1,13 @@
 
 import uuid from 'uuid';
-import dynamodb from './dynamodb';
+import dynamodb from './lib/dynamodb';
+import { success, failure } from "./lib/responses";
 
 export const createItem = (event, context, callback) => {
   const timestamp = new Date().getTime();
   const data = JSON.parse(event.body);
   if (typeof data.birthtime !== 'string') {
-    console.error('Validation Failed');
-    callback(null, {
-      statusCode: 400,
-      headers: { 'Content-Type': 'text/plain' },
-      body: 'Couldn\'t create the foto item.',
-    });
+    callback(null, failure('No birthtime - this is required.'));
     return;
   }
 
@@ -23,7 +19,7 @@ export const createItem = (event, context, callback) => {
       userid: data.userid,
       id: uuid.v1(),
       birthtime: new Date(data.birthtime).getTime(),
-      tags: data.tags, // use scan w contains filter: https://stackoverflow.com/questions/30134701/amazon-dynamodb-query-for-items-whose-key-contains-a-substring
+      tags: data.tags,
       people: data.people, // for rekognition categorisation
       image: data.image, // s3 object (image) url?
       meta: data.meta, // whatever metadata we've got for this item, or just store this as s3 object?
@@ -37,19 +33,10 @@ export const createItem = (event, context, callback) => {
     // handle potential errors
     if (error) {
       console.error(error);
-      callback(null, {
-        statusCode: error.statusCode || 501,
-        headers: { 'Content-Type': 'text/plain' },
-        body: 'Couldn\'t create the foto item.',
-      });
+      callback(null, failure('Couldn\'t create the foto item.'));
       return;
     }
 
-    // create a response
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify(params.Item),
-    };
-    callback(null, response);
+    callback(null, success(params.Item));
   });
 };

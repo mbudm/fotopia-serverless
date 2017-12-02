@@ -1,4 +1,4 @@
-import  dynamodb from './dynamodb';
+import  dynamodb from './lib/dynamodb';
 
 export const getItem = (event, context, callback) => {
   const params = {
