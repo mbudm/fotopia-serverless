@@ -22,7 +22,8 @@ module.exports.create = (event, context, callback) => {
     TableName: process.env.DYNAMODB_TABLE,
     Item: {
       userid: data.userid,
-      birthtime: new Date(data.birthtime).getTime(), // global secondary index
+      id: uuid.v1(),
+      birthtime: new Date(data.birthtime).getTime(),
       tags: data.tags, // use scan w contains filter: https://stackoverflow.com/questions/30134701/amazon-dynamodb-query-for-items-whose-key-contains-a-substring
       people: data.people, // for rekognition categorisation
       image: data.image, // s3 object (image) url?

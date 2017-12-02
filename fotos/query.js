@@ -38,7 +38,7 @@ module.exports.query = (event, context, callback) => {
 
     const response = {
       statusCode: 200,
-      body: 'Yo!' + JSON.stringify(filteredItems),
+      body: JSON.stringify(filteredItems),
     };
     callback(null, response);
   });
