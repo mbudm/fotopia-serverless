@@ -1,9 +1,8 @@
-'use strict';
 
-const uuid = require('uuid');
-const dynamodb = require('./dynamodb');
+import uuid from 'uuid';
+import dynamodb from './dynamodb';
 
-module.exports.create = (event, context, callback) => {
+export const createItem = (event, context, callback) => {
   const timestamp = new Date().getTime();
   const data = JSON.parse(event.body);
   if (typeof data.birthtime !== 'string') {

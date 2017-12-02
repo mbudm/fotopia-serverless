@@ -1,8 +1,6 @@
-'use strict';
+import dynamodb from './dynamodb';
 
-const dynamodb = require('./dynamodb');
-
-module.exports.query = (event, context, callback) => {
+export const queryItems = (event, context, callback) => {
 
   const data = JSON.parse(event.body);
 
@@ -45,12 +43,12 @@ module.exports.query = (event, context, callback) => {
 };
 
 //export these for tests!
-function filterItemsByCriteria(items, data){
+export const filterItemsByCriteria = (items, data) =>{
   return items.filter((item) => {
     return Object.keys(data.criteria).every(criteriaKey => filterByCriteria(item, criteriaKey, data.criteria[criteriaKey]));
   });
 }
 
-function filterByCriteria(item, criteriaKey, criteriaData){
+export const filterByCriteria = (item, criteriaKey, criteriaData) => {
   return criteriaData.every(criteriaDataItem => item[criteriaKey].includes(criteriaDataItem));
 }

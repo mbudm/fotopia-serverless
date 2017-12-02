@@ -1,8 +1,6 @@
-'use strict';
+import dynamodb from './dynamodb';
 
-const dynamodb = require('./dynamodb');
-
-module.exports.update = (event, context, callback) => {
+export const updateItem = (event, context, callback) => {
   const timestamp = new Date().getTime();
   const data = JSON.parse(event.body);
 

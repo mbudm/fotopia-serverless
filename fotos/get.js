@@ -1,8 +1,6 @@
-'use strict';
+import  dynamodb from './dynamodb';
 
-const dynamodb = require('./dynamodb');
-
-module.exports.get = (event, context, callback) => {
+export const getItem = (event, context, callback) => {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
