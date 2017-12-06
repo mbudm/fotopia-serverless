@@ -9,7 +9,7 @@
   "author": "Steve Roberts <mbudm@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "tape-watch fotos/**/*__test__.js -r babel-register -p tap-spec"
+    "test": "tape-watch './fotos/**/*__test__.js' -r babel-register -p tap-spec"
   },
   "dependencies": {
     "aws-sdk": "^2.12.0",
