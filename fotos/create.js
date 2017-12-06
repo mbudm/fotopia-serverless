@@ -7,9 +7,10 @@ import { requestSchema, paramsSchema } from './joi/create';
 
 export async function createItem(event, context, callback){
   try {
-    const request = await validateRequest(event.body);
-    const dbResult = await dynamodb.put(getCreateParams(request)).promise();
-    return callback(null, success(dbResult));
+    const request = validateRequest(event.body);
+    const params = getCreateParams(request);
+    await dynamodb.put(params).promise();
+    return callback(null, success(params.Item));
   } catch(err){
     return callback(null, failure(err));
   }

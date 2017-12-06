@@ -1,16 +1,18 @@
 
 require('es6-promise').polyfill();
 require('isomorphic-fetch');
+const uuid = require('uuid');
 const test = require('tape');
 const localhost = "http://localhost:3000/"
 
+const userid = uuid.v1();
 const records = [{
-  "userid":"steve",
+  "userid":userid,
   "birthtime":"2012-06-28T00:55:11.000Z",
   "tags":["blue","red"],
   "people":["Steve","Oren"]
 }, {
-  "userid":"steve",
+  "userid":userid,
   "birthtime":"2014-06-28T00:55:11.000Z",
   "tags":["blue","yellow"],
   "people":["Miki","Oren"]
@@ -48,7 +50,7 @@ test('query by tag and person', function (t) {
   t.plan(2);
 
   const query = {
-    "userid":"steve",
+    "userid":userid,
     "criteria":{
       "tags":["blue"],
       "people":["Miki"]
@@ -73,7 +75,7 @@ test('query by tag only', function (t) {
   t.plan(1);
 
   const query = {
-    "userid":"steve",
+    "userid":userid,
     "criteria":{
       "tags":["blue"]
     },
@@ -95,7 +97,7 @@ test('query by person only', function (t) {
   t.plan(1);
 
   const query = {
-    "userid":"steve",
+    "userid":userid,
     "criteria":{
       "people":["Oren"]
     },
