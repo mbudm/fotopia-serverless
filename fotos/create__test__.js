@@ -2,14 +2,16 @@
 import * as create from './create';
 import test from 'tape';
 import uuid from 'uuid';
-import sinon from 'sinon';
 
 const requestBody = {
   userid: uuid.v1(),
   birthtime: 123,
   people: ["Bob"],
-  tags:[]
+  tags:[],
+  imageBuffer: '1234'
 }
+
+const recordId = uuid.v1();
 
 test('validateRequest', t => {
   try {
@@ -24,10 +26,21 @@ test('validateRequest', t => {
 test('getCreateParams', t => {
   process.env.DYNAMODB_TABLE = "TABLE";
   try {
-    const params = create.getCreateParams(requestBody);
+    const params = create.getCreateParams(requestBody, 'location.of.image', recordId);
     t.deepEqual(params.Item.userid, requestBody.userid);
     t.end();
   } catch (e) {
     t.fail(e);
   }
 });
+
+test('getS3Params', t => {
+  process.env.S3_BUCKET = 'bucket';
+  try {
+    const params = create.getS3Params(requestBody, recordId);
+    t.deepEqual(params.Key, recordId);
+    t.end();
+  } catch (e) {
+    t.fail(e);
+  }
+})

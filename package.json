@@ -27,6 +27,7 @@
     "babel-preset-stage-3": "^6.24.1",
     "es6-promise": "^4.1.1",
     "isomorphic-fetch": "^2.2.1",
+    "serverless-s3-local": "^0.2.8",
     "serverless-webpack": "^4.1.0",
     "tap-spec": "^4.1.1",
     "tape": "^4.8.0",

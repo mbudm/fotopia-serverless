@@ -4,6 +4,7 @@ frameworkVersion: ">=1.1.0 <2.0.0"
 
 plugins:
   - serverless-dynamodb-local
+  - serverless-s3-local
   - serverless-offline
   - serverless-webpack
 
@@ -16,6 +17,11 @@ custom:
       migrate: true
     migration:
       dir: offline/migrations
+  s3:
+    host: 0.0.0.0
+    port: 5000
+    directory: /tmp
+    cors: false
 
 provider:
   name: aws
@@ -23,6 +29,7 @@ provider:
   stage: prod
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    S3_BUCKET: ${self:service}-${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -95,3 +102,7 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
+    FotopiaBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.S3_BUCKET}
