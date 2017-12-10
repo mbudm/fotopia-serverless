@@ -11,7 +11,7 @@ export async function createItem(event, context, callback){
   try {
     const request = validateRequest(event.body);
     const s3Params = getS3Params(request, id);
-    const s3Object = await s3.putObject(s3Params).promise();
+    const s3Object = await s3.upload(s3Params).promise();
     const ddbParams = getDynamoDbParams(request, s3Object.Location, id);
     await dynamodb.put(ddbParams).promise();
     return callback(null, success(ddbParams.Item));
