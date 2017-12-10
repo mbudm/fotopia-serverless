@@ -4,6 +4,7 @@ export const requestSchema = Joi.object().keys({
   userid: Joi.string().guid().required(),
   birthtime: Joi.date().required(),
   imageBuffer: Joi.binary().encoding('base64').required(),
+  filename: Joi.string().regex(/[^\\]*\.(\w+)$/).required(),
   people: Joi.array().items(Joi.string()).unique(),
   tags: Joi.array().items(Joi.string()).unique(),
   meta: Joi.object()
@@ -26,6 +27,6 @@ export const ddbParamsSchema = Joi.object().keys({
 
 export const s3ParamsSchema =  Joi.object().keys({
   Bucket: Joi.string().required(),
-  Key: Joi.string().guid().required(),
+  Key: Joi.string().required(),
   Body: Joi.binary().encoding('base64').required()
 });

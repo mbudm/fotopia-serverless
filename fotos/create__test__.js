@@ -8,7 +8,8 @@ const requestBody = {
   birthtime: 123,
   people: ["Bob"],
   tags:[],
-  imageBuffer: '1234'
+  imageBuffer: '1234',
+  filename: 'me.jpg'
 }
 
 const recordId = uuid.v1();
@@ -38,7 +39,8 @@ test('getS3Params', t => {
   process.env.S3_BUCKET = 'bucket';
   try {
     const params = create.getS3Params(requestBody, recordId);
-    t.deepEqual(params.Key, recordId);
+    t.ok(params.Key.indexOf(recordId) > -1);
+    t.ok(params.Key.indexOf(requestBody.filename) > -1);
     t.end();
   } catch (e) {
     t.fail(e);

@@ -23,12 +23,14 @@ const mocks = new Promise((resolve, reject) => {
       "birthtime":"2012-06-28T00:55:11.000Z",
       "tags":["blue","red"],
       "imageBuffer": imageData,
+      "filename": "one.jpg",
       "people":["Steve","Oren"]
     }, {
       "userid":userid,
       "birthtime":"2014-06-28T00:55:11.000Z",
       "tags":["blue","yellow"],
       "imageBuffer": imageData,
+      "filename": "one.jpg",
       "people":["Miki","Oren"]
     }];
   })

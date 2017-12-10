@@ -23,7 +23,7 @@ export async function createItem(event, context, callback){
 export function getS3Params(requestBody, id){
   const params = {
     Bucket: process.env.S3_BUCKET,
-    Key: id,
+    Key: `${id}__${requestBody.filename}`,
     Body: requestBody.imageBuffer
   }
   const result = Joi.validate(params, s3ParamsSchema);
