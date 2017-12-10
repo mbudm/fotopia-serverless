@@ -14,7 +14,7 @@ export async function createItem(event, context, callback){
     const s3Object = await s3.putObject(s3Params).promise();
     const ddbParams = getDynamoDbParams(request, s3Object.Location, id);
     await dynamodb.put(ddbParams).promise();
-    return callback(null, success(params.Item));
+    return callback(null, success(ddbParams.Item));
   } catch(err){
     return callback(null, failure(err));
   }
@@ -44,7 +44,7 @@ export function validateRequest(requestBody){
     }
 }
 
-export function getCreateParams(data, image, id){
+export function getDynamoDbParams(data, image, id){
     const timestamp = new Date().getTime();
     const params = {
       TableName: process.env.DYNAMODB_TABLE,

@@ -23,10 +23,10 @@ test('validateRequest', t => {
   }
 });
 
-test('getCreateParams', t => {
+test('getDynamoDbParams', t => {
   process.env.DYNAMODB_TABLE = "TABLE";
   try {
-    const params = create.getCreateParams(requestBody, 'location.of.image', recordId);
+    const params = create.getDynamoDbParams(requestBody, 'location.of.image', recordId);
     t.deepEqual(params.Item.userid, requestBody.userid);
     t.end();
   } catch (e) {
