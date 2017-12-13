@@ -5,52 +5,58 @@ const fs = require('fs');
 const path = require('path');
 const uuid = require('uuid');
 const test = require('tape');
+
+const upload = require('./upload');
+
+
+const bucket = 'fotopia-web-app-prod';
 const localhost = "http://localhost:3000/"
 const userid = uuid.v1();
 
-const imageStream = fs.createReadStream(path.resolve(__dirname, './mock/one.jpg'));
+const images = [{
+  path: path.resolve(__dirname, './mock/one.jpg'),
+  key: userid+'-one.jpg'
+},{
+  path: path.resolve(__dirname, './mock/two.jpeg'),
+  key: userid+'-two.jpg'
+}];
 
 const records = [{
   "userid":userid,
   "birthtime":"2012-06-28T00:55:11.000Z",
   "tags":["blue","red"],
-  "imageBuffer": imageStream,
-  "filename": "one.jpg",
   "people":["Steve","Oren"]
 }, {
   "userid":userid,
   "birthtime":"2014-06-28T00:55:11.000Z",
   "tags":["blue","yellow"],
-  "imageBuffer": imageStream,
-  "filename": "one.jpg",
   "people":["Miki","Oren"]
 }];
 
-test('upload an image', (t) => {
-  t.plan(1);
-  fetch(localhost + 'upload', {
-    method: 'POST',
-    body: imageStream
-  })
-    .then((response) => response.json())
+
+test('upload image one', (t) => {
+  t.plan(2);
+  upload(images[0].path, bucket, images[0].key)
     .then((responseBody) => {
-      t.equal(responseBody.userid, records[0].userid);
+      t.equal(responseBody.key, images[0].key);
+      t.equal(responseBody.Bucket, bucket);
+
+      records[0].location = responseBody.Location;
     });
 });
 
-test('check db or s3 for uploaded image record', (t) => {
-  t.plan(1);
-  fetch(localhost + 'upload', {
-    method: 'POST',
-    body: imageStream
-  })
-    .then((response) => response.json())
+test('upload image two', (t) => {
+  t.plan(2);
+  upload(images[1].path, bucket, images[1].key)
     .then((responseBody) => {
-      t.equal(responseBody.userid, records[0].userid);
+      t.equal(responseBody.key, images[1].key);
+      t.equal(responseBody.Bucket, bucket);
+
+      records[1].location = responseBody.Location;
     });
 });
 
-test('update db with uploaded image meta data', function (t) {
+test('create image one meta data', function (t) {
   t.plan(1);
 
   fetch(localhost + 'create', {
@@ -59,7 +65,24 @@ test('update db with uploaded image meta data', function (t) {
   })
     .then((response) => response.json())
     .then((responseBody) => {
-      t.equal(responseBody.userid, records[0].userid);
+
+      const utcBirthTime = new Date(responseBody.birthtime).toISOString();
+      t.equal(utcBirthTime, records[0].birthtime);
+    });
+});
+
+test('create image two meta data', function (t) {
+  t.plan(1);
+
+  fetch(localhost + 'create', {
+    method: 'POST',
+    body: JSON.stringify(records[1])
+  })
+    .then((response) => response.json())
+    .then((responseBody) => {
+
+      const utcBirthTime = new Date(responseBody.birthtime).toISOString();
+      t.equal(utcBirthTime, records[1].birthtime);
     });
 });
 

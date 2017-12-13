@@ -27,12 +27,14 @@
     "babel-preset-stage-3": "^6.24.1",
     "es6-promise": "^4.1.1",
     "isomorphic-fetch": "^2.2.1",
+    "s3-upload-stream": "^1.0.7",
     "serverless-s3-local": "^0.2.8",
     "serverless-webpack": "^4.1.0",
     "tap-spec": "^4.1.1",
     "tape": "^4.8.0",
     "tape-watch": "^2.3.0",
     "webpack": "^3.9.1",
-    "webpack-node-externals": "^1.6.0"
+    "webpack-node-externals": "^1.6.0",
+    "zlib": "^1.0.5"
   }
 }

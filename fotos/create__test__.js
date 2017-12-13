@@ -8,8 +8,7 @@ const requestBody = {
   birthtime: 123,
   people: ["Bob"],
   tags:[],
-  imageBuffer: '1234',
-  filename: 'me.jpg'
+  location: 'https://location.of.image.com/me.jpg'
 }
 
 const recordId = uuid.v1();
@@ -27,7 +26,7 @@ test('validateRequest', t => {
 test('getDynamoDbParams', t => {
   process.env.DYNAMODB_TABLE = "TABLE";
   try {
-    const params = create.getDynamoDbParams(requestBody, 'location.of.image', recordId);
+    const params = create.getDynamoDbParams(requestBody, recordId);
     t.deepEqual(params.Item.userid, requestBody.userid);
     t.end();
   } catch (e) {
@@ -35,14 +34,4 @@ test('getDynamoDbParams', t => {
   }
 });
 
-test('getS3Params', t => {
-  process.env.S3_BUCKET = 'bucket';
-  try {
-    const params = create.getS3Params(requestBody, recordId);
-    t.ok(params.Key.indexOf(recordId) > -1);
-    t.ok(params.Key.indexOf(requestBody.filename) > -1);
-    t.end();
-  } catch (e) {
-    t.fail(e);
-  }
-})
+

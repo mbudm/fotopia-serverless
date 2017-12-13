@@ -20,7 +20,7 @@ custom:
   s3:
     host: 0.0.0.0
     port: 5000
-    directory: /tmp
+    directory: /tmp/s3bucket
     cors: false
 
 provider:
@@ -106,3 +106,4 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:provider.environment.S3_BUCKET}
+        AccessControl: PublicRead
