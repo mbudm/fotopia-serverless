@@ -156,3 +156,17 @@ test('query by person only', function (t) {
     });
 });
 
+/*
+more tests
+
+get an image record
+update a person
+update a tag
+update metadata
+
+update multiple
+
+delete an image and its record
+
+
+*/
