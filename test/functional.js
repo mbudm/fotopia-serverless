@@ -74,9 +74,12 @@ test('create image one meta data', function (t) {
   })
     .then((response) => response.json())
     .then((responseBody) => {
-
+      console.log('responseBody', responseBody);
       const utcBirthTime = new Date(responseBody.birthtime).toISOString();
       t.equal(utcBirthTime, records[0].birthtime);
+    })
+    .catch((e) => {
+      console.log('error', e, );
     });
 });
 
