@@ -13,14 +13,12 @@
     "functional": "node ./test/functional.js | tap-spec"
   },
   "dependencies": {
+    "babel-runtime": "^6.26.0",
     "joi": "^13.0.2",
     "uuid": "^3.1.0"
   },
   "devDependencies": {
     "aws-sdk": "^2.12.0",
-    "babel-runtime": "^6.26.0",
-    "serverless-dynamodb-local": "^0.2.18",
-    "serverless-offline": "^3.8.3",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-plugin-transform-runtime": "^6.23.0",
@@ -29,6 +27,8 @@
     "es6-promise": "^4.1.1",
     "isomorphic-fetch": "^2.2.1",
     "s3-upload-stream": "^1.0.7",
+    "serverless-dynamodb-local": "^0.2.18",
+    "serverless-offline": "^3.8.3",
     "serverless-s3-local": "^0.2.8",
     "serverless-webpack": "^4.1.0",
     "tap-spec": "^4.1.1",

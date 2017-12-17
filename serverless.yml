@@ -112,3 +112,4 @@ package:
     - node_modules/**
     - '!node_modules/joi/**'
     - '!node_modules/uuid/**'
+    - '!node_modules/babel-runtime/**'
