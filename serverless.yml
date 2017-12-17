@@ -107,3 +107,8 @@ resources:
       Properties:
         BucketName: ${self:provider.environment.S3_BUCKET}
         AccessControl: PublicRead
+package:
+  exclude:
+    - node_modules/**
+    - '!node_modules/joi/**'
+    - '!node_modules/uuid/**'

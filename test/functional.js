@@ -10,8 +10,11 @@ const upload = require('./upload');
 
 
 const bucket = 'fotopia-web-app-prod';
-const localhost = "http://localhost:3000/"
+const host = process.env.hostname || "http://localhost:3000/";
+const s3Url = process.env.hostname ? false : 'http://localhost:5000';
 const userid = uuid.v1();
+
+console.log('urls - ', host, s3Url);
 
 const images = [{
   path: path.resolve(__dirname, './mock/one.jpg'),
@@ -36,30 +39,36 @@ const records = [{
 
 test('upload image one', (t) => {
   t.plan(2);
-  upload(images[0].path, bucket, images[0].key)
+  upload(images[0].path, bucket, images[0].key, s3Url)
     .then((responseBody) => {
       t.equal(responseBody.key, images[0].key);
       t.equal(responseBody.Bucket, bucket);
 
       records[0].location = responseBody.Location;
+    })
+    .catch((e) => {
+      console.log('error', e);
     });
 });
 
 test('upload image two', (t) => {
   t.plan(2);
-  upload(images[1].path, bucket, images[1].key)
+  upload(images[1].path, bucket, images[1].key, s3Url)
     .then((responseBody) => {
       t.equal(responseBody.key, images[1].key);
       t.equal(responseBody.Bucket, bucket);
 
       records[1].location = responseBody.Location;
+    })
+    .catch((e) => {
+      console.log('error', e);
     });
 });
 
 test('create image one meta data', function (t) {
   t.plan(1);
 
-  fetch(localhost + 'create', {
+  fetch(host + 'create', {
     method: 'POST',
     body: JSON.stringify(records[0])
   })
@@ -74,7 +83,7 @@ test('create image one meta data', function (t) {
 test('create image two meta data', function (t) {
   t.plan(1);
 
-  fetch(localhost + 'create', {
+  fetch(host + 'create', {
     method: 'POST',
     body: JSON.stringify(records[1])
   })
@@ -100,7 +109,7 @@ test('query by tag and person', function (t) {
     "to":"2017-11-02"
   }
 
-  fetch(localhost + 'query', {
+  fetch(host + 'query', {
     method: 'POST',
     body: JSON.stringify(query)
   })
@@ -124,7 +133,7 @@ test('query by tag only', function (t) {
     "to":"2017-11-02"
   }
 
-  fetch(localhost + 'query', {
+  fetch(host + 'query', {
     method: 'POST',
     body: JSON.stringify(query)
   })
@@ -146,7 +155,7 @@ test('query by person only', function (t) {
     "to":"2017-11-02"
   }
 
-  fetch(localhost + 'query', {
+  fetch(host + 'query', {
     method: 'POST',
     body: JSON.stringify(query)
   })

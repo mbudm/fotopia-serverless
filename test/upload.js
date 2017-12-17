@@ -1,11 +1,13 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
 
-module.exports = function(pathToFile, bucket, key){
+module.exports = function(pathToFile, bucket, key, s3Url){
   return new Promise((resolve, reject) => {
     const config = {
-      s3ForcePathStyle: true,
-      endpoint: new AWS.Endpoint('http://localhost:5000')
+      s3ForcePathStyle: true
+    }
+    if(s3Url){
+      config.endpoint = new AWS.Endpoint(s3Url);
     }
 
     const client = new AWS.S3(config)
@@ -19,7 +21,7 @@ module.exports = function(pathToFile, bucket, key){
 
     client.upload(params, function uploadCallback (err, data) {
       if(err){
-        reject(err);
+        reject({params, err});
       }else{
         resolve(data);
       }

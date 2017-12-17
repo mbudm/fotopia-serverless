@@ -23,3 +23,7 @@ aws dynamodb describe-table --table-name fotopia-web-app-prod --endpoint-url htt
 
 lsof -i:8000
 kill [pid]
+
+
+## clean up s3 local
+rm -R /tmp/s3Bucket/fotopia-web-app-prod/

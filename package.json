@@ -1,6 +1,6 @@
 {
   "name": "fotopia-web-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Serverless REST API with DynamoDB and offline support",
   "repository": {
     "type": "git",
@@ -13,13 +13,14 @@
     "functional": "node ./test/functional.js | tap-spec"
   },
   "dependencies": {
+    "joi": "^13.0.2",
+    "uuid": "^3.1.0"
+  },
+  "devDependencies": {
     "aws-sdk": "^2.12.0",
     "babel-runtime": "^6.26.0",
     "serverless-dynamodb-local": "^0.2.18",
     "serverless-offline": "^3.8.3",
-    "uuid": "^2.0.3"
-  },
-  "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-plugin-transform-runtime": "^6.23.0",
