@@ -36,6 +36,8 @@ const records = [{
   "people":["Miki","Oren"]
 }];
 
+const getEndpoint = (rec) => `${host}foto/${rec.userid}/${rec.birthtime}`;
+
 
 test('upload image one', (t) => {
   t.plan(2);
@@ -74,9 +76,11 @@ test('create image one meta data', function (t) {
   })
     .then((response) => response.json())
     .then((responseBody) => {
-      console.log('responseBody', responseBody, records[0]);
+
       const utcBirthTime = new Date(responseBody.birthtime).toISOString();
       t.equal(utcBirthTime, records[0].birthtime);
+      records[0].id = responseBody.id;
+      records[0].birthtime = responseBody.birthtime;
     })
     .catch((e) => {
       console.log('error', e, );
@@ -92,9 +96,10 @@ test('create image two meta data', function (t) {
   })
     .then((response) => response.json())
     .then((responseBody) => {
-
       const utcBirthTime = new Date(responseBody.birthtime).toISOString();
       t.equal(utcBirthTime, records[1].birthtime);
+      records[1].id = responseBody.id;
+      records[1].birthtime = responseBody.birthtime;
     });
 });
 
@@ -166,6 +171,34 @@ test('query by person only', function (t) {
     .then((responseBody) => {
       t.equal(responseBody.length, 2);
     });
+});
+
+test('get an item', function (t) {
+  t.plan(1);
+  const endpoint = getEndpoint(records[0]);
+  console.log('get', endpoint);
+  fetch(endpoint)
+    .then((response) => response.json())
+    .then((responseBody) => {
+      t.equal(responseBody.id, records[0].id);
+    });
+});
+
+
+test('delete query by person', function (t) {
+  t.plan(1);
+  const endpoint = getEndpoint(records[0]);
+  fetch(endpoint, {
+    method: 'DELETE'
+  })
+    .then((response) => response.json())
+    .then((responseBody) => {
+      t.equal(responseBody, 'not sure');
+    })
+    .catch((e) => {
+      console.log('error', e, );
+    });
+
 });
 
 /*

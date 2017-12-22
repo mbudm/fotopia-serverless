@@ -39,6 +39,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
+        - lambda:InvokeFunction
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 functions:
@@ -62,7 +63,7 @@ functions:
     handler: fotos/get.getItem
     events:
       - http:
-          path: foto/{id}
+          path: foto/{userid}/{birthtime}
           method: get
           cors: true
 
@@ -70,7 +71,7 @@ functions:
     handler: fotos/update.updateItem
     events:
       - http:
-          path: foto/{id}
+          path: foto/{userid}/{birthtime}
           method: put
           cors: true
 
@@ -78,7 +79,7 @@ functions:
     handler: fotos/delete.deleteItem
     events:
       - http:
-          path: foto/{id}
+          path: foto/{userid}/{birthtime}
           method: delete
           cors: true
 

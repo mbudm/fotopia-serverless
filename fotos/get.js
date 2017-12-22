@@ -1,15 +1,18 @@
 import  dynamodb from './lib/dynamodb';
 
 export const getItem = (event, context, callback) => {
+
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
-      id: event.pathParameters.id,
+      userid: event.pathParameters.userid, //needs a global secondary index that lets you query by id
+      birthtime: event.pathParameters.birthtime * 1
     },
   };
 
   // fetch foto from the database
   dynamodb.get(params, (error, result) => {
+    console.log('yo! get response', result);
     // handle potential errors
     if (error) {
       console.error(error);
