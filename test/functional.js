@@ -201,6 +201,19 @@ test('delete item', function (t) {
 
 });
 
+test('get deleted item', function (t) {
+  t.plan(1);
+  const endpoint = getEndpoint(records[0]);
+  fetch(endpoint)
+    .then((response) => response.json())
+    .then((responseBody) => {
+      t.ok(responseBody.startsWith('No item found for'));
+    })
+    .catch((e) => {
+      console.log('error', e, );
+    });
+});
+
 /*
 more tests
 

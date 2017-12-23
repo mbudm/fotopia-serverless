@@ -23,7 +23,7 @@ export const getItem = (event, context, callback) => {
       return;
     }
 
-    const body =  result.Item ? JSON.stringify(result.Item) : `No item found for ${event.pathParameters.id}`;
+    const body =  result.Item ? JSON.stringify(result.Item) : JSON.stringify(`No item found for ${event.pathParameters.userid} & ${event.pathParameters.birthtime}`);
 
     // create a response
     const response = {
