@@ -8,7 +8,11 @@ export async function deleteItem(event, context, callback){
   const birthtime = event.pathParameters.birthtime;
   try {
     const params = getInvokeGetParams(userid, birthtime);
-    const dbItem = await lambda.invoke(params).promise();
+    const dbGetResponse = await lambda.invoke(params).promise();
+    console.log('dbGetResponse', dbGetResponse);
+    const s3Params = getS3Params(dbGetResponse);
+    console.log('s3Params', s3Params);
+    await s3.deleteObject(s3Params).promise();
     const ddbParams = getDynamoDbParams(userid, birthtime);
     await dynamodb.delete(ddbParams).promise();
     return callback(null, success(ddbParams.Key));
@@ -16,6 +20,14 @@ export async function deleteItem(event, context, callback){
     return callback(null, failure(err));
   }
 };
+
+export function getS3Params(dbGetResponse){
+  const dbItemObj = JSON.parse(dbGetResponse.body);
+  return {
+    Bucket: 'fotopia-web-app-prod',
+    Key: dbItemObj.key
+   };
+}
 
 export function getDynamoDbParams(userid, birthtime){
   return {

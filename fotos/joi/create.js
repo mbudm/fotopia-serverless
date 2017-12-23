@@ -8,6 +8,7 @@ export const requestSchema = Joi.object().keys({
       /https?/
     ]
   }).required(),
+  key: Joi.string().required(),
   people: Joi.array().items(Joi.string()).unique(),
   tags: Joi.array().items(Joi.string()).unique(),
   meta: Joi.object()
@@ -26,6 +27,7 @@ export const ddbParamsSchema = Joi.object().keys({
         /https?/
       ]
     }).required(),
+    key: Joi.string().required(),
     meta: Joi.object(),
     createdAt: Joi.number().required(),
     updatedAt: Joi.number().required(),

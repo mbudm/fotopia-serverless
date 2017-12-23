@@ -47,6 +47,7 @@ test('upload image one', (t) => {
       t.equal(responseBody.Bucket, bucket);
 
       records[0].location = responseBody.Location;
+      records[0].key = responseBody.key;
     })
     .catch((e) => {
       console.log('error', e);
@@ -61,6 +62,7 @@ test('upload image two', (t) => {
       t.equal(responseBody.Bucket, bucket);
 
       records[1].location = responseBody.Location;
+      records[1].key = responseBody.key;
     })
     .catch((e) => {
       console.log('error', e);

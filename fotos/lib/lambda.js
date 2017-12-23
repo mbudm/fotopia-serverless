@@ -27,9 +27,9 @@ if (process.env.IS_OFFLINE) {
               pathParameters: JSON.parse(invokeParams.Payload) //assumes fn expects request params here
             }, null, (context, response) => {
               if(response.statusCode !== 200){
-                reject(response.body);
+                reject(response);
               }else{
-                resolve(response.body);
+                resolve(response);
               }
             });
           });
