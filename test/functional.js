@@ -176,7 +176,6 @@ test('query by person only', function (t) {
 test('get an item', function (t) {
   t.plan(1);
   const endpoint = getEndpoint(records[0]);
-  console.log('get', endpoint);
   fetch(endpoint)
     .then((response) => response.json())
     .then((responseBody) => {
@@ -185,15 +184,16 @@ test('get an item', function (t) {
 });
 
 
-test('delete query by person', function (t) {
-  t.plan(1);
+test('delete item', function (t) {
+  t.plan(2);
   const endpoint = getEndpoint(records[0]);
   fetch(endpoint, {
     method: 'DELETE'
   })
     .then((response) => response.json())
     .then((responseBody) => {
-      t.equal(responseBody, 'not sure');
+      t.equal(responseBody.userid, records[0].userid);
+      t.equal(responseBody.birthtime, records[0].birthtime);
     })
     .catch((e) => {
       console.log('error', e, );

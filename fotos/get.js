@@ -12,7 +12,6 @@ export const getItem = (event, context, callback) => {
 
   // fetch foto from the database
   dynamodb.get(params, (error, result) => {
-    console.log('yo! get response', result);
     // handle potential errors
     if (error) {
       console.error(error);

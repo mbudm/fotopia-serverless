@@ -9,12 +9,9 @@ export async function deleteItem(event, context, callback){
   try {
     const params = getInvokeGetParams(userid, birthtime);
     const dbItem = await lambda.invoke(params).promise();
-    console.log('dbItem', dbItem);
-    // s3 dlete
     const ddbParams = getDynamoDbParams(userid, birthtime);
     await dynamodb.delete(ddbParams).promise();
     return callback(null, success(ddbParams.Key));
-    //return callback(null, 'yo!');
   } catch(err){
     return callback(null, failure(err));
   }
