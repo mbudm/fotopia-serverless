@@ -52,7 +52,7 @@ export function getDynamoDbParams(userid, birthtime){
 export function getInvokeGetParams(userid, birthtime){
   return {
     InvocationType: 'RequestResponse',
-    FunctionName: process.env.LAMBDA_GET,
+    FunctionName: process.env.IS_OFFLINE ? process.env.LAMBDA_GET_OFFLINE : process.env.LAMBDA_GET,
     LogType: 'Tail',
     Payload: JSON.stringify({
       pathParameters: {

@@ -26,10 +26,13 @@ if (process.env.IS_OFFLINE) {
             handlerFn(JSON.parse(invokeParams.Payload), //assumes fn expects request params here
             null,
             (context, response) => {
+              const serialized = {
+                Payload:JSON.stringify(response)
+              }
               if(response.statusCode !== 200){
-                reject(response);
+                reject(serialized);
               }else{
-                resolve(response);
+                resolve(serialized);
               }
             });
           });

@@ -31,6 +31,7 @@ provider:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     S3_BUCKET: ${self:service}-${opt:stage, self:provider.stage}
     LAMBDA_GET: ${self:service}-${opt:stage, self:provider.stage}-get
+    LAMBDA_GET_OFFLINE: get
   iamRoleStatements:
     - Effect: Allow
       Action:
