@@ -23,9 +23,9 @@ if (process.env.IS_OFFLINE) {
       return {
         promise: () => {
           return new Promise((resolve, reject) => {
-            handlerFn({
-              pathParameters: JSON.parse(invokeParams.Payload) //assumes fn expects request params here
-            }, null, (context, response) => {
+            handlerFn(JSON.parse(invokeParams.Payload), //assumes fn expects request params here
+            null,
+            (context, response) => {
               if(response.statusCode !== 200){
                 reject(response);
               }else{

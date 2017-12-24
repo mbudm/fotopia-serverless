@@ -1,11 +1,11 @@
 import  dynamodb from './lib/dynamodb';
 
 export const getItem = (event, context, callback) => {
-
+  console.log('get', event, context);
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
-      userid: event.pathParameters.userid, //needs a global secondary index that lets you query by id
+      userid: event.pathParameters.userid,
       birthtime: event.pathParameters.birthtime * 1
     },
   };
@@ -22,7 +22,7 @@ export const getItem = (event, context, callback) => {
       });
       return;
     }
-
+    console.log('get response', result);
     const body =  result.Item ? JSON.stringify(result.Item) : JSON.stringify(`No item found for ${event.pathParameters.userid} & ${event.pathParameters.birthtime}`);
 
     // create a response

@@ -30,6 +30,7 @@ provider:
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     S3_BUCKET: ${self:service}-${opt:stage, self:provider.stage}
+    LAMBDA_GET: ${self:service}-${opt:stage, self:provider.stage}-get
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -39,9 +40,27 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-        - lambda:InvokeFunction
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
-
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+        - lambda:InvokeAsync
+      Resource:
+        - "*"
+        - "arn:aws:lambda:*:*:*"
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+        - logs:DescribeLogStreams
+      Resource:
+        - "arn:aws:logs:*:*:*"
+    - Effect: "Allow"
+      Action:
+        - "s3:DeleteObject"
+      Resource:
+        - arn:aws:s3:::${self:provider.environment.S3_BUCKET}*"
 functions:
   create:
     handler: fotos/create.createItem
@@ -87,7 +106,7 @@ resources:
   Resources:
     FotopiaDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Retain
+      DeletionPolicy: Delete
       Properties:
         AttributeDefinitions:
           - AttributeName: userid
@@ -105,6 +124,7 @@ resources:
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
     FotopiaBucket:
       Type: AWS::S3::Bucket
+      DeletionPolicy: Delete
       Properties:
         BucketName: ${self:provider.environment.S3_BUCKET}
         AccessControl: PublicRead
