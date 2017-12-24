@@ -186,7 +186,7 @@ test('get an item', function (t) {
 });
 
 
-test('delete item', function (t) {
+test('delete item one', function (t) {
   t.plan(2);
   const endpoint = getEndpoint(records[0]);
   fetch(endpoint, {
@@ -203,7 +203,7 @@ test('delete item', function (t) {
 
 });
 
-test('get deleted item', function (t) {
+test('try and get deleted item', function (t) {
   t.plan(1);
   const endpoint = getEndpoint(records[0]);
   fetch(endpoint)
@@ -214,6 +214,23 @@ test('get deleted item', function (t) {
     .catch((e) => {
       console.log('error', e, );
     });
+});
+
+test('delete item two, so can sls remove the s3 bucket', function (t) {
+  t.plan(2);
+  const endpoint = getEndpoint(records[1]);
+  fetch(endpoint, {
+    method: 'DELETE'
+  })
+    .then((response) => response.json())
+    .then((responseBody) => {
+      t.equal(responseBody.userid, records[1].userid);
+      t.equal(responseBody.birthtime, records[1].birthtime);
+    })
+    .catch((e) => {
+      console.log('error', e, );
+    });
+
 });
 
 /*
