@@ -12,9 +12,7 @@ export function getDynamoDbParams(userid, birthtime) {
 }
 
 export function getResponseBody(ddbResponse, userid, birthtime) {
-  return ddbResponse.Item ?
-    JSON.stringify(ddbResponse.Item) :
-    JSON.stringify(`No item found for ${userid} & ${birthtime}`);
+  return ddbResponse.Item ? ddbResponse.Item : `No item found for ${userid} & ${birthtime}`;
 }
 
 export async function getItem(event, context, callback) {
