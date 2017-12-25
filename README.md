@@ -24,6 +24,6 @@ You may also need to
 
 
 ## Deploy in AWS, run functional test and remove
-`sls deploy`
-`hostname=https://[your-stack-id-here].execute-api.us-east-1.amazonaws.com/prod/ npm run functional`
-`sls remove`
+- `sls deploy`
+- `hostname=https://[your-stack-id-here].execute-api.us-east-1.amazonaws.com/prod/ npm run functional`
+- `sls remove`
