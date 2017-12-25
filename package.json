@@ -1,10 +1,10 @@
 {
-  "name": "fotopia-web-app",
+  "name": "fotopia-serverless",
   "version": "1.0.1",
-  "description": "Serverless REST API with DynamoDB and offline support",
+  "description": "Serverless photo web app using Lambda, S3, DynamoDB",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mbudm/fotopia.git/fotopia-web-app"
+    "url": "https://github.com/mbudm/fotopia-serverless.git"
   },
   "author": "Steve Roberts <mbudm@gmail.com>",
   "license": "MIT",
