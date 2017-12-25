@@ -3,13 +3,14 @@ A photo archive using serverless framework
 
 ## Requires
 Node 6.x or later
-serverless framework
+serverless framework `npm install -g serverless`
+AWS account with credentials (https://serverless.com/framework/docs/providers/aws/guide/credentials/)
 
 ## Set up
 `npm i`
 `sls dynamodb install`
 
-## Run offline locally
+## Deploy locally and run functional test 
 `sls offline start`
 `npm run functional`
 
@@ -23,7 +24,7 @@ You may also need to
 - kill dynamodb local `lsof -i:8000` then `kill [PID]`
 
 
-## Run in AWS, test and remove
+## Deploy in AWS, run functional test and remove
 `sls deploy`
-`hostname=https://[your-deployed-stack]/prod/ npm run functional`
+`hostname=https://[your-stack-id-here].execute-api.us-east-1.amazonaws.com/prod/ npm run functional`
 `sls remove`
