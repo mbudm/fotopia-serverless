@@ -1,33 +1,31 @@
-import  dynamodb from './lib/dynamodb';
+import dynamodb from './lib/dynamodb';
+import { success, failure } from './lib/responses';
 
-export const getItem = (event, context, callback) => {
-  const params = {
+export function getDynamoDbParams(userid, birthtime) {
+  return {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
-      userid: event.pathParameters.userid,
-      birthtime: event.pathParameters.birthtime * 1
+      userid,
+      birthtime: birthtime * 1,
     },
   };
+}
 
-  // fetch foto from the database
-  dynamodb.get(params, (error, result) => {
-    // handle potential errors
-    if (error) {
-      console.error(error);
-      callback(null, {
-        statusCode: error.statusCode || 501,
-        headers: { 'Content-Type': 'text/plain' },
-        body: 'Couldn\'t fetch the foto item.',
-      });
-      return;
-    }
-    const body =  result.Item ? JSON.stringify(result.Item) : JSON.stringify(`No item found for ${event.pathParameters.userid} & ${event.pathParameters.birthtime}`);
+export function getResponseBody(ddbResponse, userid, birthtime) {
+  return ddbResponse.Item ?
+    JSON.stringify(ddbResponse.Item) :
+    JSON.stringify(`No item found for ${userid} & ${birthtime}`);
+}
 
-    // create a response
-    const response = {
-      statusCode: 200,
-      body
-    };
-    callback(null, response);
-  });
-};
+export async function getItem(event, context, callback) {
+  const { userid, birthtime } = event.pathParameters;
+  try {
+    const ddbParams = getDynamoDbParams(userid, birthtime);
+    const ddbResponse = await dynamodb.get(ddbParams).promise();
+    const responseBody = getResponseBody(ddbResponse);
+    return callback(null, success(responseBody));
+  } catch (err) {
+    console.error(err, userid, birthtime);
+    return callback(null, failure(err));
+  }
+}

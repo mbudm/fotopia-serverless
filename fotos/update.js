@@ -1,6 +1,6 @@
 import dynamodb from './lib/dynamodb';
 
-export const updateItem = (event, context, callback) => {
+export default function updateItem(event, context, callback) {
   const timestamp = new Date().getTime();
   const data = JSON.parse(event.body);
 
@@ -51,4 +51,4 @@ export const updateItem = (event, context, callback) => {
     };
     callback(null, response);
   });
-};
+}

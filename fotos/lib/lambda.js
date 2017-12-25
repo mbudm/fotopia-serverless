@@ -12,8 +12,8 @@ if (process.env.IS_OFFLINE) {
     specific to this helper could be provided
   */
   const getHandlerFn = (handlerObj) => {
-    const fnKeys = Object.keys(handlerObj).filter(key=> typeof handlerObj[key] === 'function');
-    return handlerObj[fnKeys[0]]; //assumes the first fn is the handler
+    const fnKeys = Object.keys(handlerObj).filter(key => typeof handlerObj[key] === 'function');
+    return handlerObj[fnKeys[0]]; // assumes the first fn is the handler
   };
 
   lambda = {
@@ -21,26 +21,26 @@ if (process.env.IS_OFFLINE) {
       const handler = require(`../${invokeParams.FunctionName}`);
       const handlerFn = getHandlerFn(handler);
       return {
-        promise: () => {
-          return new Promise((resolve, reject) => {
-            handlerFn(JSON.parse(invokeParams.Payload), //assumes fn expects request params here
+        promise: () => new Promise((resolve, reject) => {
+          handlerFn(
+            JSON.parse(invokeParams.Payload), // assumes fn expects request params here
             null,
             (context, response) => {
               const serialized = {
-                Payload:JSON.stringify(response)
-              }
-              if(response.statusCode !== 200){
+                Payload: JSON.stringify(response),
+              };
+              if (response.statusCode !== 200) {
                 reject(serialized);
-              }else{
+              } else {
                 resolve(serialized);
               }
-            });
-          });
-        }
+            },
+          );
+        }),
       };
-    }
-  }
-} else{
+    },
+  };
+} else {
   lambda = new AWS.Lambda();
 }
 export default lambda;

@@ -1,0 +1,19 @@
+{
+  "extends": "airbnb",
+  "rules": {
+    "import/no-extraneous-dependencies": 0,
+    "import/extensions": [2, { "js": "never"}],
+    "no-console": 0,
+    "import/no-mutable-exports": 0,
+    "import/no-dynamic-require": 0,
+    "global-require": 0,
+    "import/no-unresolved": 0
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": ["fotos"]
+      }
+    }
+  }
+}

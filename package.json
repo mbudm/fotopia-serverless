@@ -9,9 +9,15 @@
   "author": "Steve Roberts <mbudm@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "tape-watch './fotos/**/*__test__.js' -r babel-register -p tap-spec",
-    "functional": "node ./test/functional.js | tap-spec"
+    "test": "tape './fotos/**/*__test__.js' -r babel-register | tap-spec",
+    "test-watch": "tape-watch './fotos/**/*__test__.js' -r babel-register -p tap-spec",
+    "functional": "node ./test/functional.js | tap-spec",
+    "lint": "eslint fotos"
   },
+  "pre-commit": [
+    "lint",
+    "test"
+  ],
   "dependencies": {
     "babel-runtime": "^6.26.0",
     "joi": "^13.0.2",
@@ -25,7 +31,13 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-3": "^6.24.1",
     "es6-promise": "^4.1.1",
+    "eslint": "^4.14.0",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.5.1",
     "isomorphic-fetch": "^2.2.1",
+    "pre-commit": "^1.2.2",
     "s3-upload-stream": "^1.0.7",
     "serverless-dynamodb-local": "^0.2.18",
     "serverless-offline": "^3.8.3",

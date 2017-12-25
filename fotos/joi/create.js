@@ -5,13 +5,13 @@ export const requestSchema = Joi.object().keys({
   birthtime: Joi.date().required(),
   location: Joi.string().uri({
     scheme: [
-      /https?/
-    ]
+      /https?/,
+    ],
   }).required(),
   key: Joi.string().required(),
   people: Joi.array().items(Joi.string()).unique(),
   tags: Joi.array().items(Joi.string()).unique(),
-  meta: Joi.object()
+  meta: Joi.object(),
 });
 
 export const ddbParamsSchema = Joi.object().keys({
@@ -24,8 +24,8 @@ export const ddbParamsSchema = Joi.object().keys({
     people: Joi.array().items(Joi.string()).unique(),
     location: Joi.string().uri({
       scheme: [
-        /https?/
-      ]
+        /https?/,
+      ],
     }).required(),
     key: Joi.string().required(),
     meta: Joi.object(),
