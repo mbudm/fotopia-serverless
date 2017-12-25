@@ -1,54 +1,57 @@
+import Joi from 'joi';
 import dynamodb from './lib/dynamodb';
+import { success, failure } from './lib/responses';
+import { requestSchema, ddbParamsSchema } from './joi/update';
 
-export default function updateItem(event, context, callback) {
-  const timestamp = new Date().getTime();
-  const data = JSON.parse(event.body);
-
-  // validation
-  if (typeof data.text !== 'string' || typeof data.checked !== 'boolean') {
-    console.error('Validation Failed');
-    callback(null, {
-      statusCode: 400,
-      headers: { 'Content-Type': 'text/plain' },
-      body: 'Couldn\'t update the foto item.',
-    });
-    return;
+export function validateRequest(requestBody) {
+  const data = JSON.parse(requestBody);
+  const result = Joi.validate(data, requestSchema);
+  if (result.error !== null) {
+    throw result.error;
+  } else {
+    return data;
   }
+}
 
+export function getDynamoDbParams(data) {
+  const timestamp = new Date().getTime();
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
-      id: event.pathParameters.id,
+      userid: data.userid,
+      birthtime: data.birthtime * 1,
     },
     ExpressionAttributeNames: {
-      '#foto_meta': 'meta',
+      '#meta': 'meta',
+      '#people': 'people',
+      '#tags': 'tags',
     },
     ExpressionAttributeValues: {
       ':meta': data.meta,
       ':updatedAt': timestamp,
+      ':tags': data.tags,
+      ':people': data.people,
     },
-    UpdateExpression: 'SET #foto_meta = :meta, updatedAt = :updatedAt',
+    UpdateExpression: 'SET #meta = :meta, #people = :people, #tags = :tags, updatedAt = :updatedAt',
     ReturnValues: 'ALL_NEW',
   };
 
-  // update the foto in the database
-  dynamodb.update(params, (error, result) => {
-    // handle potential errors
-    if (error) {
-      console.error(error);
-      callback(null, {
-        statusCode: error.statusCode || 501,
-        headers: { 'Content-Type': 'text/plain' },
-        body: 'Couldn\'t update the foto item.',
-      });
-      return;
-    }
+  const result = Joi.validate(params, ddbParamsSchema);
+  if (result.error !== null) {
+    throw result.error;
+  } else {
+    return params;
+  }
+}
 
-    // create a response
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify(result.Attributes),
-    };
-    callback(null, response);
-  });
+
+export async function updateItem(event, context, callback) {
+  try {
+    const request = validateRequest(event.body);
+    const ddbParams = getDynamoDbParams(request);
+    await dynamodb.update(ddbParams).promise();
+    return callback(null, success(ddbParams.Item));
+  } catch (err) {
+    return callback(null, failure(err));
+  }
 }
