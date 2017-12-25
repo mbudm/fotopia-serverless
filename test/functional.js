@@ -14,7 +14,7 @@ const host = process.env.hostname || "http://localhost:3000/";
 const s3Url = process.env.hostname ? false : 'http://localhost:5000';
 const userid = uuid.v1();
 
-console.log('urls - ', host, s3Url);
+console.log('testing with urls - ', host, s3Url);
 
 const images = [{
   path: path.resolve(__dirname, './mock/one.jpg'),
@@ -194,7 +194,6 @@ test('delete item one', function (t) {
   })
     .then((response) => response.json())
     .then((responseBody) => {
-      console.log('responseBody delete 1', responseBody)
       t.equal(responseBody.userid, records[0].userid);
       t.equal(responseBody.birthtime, records[0].birthtime);
     })
@@ -210,7 +209,6 @@ test('try and get deleted item', function (t) {
   fetch(endpoint)
     .then((response) => response.json())
     .then((responseBody) => {
-      console.log('responseBody get', responseBody)
       t.ok(responseBody.startsWith('No item found for'));
     })
     .catch((e) => {
@@ -226,7 +224,6 @@ test('delete item two, so can sls remove the s3 bucket', function (t) {
   })
     .then((response) => response.json())
     .then((responseBody) => {
-      console.log('responseBody delete 2', responseBody)
       t.equal(responseBody.userid, records[1].userid);
       t.equal(responseBody.birthtime, records[1].birthtime);
     })

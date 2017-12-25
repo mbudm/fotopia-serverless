@@ -1,7 +1,6 @@
 import  dynamodb from './lib/dynamodb';
 
 export const getItem = (event, context, callback) => {
-  console.log('get', event, context);
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
@@ -22,7 +21,6 @@ export const getItem = (event, context, callback) => {
       });
       return;
     }
-    console.log('get response', result);
     const body =  result.Item ? JSON.stringify(result.Item) : JSON.stringify(`No item found for ${event.pathParameters.userid} & ${event.pathParameters.birthtime}`);
 
     // create a response
