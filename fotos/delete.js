@@ -2,6 +2,7 @@ import dynamodb from './lib/dynamodb';
 import s3 from './lib/s3';
 import lambda from './lib/lambda';
 import { success, failure } from './lib/responses';
+import { getDynamoDbParams, validateRequest } from './get';
 
 export function getS3Params(dbGetResponse) {
   const payload = JSON.parse(dbGetResponse.Payload);
@@ -12,42 +13,31 @@ export function getS3Params(dbGetResponse) {
   };
 }
 
-export function getDynamoDbParams(userid, birthtime) {
-  return {
-    TableName: process.env.DYNAMODB_TABLE,
-    Key: {
-      userid,
-      birthtime: birthtime * 1,
-    },
-  };
-}
-
-export function getInvokeGetParams(userid, birthtime) {
+export function getInvokeGetParams(request) {
   return {
     InvocationType: 'RequestResponse',
     FunctionName: process.env.IS_OFFLINE ? process.env.LAMBDA_GET_OFFLINE : process.env.LAMBDA_GET,
     LogType: 'Tail',
     Payload: JSON.stringify({
       pathParameters: {
-        userid,
-        birthtime,
+        ...request,
       },
     }),
   };
 }
 
 export async function deleteItem(event, context, callback) {
-  const { userid, birthtime } = event.pathParameters;
   try {
-    const params = getInvokeGetParams(userid, birthtime);
+    const request = validateRequest(event.pathParameters);
+    const params = getInvokeGetParams(request);
     const dbGetResponse = await lambda.invoke(params).promise();
     const s3Params = getS3Params(dbGetResponse);
     await s3.deleteObject(s3Params).promise();
-    const ddbParams = getDynamoDbParams(userid, birthtime);
+    const ddbParams = getDynamoDbParams(request);
     await dynamodb.delete(ddbParams).promise();
     return callback(null, success(ddbParams.Key));
   } catch (err) {
-    console.error(err, userid, birthtime);
+    console.error(err, event.pathParameters);
     return callback(null, failure(err));
   }
 }

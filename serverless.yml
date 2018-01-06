@@ -8,6 +8,13 @@ plugins:
   - serverless-offline
   - serverless-webpack
 
+# fork of serverless stack to go all infra as code using serverless framework:
+# like the idea of splitting the stacks
+# auth / dynamo
+# gateway/lambdas/fotos s3 bucket
+# static client s3 bucket
+# https://github.com/timoteoalvarenga/serverless-stack-demo-api/blob/master/serverless.yml
+
 custom:
   webpackIncludeModules: true
   dynamodb:
@@ -30,6 +37,7 @@ provider:
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     S3_BUCKET: ${self:service}-${opt:stage, self:provider.stage}
+    S3_CLIENT_BUCKET: ${self:service}-${opt:stage, self:provider.stage}-client
     LAMBDA_GET: ${self:service}-${opt:stage, self:provider.stage}-get
     LAMBDA_GET_OFFLINE: get
   iamRoleStatements:
@@ -129,6 +137,15 @@ resources:
       Properties:
         BucketName: ${self:provider.environment.S3_BUCKET}
         AccessControl: PublicRead
+    FotopiaClient:
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Delete
+      Properties:
+        BucketName: ${self:provider.environment.S3_CLIENT_BUCKET}
+        AccessControl: PublicRead
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
 package:
   exclude:
     - node_modules/**
