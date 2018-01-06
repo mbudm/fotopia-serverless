@@ -49,7 +49,7 @@ test('getResponseBody - items after filter', (t) => {
     },
     {
       tags: ['trees'],
-      people: ['Ahmeds Uncle'],
+      people: ['Ahmed'],
     }],
   }, requestBody);
   t.equal(result.length, 2);

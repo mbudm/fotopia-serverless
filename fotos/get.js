@@ -37,7 +37,7 @@ export async function getItem(event, context, callback) {
     const request = validateRequest(event.pathParameters);
     const ddbParams = getDynamoDbParams(request);
     const ddbResponse = await dynamodb.get(ddbParams).promise();
-    const responseBody = getResponseBody(ddbResponse);
+    const responseBody = getResponseBody(ddbResponse, request);
     return callback(null, success(responseBody));
   } catch (err) {
     console.error(err, event.pathParameters);

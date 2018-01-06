@@ -110,7 +110,7 @@ test('query by tag and person', (t) => {
   const query = {
     userid,
     criteria: {
-      tags: ['blue'],
+      tags: ['yellow'],
       people: ['Miki'],
     },
     from: '2004-04-04',

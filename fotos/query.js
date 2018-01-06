@@ -36,6 +36,7 @@ export const getDynamoDbParams = (data) => {
 };
 
 export const filterByCriteria = (item, criteriaKey, criteriaData) =>
+  criteriaData.length === 0 ||
   criteriaData.some(criteriaDataItem => item[criteriaKey].includes(criteriaDataItem));
 
 export const filterItemsByCriteria = (items, data) =>
@@ -53,8 +54,10 @@ export async function queryItems(event, context, callback) {
   try {
     const request = validateRequest(event.body);
     const ddbParams = getDynamoDbParams(request);
+    console.log('q', ddbParams);
     const ddbResponse = await dynamodb.query(ddbParams).promise();
-    const responseBody = getResponseBody(ddbResponse.Items, request);
+    console.log('q2', ddbResponse);
+    const responseBody = getResponseBody(ddbResponse, request);
     return callback(null, success(responseBody));
   } catch (err) {
     return callback(null, failure(err));
