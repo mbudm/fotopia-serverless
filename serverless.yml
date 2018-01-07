@@ -3,10 +3,11 @@ service: fotopia-web-app
 frameworkVersion: ">=1.1.0 <2.0.0"
 
 plugins:
+  - serverless-webpack
   - serverless-dynamodb-local
   - serverless-s3-local
+  - serverless-s3-local-sync
   - serverless-offline
-  - serverless-webpack
 
 # fork of serverless stack to go all infra as code using serverless framework:
 # like the idea of splitting the stacks
@@ -29,6 +30,9 @@ custom:
     port: 5000
     directory: /tmp/s3bucket
     cors: false
+  s3Sync:
+    - bucketName: ${self:provider.environment.S3_CLIENT_BUCKET}
+      localDir: client
 
 provider:
   name: aws
@@ -144,8 +148,9 @@ resources:
         BucketName: ${self:provider.environment.S3_CLIENT_BUCKET}
         AccessControl: PublicRead
         WebsiteConfiguration:
-          IndexDocument: index.html
-          ErrorDocument: index.html
+          IndexDocument: client/index.html
+          ErrorDocument: client/error.html
+
 package:
   exclude:
     - node_modules/**

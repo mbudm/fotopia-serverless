@@ -1,0 +1,16 @@
+{
+  "name": "serverless-s3-local-sync",
+  "version": "1.0.0",
+  "description": "syncs a directory with a local s3 bucket",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Steve Roberts",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.177.0",
+    "glob": "^7.1.2",
+    "mime-types": "^2.1.17"
+  }
+}
