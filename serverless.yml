@@ -4,17 +4,11 @@ frameworkVersion: ">=1.1.0 <2.0.0"
 
 plugins:
   - serverless-webpack
+  - serverless-s3-sync
   - serverless-dynamodb-local
   - serverless-s3-local
   - serverless-s3-local-sync
   - serverless-offline
-
-# fork of serverless stack to go all infra as code using serverless framework:
-# like the idea of splitting the stacks
-# auth / dynamo
-# gateway/lambdas/fotos s3 bucket
-# static client s3 bucket
-# https://github.com/timoteoalvarenga/serverless-stack-demo-api/blob/master/serverless.yml
 
 custom:
   webpackIncludeModules: true
@@ -148,8 +142,8 @@ resources:
         BucketName: ${self:provider.environment.S3_CLIENT_BUCKET}
         AccessControl: PublicRead
         WebsiteConfiguration:
-          IndexDocument: client/index.html
-          ErrorDocument: client/error.html
+          IndexDocument: index.html
+          ErrorDocument: index.html
 
 package:
   exclude:

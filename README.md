@@ -17,8 +17,7 @@ A photo archive using serverless framework
 
 Local cleanup 
 - remove s3 'bucket', not crucial just avoids the CLI message: 'error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-prod" already exists'
-`rm -R /tmp/s3Bucket/fotopia-web-app-prod/`
-`rm -R /tmp/s3Bucket/fotopia-web-app-prod-client/`
+`rm -R /tmp/s3Bucket/fotopia-web-app-prod/ && rm -R /tmp/s3Bucket/fotopia-web-app-prod-client/`
 
 You may also need to 
 - kill node server `killall node` (warning: kills all node scripts)
