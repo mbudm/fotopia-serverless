@@ -213,22 +213,6 @@ test('try and get deleted item', (t) => {
     });
 });
 
-test('delete item two, so can sls remove the s3 bucket', (t) => {
-  t.plan(2);
-  const endpoint = getEndpoint(records[1]);
-  fetch(endpoint, {
-    method: 'DELETE',
-  })
-    .then(response => response.json())
-    .then((responseBody) => {
-      t.equal(responseBody.userid, records[1].userid);
-      t.equal(responseBody.birthtime, records[1].birthtime);
-    })
-    .catch((e) => {
-      console.log('error', e);
-    });
-});
-
 /*
 more tests
 

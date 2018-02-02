@@ -9,6 +9,7 @@ plugins:
   - serverless-s3-local
   - serverless-s3-local-sync
   - serverless-offline
+  - serverless-s3-remover
 
 custom:
   webpackIncludeModules: true
@@ -27,11 +28,16 @@ custom:
   s3Sync:
     - bucketName: ${self:provider.environment.S3_CLIENT_BUCKET}
       localDir: client
+  remover:
+     buckets:
+       - ${self:provider.environment.S3_CLIENT_BUCKET}
+       - ${self:provider.environment.S3_BUCKET}
 
 provider:
   name: aws
   runtime: nodejs6.10
   stage: prod
+  profile: default
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     S3_BUCKET: ${self:service}-${opt:stage, self:provider.stage}
@@ -144,6 +150,17 @@ resources:
         WebsiteConfiguration:
           IndexDocument: index.html
           ErrorDocument: index.html
+    FotopiaPublicPolicy:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+        Bucket: ${self:provider.environment.S3_BUCKET}
+        PolicyDocument:
+          Statement:
+          - Principal: "*"
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
 
 package:
   exclude:

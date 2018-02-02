@@ -48,6 +48,7 @@ export async function createItem(event, context, callback) {
     const request = validateRequest(event.body);
     const ddbParams = getDynamoDbParams(request, id);
     await dynamodb.put(ddbParams).promise();
+    console.log('Created Item', JSON.stringify(ddbParams.Item));
     return callback(null, success(ddbParams.Item));
   } catch (err) {
     return callback(null, failure(err));

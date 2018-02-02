@@ -5,9 +5,11 @@ A photo archive using serverless framework
 - Node 6.x or later
 - yarn (or npm)
 - serverless framework `yarn global add serverless`
+- serverless platform account
 - AWS account with credentials (https://serverless.com/framework/docs/providers/aws/guide/credentials/)
 
 ## Set up
+- `sls login` (log in to serverless platform account)
 - `yarn`
 - `sls dynamodb install`
 
