@@ -9,6 +9,7 @@ plugins:
   - serverless-s3-local
   - serverless-s3-local-sync
   - serverless-offline
+  - serverless-stack-output
   - serverless-s3-remover
 
 custom:
@@ -28,6 +29,8 @@ custom:
   s3Sync:
     - bucketName: ${self:provider.environment.S3_CLIENT_BUCKET}
       localDir: client
+  output:
+    file: client/output.json
   remover:
      buckets:
        - ${self:provider.environment.S3_CLIENT_BUCKET}
@@ -37,6 +40,7 @@ provider:
   name: aws
   runtime: nodejs6.10
   stage: prod
+  region: us-east-1
   profile: default
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
@@ -44,6 +48,13 @@ provider:
     S3_CLIENT_BUCKET: ${self:service}-${opt:stage, self:provider.stage}-client
     LAMBDA_GET: ${self:service}-${opt:stage, self:provider.stage}-get
     LAMBDA_GET_OFFLINE: get
+    USER_POOL_NAME: ${self:service}-${opt:stage, self:provider.stage}-user-pool
+    USER_POOL_APP_CLIENT: ${self:service}-${opt:stage, self:provider.stage}-user-pool-client
+    IDENTITY_POOL: fotopia ${opt:stage, self:provider.stage} identity pool
+    COGNITO_AUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-auth-role-name
+    COGNITO_AUTHORIZED_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-policy
+    COGNITO_AUTHORIZED_S3_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-s3-policy
+    COGNITO_AUTHORIZED_API_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-api-policy
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -161,6 +172,114 @@ resources:
               - s3:GetObject
             Effect: Allow
             Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
+    UserPool:
+      Type: "AWS::Cognito::UserPool"
+      Properties:
+        UserPoolName: ${self:provider.environment.USER_POOL_NAME}
+        AutoVerifiedAttributes:
+          - email
+        #EmailVerificationMessage: String
+        #EmailVerificationSubject: String
+        Schema:
+          - Name: name
+            AttributeDataType: String
+            Mutable: true
+            Required: true
+          - Name: email
+            AttributeDataType: String
+            Mutable: false
+            Required: true
+    UserPoolClient:
+      Type: "AWS::Cognito::UserPoolClient"
+      Properties:
+        ClientName: ${self:provider.environment.USER_POOL_APP_CLIENT}
+        RefreshTokenValidity: 30
+        ExplicitAuthFlows: [ADMIN_NO_SRP_AUTH]
+        GenerateSecret: false
+        UserPoolId:
+          Ref: UserPool
+    IdentityPool:
+      Type: "AWS::Cognito::IdentityPool"
+      Properties:
+        IdentityPoolName: ${self:provider.environment.IDENTITY_POOL}
+        AllowUnauthenticatedIdentities: true
+        CognitoIdentityProviders:
+          - ClientId:
+              Ref: UserPoolClient
+            ProviderName:
+              Fn::GetAtt: [ UserPool, ProviderName ]
+    CognitoAuthorizedRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: ${self:provider.environment.COGNITO_AUTHORIZED_ROLE_NAME}
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Federated: "cognito-identity.amazonaws.com"
+              Action:
+                - "sts:AssumeRoleWithWebIdentity"
+              Condition:
+                StringEquals:
+                  "cognito-identity.amazonaws.com:aud":
+                    Ref: IdentityPool
+        Policies:
+          - PolicyName: ${self:provider.environment.COGNITO_AUTHORIZED_POLICY}
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - "mobileanalytics:PutEvents"
+                    - "cognito-sync:*"
+                    - "cognito-identity:*"
+                  Resource: "*"
+          - PolicyName: ${self:provider.environment.COGNITO_AUTHORIZED_S3_POLICY}
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - "s3:*"
+                  Resource: arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*
+          - PolicyName: ${self:provider.environment.COGNITO_AUTHORIZED_API_POLICY}
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - "execute-api:Invoke"
+                  Resource: "arn:aws:execute-api:${self:provider.region}:*:*/*"
+    IdentityPoolRoleMapping:
+      Type: "AWS::Cognito::IdentityPoolRoleAttachment"
+      Properties:
+        IdentityPoolId:
+          Ref: IdentityPool
+        Roles:
+          authenticated:
+            Fn::GetAtt: [ CognitoAuthorizedRole, Arn ]
+  Outputs:
+    UserPoolId:
+      Value:
+        Ref: UserPool
+      Export:
+        Name: "UserPool::Id"
+    UserPoolClientId:
+      Value:
+        Ref: UserPoolClient
+      Export:
+        Name: "UserPoolClient::Id"
+    IdentityPoolId:
+      Value:
+        Ref: IdentityPool
+      Export:
+        Name: "IdentityPool::Id"
+    CognitoAuthorizedRoleArn:
+      Value:
+        Fn::GetAtt: [ CognitoAuthorizedRole, Arn ]
+      Export:
+        Name: "CognitoAuthorizedRole::Arn"
 
 package:
   exclude:

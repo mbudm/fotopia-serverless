@@ -1,12 +1,27 @@
 /* eslint-disable */
-
+const bucketUploadUrl = 'http://localhost:5000/';
+function getLatestPhotos(){
+  return 'none yet - need to fetch';
+}
 // Renders the page based on the current URL
 function renderApp() {
   var content;
-  if (window.location.pathname === '/about') {
-    content = '<div>Welcome to the About page</div>'
-  } else if (window.location.pathname === '/') {
-    content = '<div>Welcome Serverless Developer :)</div>'
+  if (window.location.pathname === '/upload') {
+    content = `<div>Welcome to the Upload page</div>
+    <form method="POST" action="${bucketUploadUrl}">
+      <input name="file" type="file">
+      <input type="submit" value="Upload" />
+    </form>`;
+  } else if(window.location.pathname === '/recent'){
+    content = `<div>Here's the recent photos:</div>
+    <ul>
+    ${getLatestPhotos()}
+    </ul>`
+  } else {
+    content = `<div>Login</div>
+    <ul>
+
+    </ul>`
   }
 
   var main = document.getElementsByTagName('main')[0];
