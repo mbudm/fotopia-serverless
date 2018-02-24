@@ -3,13 +3,13 @@ service: fotopia-web-app
 frameworkVersion: ">=1.1.0 <2.0.0"
 
 plugins:
+  - serverless-stack-output
   - serverless-webpack
-  - serverless-s3-sync
   - serverless-dynamodb-local
+  - serverless-offline
+  - serverless-s3-sync
   - serverless-s3-local
   - serverless-s3-local-sync
-  - serverless-offline
-  - serverless-stack-output
   - serverless-s3-remover
 
 custom:
@@ -21,19 +21,19 @@ custom:
       migrate: true
     migration:
       dir: offline/migrations
+  output:
+    file: output/${self:provider.environment.S3_OUTPUT_FILENAME}
   s3:
     host: 0.0.0.0
     port: 5000
     directory: /tmp/s3bucket
     cors: false
   s3Sync:
-    - bucketName: ${self:provider.environment.S3_CLIENT_BUCKET}
-      localDir: client
-  output:
-    file: client/output.json
+    - bucketName: ${self:provider.environment.S3_OUTPUT_BUCKET}
+      localDir: output
   remover:
      buckets:
-       - ${self:provider.environment.S3_CLIENT_BUCKET}
+       - ${self:provider.environment.S3_OUTPUT_BUCKET}
        - ${self:provider.environment.S3_BUCKET}
 
 provider:
@@ -45,7 +45,8 @@ provider:
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     S3_BUCKET: ${self:service}-${opt:stage, self:provider.stage}
-    S3_CLIENT_BUCKET: ${self:service}-${opt:stage, self:provider.stage}-client
+    S3_OUTPUT_BUCKET: ${self:service}-${opt:stage, self:provider.stage}-output
+    S3_OUTPUT_FILENAME: config.json
     LAMBDA_GET: ${self:service}-${opt:stage, self:provider.stage}-get
     LAMBDA_GET_OFFLINE: get
     USER_POOL_NAME: ${self:service}-${opt:stage, self:provider.stage}-user-pool
@@ -84,6 +85,10 @@ provider:
       Action:
         - "s3:DeleteObject"
       Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+      Resource: "arn:aws:s3:::${self:provider.environment.S3_OUTPUT_BUCKET}/*"
 
 functions:
   create:
@@ -125,7 +130,13 @@ functions:
           path: foto/{userid}/{birthtime}
           method: delete
           cors: true
-
+  config:
+      handler: fotos/config.getItem
+      events:
+        - http:
+            path: foto/config
+            method: get
+            cors: true
 resources:
   Resources:
     FotopiaDynamoDbTable:
@@ -152,15 +163,12 @@ resources:
       Properties:
         BucketName: ${self:provider.environment.S3_BUCKET}
         AccessControl: PublicRead
-    FotopiaClient:
+    FotopiaOutput:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
       Properties:
-        BucketName: ${self:provider.environment.S3_CLIENT_BUCKET}
+        BucketName: ${self:provider.environment.S3_OUTPUT_BUCKET}
         AccessControl: PublicRead
-        WebsiteConfiguration:
-          IndexDocument: index.html
-          ErrorDocument: index.html
     FotopiaPublicPolicy:
       Type: "AWS::S3::BucketPolicy"
       Properties:
@@ -172,14 +180,23 @@ resources:
               - s3:GetObject
             Effect: Allow
             Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
+    FotopiaOutputBucketPolicy:
+      Type: "AWS::S3::BucketPolicy"
+      Properties:
+        Bucket: ${self:provider.environment.S3_OUTPUT_BUCKET}
+        PolicyDocument:
+          Statement:
+          - Principal: "*"
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource: "arn:aws:s3:::${self:provider.environment.S3_OUTPUT_BUCKET}/*"
     UserPool:
       Type: "AWS::Cognito::UserPool"
       Properties:
         UserPoolName: ${self:provider.environment.USER_POOL_NAME}
         AutoVerifiedAttributes:
           - email
-        #EmailVerificationMessage: String
-        #EmailVerificationSubject: String
         Schema:
           - Name: name
             AttributeDataType: String
