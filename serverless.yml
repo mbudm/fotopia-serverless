@@ -297,6 +297,8 @@ resources:
         Fn::GetAtt: [ CognitoAuthorizedRole, Arn ]
       Export:
         Name: "CognitoAuthorizedRole::Arn"
+    Region:
+      Value: ${self:provider.region}
 
 package:
   exclude:
