@@ -3,11 +3,10 @@ import s3 from './lib/s3';
 import { success, failure } from './lib/responses';
 
 const offlineConfig = {
-  UserPoolId: '',
-  UserPoolClientId: '',
-  IdentityPoolId: '',
-  CognitoAuthorizedRoleArn: '',
-  Region: '',
+  UserPoolId: 'us-east-1_FaKe12345',
+  UserPoolClientId: 'FakeUserPoolClientId',
+  IdentityPoolId: 'FakeIdentityPoolId',
+  Region: 'us-east-1',
 };
 
 export function getS3Params() {
