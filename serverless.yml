@@ -201,7 +201,7 @@ resources:
           - Name: name
             AttributeDataType: String
             Mutable: true
-            Required: true
+            Required: false
           - Name: email
             AttributeDataType: String
             Mutable: false
