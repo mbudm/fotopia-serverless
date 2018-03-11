@@ -98,6 +98,7 @@ functions:
           path: create
           method: post
           cors: true
+          authorizer: aws_iam
 
   query:
     handler: fotos/query.queryItems
@@ -106,6 +107,7 @@ functions:
           path: query
           method: post
           cors: true
+          authorizer: aws_iam
 
   get:
     handler: fotos/get.getItem
@@ -114,6 +116,7 @@ functions:
           path: foto/{userid}/{birthtime}
           method: get
           cors: true
+          authorizer: aws_iam
 
   update:
     handler: fotos/update.updateItem
@@ -122,6 +125,7 @@ functions:
           path: foto/{userid}/{birthtime}
           method: put
           cors: true
+          authorizer: aws_iam
 
   delete:
     handler: fotos/delete.deleteItem
@@ -130,6 +134,7 @@ functions:
           path: foto/{userid}/{birthtime}
           method: delete
           cors: true
+          authorizer: aws_iam
   config:
       handler: fotos/config.getItem
       events:
@@ -225,6 +230,33 @@ resources:
               Ref: UserPoolClient
             ProviderName:
               Fn::GetAtt: [ UserPool, ProviderName ]
+    CognitoUnAuthorizedRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Federated: "cognito-identity.amazonaws.com"
+              Action:
+                - "sts:AssumeRoleWithWebIdentity"
+              Condition:
+                StringEquals:
+                  "cognito-identity.amazonaws.com:aud":
+                    Ref: IdentityPool
+                "ForAnyValue:StringLike":
+                  "cognito-identity.amazonaws.com:amr": unauthenticated
+        Policies:
+          - PolicyName: "CognitoUnauthorizedPolicy"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - "mobileanalytics:PutEvents"
+                    - "cognito-sync:*"
+                  Resource: "*"
     CognitoAuthorizedRole:
       Type: "AWS::IAM::Role"
       Properties:
