@@ -7,6 +7,20 @@ const test = require('tape');
 
 const upload = require('./upload');
 
+/*
+
+todos
+- logs not working?
+- create user using aws sdk
+- get hostname using sls cli
+- set up cloudfront (sep stack? just for prod)
+- switch stages
+- CI tool
+
+- auto get exif data on create (use s3 create event? can we get user id from the iam creds?)
+
+*/
+
 
 const bucket = 'fotopia-web-app-prod';
 const host = process.env.hostname || 'http://localhost:3000/';
