@@ -6,9 +6,9 @@ plugins:
   - serverless-stack-output
   - serverless-webpack
   - serverless-dynamodb-local
-  - serverless-offline
   - serverless-s3-sync
   - serverless-s3-local
+  - serverless-offline
   - serverless-s3-local-sync
   - serverless-s3-remover
 
@@ -91,6 +91,10 @@ provider:
       Resource: "arn:aws:s3:::${self:provider.environment.S3_OUTPUT_BUCKET}/*"
 
 functions:
+  uploaded:
+    handler: fotos/uploaded.uploadedItem
+    events:
+      - s3: ${self:provider.environment.S3_BUCKET}
   create:
     handler: fotos/create.createItem
     events:
@@ -162,7 +166,7 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
-    FotopiaBucket:
+    S3BucketFotos:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
       Properties:
@@ -196,6 +200,18 @@ resources:
               - s3:GetObject
             Effect: Allow
             Resource: "arn:aws:s3:::${self:provider.environment.S3_OUTPUT_BUCKET}/*"
+    UploadedLambdaPermissionFotosS3:
+      Type: "AWS::Lambda::Permission"
+      Properties:
+        FunctionName:
+          "Fn::GetAtt":
+            - UploadedLambdaFunction
+            - Arn
+        Principal: "s3.amazonaws.com"
+        Action: "lambda:InvokeFunction"
+        SourceAccount:
+          Ref: AWS::AccountId
+        SourceArn: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
     UserPool:
       Type: "AWS::Cognito::UserPool"
       Properties:
