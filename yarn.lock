@@ -4181,7 +4181,7 @@ serverless-s3-local-sync@^1.0.1:
     glob "^7.1.2"
     mime-types "^2.1.17"
 
-serverless-s3-local@^0.3.0:
+serverless-s3-local@0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/serverless-s3-local/-/serverless-s3-local-0.3.0.tgz#47ad04e9d7536688e9569d7b0d0d612cd5a54f57"
   dependencies:

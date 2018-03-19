@@ -1,0 +1,14 @@
+<CORSConfiguration>
+  <CORSRule>
+    <AllowedOrigin>http://localhost:4000</AllowedOrigin>
+    <AllowedMethod>GET</AllowedMethod>
+    <AllowedMethod>PUT</AllowedMethod>
+    <AllowedMethod>OPTIONS</AllowedMethod>
+    <MaxAgeSeconds>3000</MaxAgeSeconds>
+    <AllowedHeader>Authorization</AllowedHeader>
+    <AllowedHeader>content-type</AllowedHeader>
+    <AllowedHeader>x-amz-content-sha256</AllowedHeader>
+    <AllowedHeader>x-amz-date</AllowedHeader>
+    <AllowedHeader>x-amz-user-agent</AllowedHeader>
+  </CORSRule>
+</CORSConfiguration>

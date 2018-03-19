@@ -27,7 +27,8 @@ custom:
     host: 0.0.0.0
     port: 5000
     directory: /tmp/s3bucket
-    cors: true
+    location: ./.webpack/service
+    cors: ./cors-policy.xml
   s3Sync:
     - bucketName: ${self:provider.environment.S3_OUTPUT_BUCKET}
       localDir: output
@@ -166,7 +167,7 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
-    S3BucketFotos:
+    FotopiaBucket:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
       Properties:
