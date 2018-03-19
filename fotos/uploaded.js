@@ -8,10 +8,18 @@ export async function uploadedItem(event, context) {
     event,
     context,
   }, null, 2));
+
+  /*
+  call config
+  call cognito
+  get user id
+
+  */
 }
 
 /*
-
+s3rver response - compare to what might come out of cognito auth'd remote:
+https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-reference-user-identity.html
 {
    "Records":[
       {

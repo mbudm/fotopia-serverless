@@ -95,7 +95,7 @@ functions:
   uploaded:
     handler: fotos/uploaded.uploadedItem
     events:
-      - s3: ${self:provider.environment.S3_BUCKET}
+      - s3: fotos
   create:
     handler: fotos/create.createItem
     events:
@@ -167,7 +167,7 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
-    FotopiaBucket:
+    S3BucketFotos:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
       Properties:
@@ -212,7 +212,7 @@ resources:
         Action: "lambda:InvokeFunction"
         SourceAccount:
           Ref: AWS::AccountId
-        SourceArn: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
+        SourceArn: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}"
     UserPool:
       Type: "AWS::Cognito::UserPool"
       Properties:
