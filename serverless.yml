@@ -57,6 +57,7 @@ provider:
     COGNITO_AUTHORIZED_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-policy
     COGNITO_AUTHORIZED_S3_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-s3-policy
     COGNITO_AUTHORIZED_API_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-api-policy
+    COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -247,9 +248,10 @@ resources:
               Ref: UserPoolClient
             ProviderName:
               Fn::GetAtt: [ UserPool, ProviderName ]
-    CognitoUnAuthorizedRole:
+    CognitoUnauthorizedRole:
       Type: "AWS::IAM::Role"
       Properties:
+        RoleName: ${self:provider.environment.COGNITO_UNAUTHORIZED_ROLE_NAME}
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -325,6 +327,8 @@ resources:
         Roles:
           authenticated:
             Fn::GetAtt: [ CognitoAuthorizedRole, Arn ]
+          unauthenticated:
+            Fn::GetAtt: [ CognitoUnauthorizedRole, Arn ]
   Outputs:
     UserPoolId:
       Value:
@@ -346,6 +350,11 @@ resources:
         Fn::GetAtt: [ CognitoAuthorizedRole, Arn ]
       Export:
         Name: "CognitoAuthorizedRole::Arn"
+    CognitoUnauthorizedRoleArn:
+      Value:
+        Fn::GetAtt: [ CognitoUnauthorizedRole, Arn ]
+      Export:
+        Name: "CognitoUnauthorizedRole::Arn"
     Region:
       Value: ${self:provider.region}
 
