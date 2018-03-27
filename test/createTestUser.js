@@ -3,7 +3,7 @@ require('es6-promise').polyfill();
 require('isomorphic-fetch');
 
 const AWS = require('aws-sdk');
-const AmazonCognitoIdentity = require('amazon-cognito-identity-js');
+const Amplify = require('aws-amplify').default;
 
 const config = require('../output/config.json');
 const uuid = require('uuid');
@@ -27,10 +27,9 @@ module.exports = function createTestUser() {
       TemporaryPassword: process.env.TEST_USER_TEMP_PWD,
       UserAttributes: [
         {
-          Name: 'email', /* required */
+          Name: 'email',
           Value: process.env.TEST_USER_EMAIL,
         },
-        /* more items */
       ],
     };
     cognitoISP.adminCreateUser(params, (err, data) => {
@@ -38,41 +37,32 @@ module.exports = function createTestUser() {
         reject(err);
       } else {
         console.log(JSON.stringify(data, null, 2));
-
-        const authenticationData = {
-          Username: userName,
-          Password: process.env.TEST_USER_TEMP_PWD,
-        };
-        const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
-        const poolData = {
-          UserPoolId: config.UserPoolId,
-          ClientId: config.UserPoolClientId,
-        };
-        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-        const userData = {
-          Username: userName,
-          Pool: userPool,
-        };
-        const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
-        cognitoUser.authenticateUser(authenticationDetails, {
-          onSuccess(result) {
-            resolve({
-              user: {
-                userid: userName,
-                email: process.env.TEST_USER_EMAIL,
-                pwd: process.env.TEST_USER_PWD,
+        Amplify.configure({
+          Auth: {
+            identityPoolId: config.IdentityPoolId,
+            region: config.Region,
+            userPoolId: config.UserPoolId,
+            userPoolWebClientId: config.UserPoolClientId,
+          },
+          Storage: {
+            region: config.Region,
+            bucket: 'fotopia-web-app-prod',
+            identityPoolId: config.IdentityPoolId,
+          },
+          API: {
+            endpoints: [
+              {
+                name: 'fotos',
+                endpoint: config.ServiceEndpoint,
+                region: config.Region,
               },
-              tokens: result,
-              config,
-            });
-          },
-          onFailure(e) {
-            reject(e);
-          },
-          newPasswordRequired() {
-            cognitoUser.completeNewPasswordChallenge(process.env.TEST_USER_PWD, null, this);
+            ],
           },
         });
+        Amplify.Auth.signIn(userName, process.env.TEST_USER_TEMP_PWD)
+          .then(user => Amplify.Auth.completeNewPassword(user, process.env.TEST_USER_PWD))
+          .then(resolve)
+          .catch(reject);
       }
     });
   });

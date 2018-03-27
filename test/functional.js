@@ -1,15 +1,27 @@
 
 require('es6-promise').polyfill();
-const fetch = require('isomorphic-fetch');
+require('isomorphic-fetch');
+const util = require('util');
+const fs = require('fs');
 const path = require('path');
 const test = require('tape');
 
-const Amplify = require('aws-amplify').default;
+const { API, Storage } = require('aws-amplify').default;
 
 const createTestUser = require('./createTestUser');
-const upload = require('./upload');
 
 
+const bucket = 'fotopia-web-app-prod';
+const getEndpointPath = rec => `/foto/${rec.userid}/${rec.birthtime}`;
+const s3Url = process.env.IS_OFFLINE ?
+  'http://localhost:5000' :
+  `https://${bucket}.s3.amazonaws.com`;
+
+const getLocation = key => `${s3Url}/${key}`;
+
+const formatError = (e) => {
+  console.log('error', util.inspect(e));
+};
 /*
 
 todos
@@ -24,30 +36,10 @@ todos
 
 */
 
-function signIn(testUser) {
-  Amplify.configure({
-    Auth: {
-      identityPoolId: testUser.config.IdentityPoolId,
-      region: testUser.config.Region,
-      userPoolId: testUser.config.UserPoolId,
-      userPoolWebClientId: testUser.config.UserPoolClientId,
-    },
-  });
-  return Amplify.Auth.signIn(testUser.user.userid, testUser.user.pwd);
-}
 
 function runTests(signedIn) {
-  const bucket = 'fotopia-web-app-prod';
-  const host = process.env.hostname || 'http://localhost:3000/';
-  const s3Url = process.env.hostname ? false : 'http://localhost:5000';
-  const { userid } = signedIn.user;
+  const userid = signedIn.username;
 
-  console.log(userid, bucket, JSON.stringify(signedIn, null, 2));
-
-  console.log('testing with urls - ', host, s3Url);
-}
-
-function runRun(userid) {
   const images = [{
     path: path.resolve(__dirname, './mock/one.jpg'),
     key: `${userid}/one.jpg`,
@@ -68,72 +60,60 @@ function runRun(userid) {
     people: ['Miki', 'Oren'],
   }];
 
-  const getEndpoint = rec => `${host}foto/${rec.userid}/${rec.birthtime}`;
-
-
   test('upload image one', (t) => {
-    t.plan(2);
-    upload(images[0].path, bucket, images[0].key, s3Url)
+    t.plan(1);
+    const object = fs.createReadStream(images[0].path);
+    Storage.vault.put(images[0].key, object, {
+      contentType: 'image/jpeg',
+    })
       .then((responseBody) => {
         t.equal(responseBody.key, images[0].key);
-        t.equal(responseBody.Bucket, bucket);
-
-        records[0].location = responseBody.Location;
         records[0].key = responseBody.key;
+        records[0].location = getLocation(responseBody.key);
       })
-      .catch((e) => {
-        console.log('error', e);
-      });
+      .catch(formatError);
   });
 
   test('upload image two', (t) => {
-    t.plan(2);
-    upload(images[1].path, bucket, images[1].key, s3Url)
+    t.plan(1);
+    const object = fs.createReadStream(images[1].path);
+    Storage.vault.put(images[1].key, object, {
+      contentType: 'image/jpeg',
+    })
       .then((responseBody) => {
         t.equal(responseBody.key, images[1].key);
-        t.equal(responseBody.Bucket, bucket);
-
-        records[1].location = responseBody.Location;
         records[1].key = responseBody.key;
+        records[1].location = getLocation(responseBody.key);
       })
-      .catch((e) => {
-        console.log('error', e);
-      });
+      .catch(formatError);
   });
 
   test('create image one meta data', (t) => {
     t.plan(1);
-
-    fetch(`${host}create`, {
-      method: 'POST',
-      body: JSON.stringify(records[0]),
+    API.post('fotos', '/create', {
+      body: records[0],
     })
-      .then(response => response.json())
       .then((responseBody) => {
         const utcBirthTime = new Date(responseBody.birthtime).toISOString();
         t.equal(utcBirthTime, records[0].birthtime);
         records[0].id = responseBody.id;
         records[0].birthtime = responseBody.birthtime;
       })
-      .catch((e) => {
-        console.log('error', e);
-      });
+      .catch(formatError);
   });
 
   test('create image two meta data', (t) => {
     t.plan(1);
-
-    fetch(`${host}create`, {
-      method: 'POST',
-      body: JSON.stringify(records[1]),
+    API.post('fotos', '/create', {
+      body: records[1],
     })
-      .then(response => response.json())
       .then((responseBody) => {
         const utcBirthTime = new Date(responseBody.birthtime).toISOString();
         t.equal(utcBirthTime, records[1].birthtime);
         records[1].id = responseBody.id;
         records[1].birthtime = responseBody.birthtime;
-      });
+      })
+      .catch(formatError);
   });
 
 
@@ -150,16 +130,15 @@ function runRun(userid) {
       to: '2017-11-02',
     };
 
-    fetch(`${host}query`, {
-      method: 'POST',
-      body: JSON.stringify(query),
+    API.post('fotos', '/query', {
+      body: query,
     })
-      .then(response => response.json())
       .then((responseBody) => {
         t.equal(responseBody.length, 1);
         const numericBirthTime = new Date(records[1].birthtime).getTime();
         t.equal(responseBody[0].birthtime, numericBirthTime);
-      });
+      })
+      .catch(formatError);
   });
 
   test('query by tag only', (t) => {
@@ -174,14 +153,13 @@ function runRun(userid) {
       to: '2017-11-02',
     };
 
-    fetch(`${host}query`, {
-      method: 'POST',
-      body: JSON.stringify(query),
+    API.post('fotos', '/query', {
+      body: query,
     })
-      .then(response => response.json())
       .then((responseBody) => {
         t.equal(responseBody.length, 2);
-      });
+      })
+      .catch(formatError);
   });
 
   test('query by person only', (t) => {
@@ -196,54 +174,45 @@ function runRun(userid) {
       to: '2017-11-02',
     };
 
-    fetch(`${host}query`, {
-      method: 'POST',
-      body: JSON.stringify(query),
+    API.post('fotos', '/query', {
+      body: query,
     })
-      .then(response => response.json())
       .then((responseBody) => {
         t.equal(responseBody.length, 2);
-      });
+      })
+      .catch(formatError);
   });
 
   test('get an item', (t) => {
     t.plan(1);
-    const endpoint = getEndpoint(records[0]);
-    fetch(endpoint)
-      .then(response => response.json())
+    const apiPath = getEndpointPath(records[0]);
+    API.get('fotos', apiPath)
       .then((responseBody) => {
         t.equal(responseBody.id, records[0].id);
-      });
+      })
+      .catch(formatError);
   });
 
 
   test('delete item one', (t) => {
     t.plan(2);
-    const endpoint = getEndpoint(records[0]);
-    fetch(endpoint, {
-      method: 'DELETE',
-    })
-      .then(response => response.json())
+    const apiPath = getEndpointPath(records[0]);
+    API.del('fotos', apiPath)
       .then((responseBody) => {
         t.equal(responseBody.userid, records[0].userid);
         t.equal(responseBody.birthtime, records[0].birthtime);
       })
-      .catch((e) => {
-        console.log('error', e);
-      });
+      .catch(formatError);
   });
 
   test('try and get deleted item', (t) => {
     t.plan(1);
-    const endpoint = getEndpoint(records[0]);
-    fetch(endpoint)
-      .then(response => response.json())
+    const apiPath = getEndpointPath(records[0]);
+    API.get('fotos', apiPath)
       .then((responseBody) => {
         t.ok(responseBody.startsWith('No item found for'));
       })
-      .catch((e) => {
-        console.log('error', e);
-      });
+      .catch(formatError);
   });
 
   /*
@@ -264,7 +233,6 @@ function runRun(userid) {
 
 
 createTestUser()
-  .then(signIn)
   .then(runTests)
   .catch((e) => {
     console.error(e);
