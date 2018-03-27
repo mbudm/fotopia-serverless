@@ -227,7 +227,11 @@ resources:
       Type: "AWS::Cognito::UserPool"
       Properties:
         UserPoolName: ${self:provider.environment.USER_POOL_NAME}
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: true
         AutoVerifiedAttributes:
+          - email
+        AliasAttributes:
           - email
         Schema:
           - Name: name
