@@ -370,6 +370,8 @@ resources:
         Name: "CognitoUnauthorizedRole::Arn"
     Region:
       Value: ${self:provider.region}
+    Bucket:
+      Value: ${self:provider.environment.S3_BUCKET}
 
 package:
   exclude:

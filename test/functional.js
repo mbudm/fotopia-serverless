@@ -6,19 +6,18 @@ const fs = require('fs');
 const path = require('path');
 const test = require('tape');
 
-const { API, Storage } = require('aws-amplify').default;
+const { API, Storage, auth } = require('./auth');
 
-const createTestUser = require('./createTestUser');
+const config = require('../output/config.json');
 
-
-const bucket = 'fotopia-web-app-prod';
-const getEndpointPath = rec => `/foto/${rec.userid}/${rec.birthtime}`;
+const bucket = config.Bucket;
 const s3Url = process.env.IS_OFFLINE ?
   'http://localhost:5000' :
   `https://${bucket}.s3.amazonaws.com`;
 
-const getLocation = key => `${s3Url}/${key}`;
 
+const getEndpointPath = rec => `/foto/${rec.userid}/${rec.birthtime}`;
+const getLocation = key => `${s3Url}/${key}`;
 const formatError = (e) => {
   console.log('error', util.inspect(e));
 };
@@ -232,7 +231,7 @@ function runTests(signedIn) {
 }
 
 
-createTestUser()
+auth()
   .then(runTests)
   .catch((e) => {
     console.error(e);

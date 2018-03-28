@@ -12,6 +12,7 @@
     "test": "tape './fotos/**/*__test__.js' -r babel-register | tap-dot",
     "test-watch": "tape-watch './fotos/**/*__test__.js' -r babel-register -p tap-spec",
     "functional": "node ./test/functional.js | tap-spec",
+    "functional-local": "IS_OFFLINE=1 node ./test/functional.js | tap-spec",
     "lint": "eslint fotos"
   },
   "pre-commit": [
