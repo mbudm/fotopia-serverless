@@ -11,8 +11,8 @@
   "scripts": {
     "test": "tape './fotos/**/*__test__.js' -r babel-register | tap-dot",
     "test-watch": "tape-watch './fotos/**/*__test__.js' -r babel-register -p tap-spec",
-    "functional": "node ./test/functional.js | tap-spec",
-    "functional-local": "IS_OFFLINE=1 node ./test/functional.js | tap-spec",
+    "functional": "tape ./test/functional.js | tap-spec",
+    "functional-local": "IS_OFFLINE=1 tape ./test/functional.js | tap-spec",
     "lint": "eslint fotos"
   },
   "pre-commit": [
@@ -23,6 +23,7 @@
     "babel-runtime": "^6.26.0",
     "dotenv": "^5.0.1",
     "joi": "^13.0.2",
+    "leaked-handles": "^5.2.0",
     "serverless-s3-remover": "^0.4.1",
     "serverless-stack-output": "^0.2.3",
     "uuid": "^3.1.0"
