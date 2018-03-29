@@ -8,12 +8,11 @@ const test = require('tape');
 
 const { API, Storage, auth } = process.env.IS_OFFLINE ? require('./auth.local') : require('./auth');
 
-const config = require('../output/config.json');
+const config = process.env.IS_OFFLINE ? null : require('../output/config.json');
 
-const bucket = config.Bucket;
 const s3Url = process.env.IS_OFFLINE ?
   'http://localhost:5000' :
-  `https://${bucket}.s3.amazonaws.com`;
+  `https://${config.Bucket}.s3.amazonaws.com`;
 
 
 const getEndpointPath = rec => `/foto/${rec.userid}/${rec.birthtime}`;

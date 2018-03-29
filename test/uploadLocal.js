@@ -1,5 +1,4 @@
 const AWS = require('aws-sdk');
-const config = require('../output/config.json');
 
 module.exports = function uploadLocal(key, object, options) {
   return new Promise((resolve, reject) => {
@@ -11,7 +10,7 @@ module.exports = function uploadLocal(key, object, options) {
 
     const params = {
       Key: key,
-      Bucket: config.Bucket,
+      Bucket: 'fotopia-web-app-prod',
       Body: object,
       ...options,
     };
