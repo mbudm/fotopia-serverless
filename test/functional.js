@@ -1,14 +1,18 @@
+import util from 'util';
+import fs from 'fs';
+import path from 'path';
+import test from 'tape';
 
-require('es6-promise').polyfill();
-require('isomorphic-fetch');
-const util = require('util');
-const fs = require('fs');
-const path = require('path');
-const test = require('tape');
+import * as authTools from './auth';
 
-const { API, Storage, auth } = process.env.IS_OFFLINE ? require('./auth.local') : require('./auth');
+const auth = process.env.IS_OFFLINE ? authTools.local.auth : authTools.prod.auth;
+const API = process.env.IS_OFFLINE ? authTools.local.API : authTools.prod.API;
+const Storage = process.env.IS_OFFLINE ? authTools.local.Storage : authTools.prod.Storage;
 
-const config = process.env.IS_OFFLINE ? null : require('../output/config.json');
+const configPath = path.join(process.cwd(), './output/config.json');
+const config = process.env.IS_OFFLINE ?
+  null :
+  JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 const s3Url = process.env.IS_OFFLINE ?
   'http://localhost:5000' :
@@ -38,7 +42,7 @@ let images = [];
 let records = [];
 
 test('setup', (t) => {
-  auth()
+  auth(config)
     .then((signedIn) => {
       userid = signedIn.username;
       images = [{

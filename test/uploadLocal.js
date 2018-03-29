@@ -1,6 +1,6 @@
-const AWS = require('aws-sdk');
+import AWS from 'aws-sdk';
 
-module.exports = function uploadLocal(key, object, options) {
+export default function uploadLocal(key, object, options) {
   return new Promise((resolve, reject) => {
     const s3config = {
       s3ForcePathStyle: true,
@@ -23,4 +23,4 @@ module.exports = function uploadLocal(key, object, options) {
       }
     });
   });
-};
+}
