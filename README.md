@@ -18,13 +18,13 @@ A photo archive using serverless framework
 - `yarn functional`
 
 Local cleanup 
-- remove s3 'bucket', not crucial just avoids the CLI message: 'error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-prod" already exists'
+- remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-prod" already exists`
 `rm -R /tmp/s3Bucket/fotopia-web-app-prod/ && rm -R /tmp/s3Bucket/fotopia-web-app-prod-client/`
 
 You may also need to 
 - kill node server `killall node` (warning: kills all node scripts)
 - kill dynamodb local `lsof -i:8000` then `kill [PID]`
-
+- - or use [kill-port](https://www.npmjs.com/package/kill-port) npm package to simply do `kill-port 8000` (recommended)
 
 ## Deploy in AWS, run functional test and remove
 - `sls deploy`

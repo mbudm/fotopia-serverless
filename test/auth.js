@@ -5,30 +5,10 @@ import AWS from 'aws-sdk';
 import Amplify from 'aws-amplify';
 import uuid from 'uuid';
 
-import uploadLocal from './uploadLocal';
-import { postLocal, getLocal, delLocal } from './apiLocal';
-
 dotEnv.config();
 
-export const local = {
-  auth: () => new Promise(resolve => resolve({
-    username: uuid.v1(),
-  })),
-  API: {
-    post: postLocal,
-    get: getLocal,
-    del: delLocal,
-  },
-  Storage: {
-    vault: {
-      put: uploadLocal,
-    },
-  },
-};
-
-
-export const prod = {
-  auth: config => new Promise((resolve, reject) => {
+function createTestUserSignInAndGetCredentials(config) {
+  return new Promise((resolve, reject) => {
     const cognitoISP = new AWS.CognitoIdentityServiceProvider({
       region: config.Region,
     });
@@ -63,20 +43,6 @@ export const prod = {
             userPoolId: config.UserPoolId,
             userPoolWebClientId: config.UserPoolClientId,
           },
-          Storage: {
-            region: config.Region,
-            bucket: config.Bucket,
-            identityPoolId: config.IdentityPoolId,
-          },
-          API: {
-            endpoints: [
-              {
-                name: 'fotos',
-                endpoint: config.ServiceEndpoint,
-                region: config.Region,
-              },
-            ],
-          },
         });
         Amplify.Auth.signIn(userName, process.env.TEST_USER_TEMP_PWD)
           .then(user => Amplify.Auth.completeNewPassword(user, process.env.TEST_USER_PWD))
@@ -84,7 +50,12 @@ export const prod = {
           .catch(reject);
       }
     });
-  }),
-  API: Amplify.API,
-  Storage: Amplify.Storage,
-};
+  });
+}
+
+export default function (config) {
+  if (process.env.IS_OFFLINE) {
+    return new Promise(resolve => resolve({ username: uuid.v1() }));
+  }
+  return createTestUserSignInAndGetCredentials(config);
+}

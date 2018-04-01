@@ -3,11 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import test from 'tape';
 
-import * as authTools from './auth';
+import auth from './auth';
+import * as api from './api';
+import upload from './upload';
 
-const auth = process.env.IS_OFFLINE ? authTools.local.auth : authTools.prod.auth;
-const API = process.env.IS_OFFLINE ? authTools.local.API : authTools.prod.API;
-const Storage = process.env.IS_OFFLINE ? authTools.local.Storage : authTools.prod.Storage;
 
 const configPath = path.join(process.cwd(), './output/config.json');
 const config = process.env.IS_OFFLINE ?
@@ -17,6 +16,10 @@ const config = process.env.IS_OFFLINE ?
 const s3Url = process.env.IS_OFFLINE ?
   'http://localhost:5000' :
   `https://${config.Bucket}.s3.amazonaws.com`;
+
+const apiUrl = process.env.IS_OFFLINE ?
+  'http://localhost:3000' :
+  config.ServiceEndpoint;
 
 
 const getEndpointPath = rec => `/foto/${rec.userid}/${rec.birthtime}`;
@@ -38,6 +41,7 @@ todos
 
 */
 let userid = '';
+let creds = null;
 let images = [];
 let records = [];
 
@@ -45,6 +49,11 @@ test('setup', (t) => {
   auth(config)
     .then((signedIn) => {
       userid = signedIn.username;
+      creds = process.env.IS_OFFLINE ? null : {
+        secretAccessKey: signedIn.secretAccessKey,
+        accessKeyId: signedIn.accessKeyId,
+        sessionToken: signedIn.token,
+      };
       images = [{
         path: path.resolve(__dirname, './mock/one.jpg'),
         key: `${userid}/one.jpg`,
@@ -72,7 +81,7 @@ test('setup', (t) => {
 test('upload image one', (t) => {
   t.plan(1);
   const object = fs.createReadStream(images[0].path);
-  Storage.vault.put(images[0].key, object, {
+  upload(images[0].key, object, {
     contentType: 'image/jpeg',
   })
     .then((responseBody) => {
@@ -86,7 +95,7 @@ test('upload image one', (t) => {
 test('upload image two', (t) => {
   t.plan(1);
   const object = fs.createReadStream(images[1].path);
-  Storage.vault.put(images[1].key, object, {
+  upload(images[1].key, object, {
     contentType: 'image/jpeg',
   })
     .then((responseBody) => {
@@ -99,9 +108,9 @@ test('upload image two', (t) => {
 
 test('create image one meta data', (t) => {
   t.plan(1);
-  API.post('fotos', '/create', {
+  api.post(apiUrl, '/create', {
     body: records[0],
-  })
+  }, creds)
     .then((responseBody) => {
       const utcBirthTime = new Date(responseBody.birthtime).toISOString();
       t.equal(utcBirthTime, records[0].birthtime);
@@ -113,9 +122,9 @@ test('create image one meta data', (t) => {
 
 test('create image two meta data', (t) => {
   t.plan(1);
-  API.post('fotos', '/create', {
+  api.post(apiUrl, '/create', {
     body: records[1],
-  })
+  }, creds)
     .then((responseBody) => {
       const utcBirthTime = new Date(responseBody.birthtime).toISOString();
       t.equal(utcBirthTime, records[1].birthtime);
@@ -139,9 +148,9 @@ test('query by tag and person', (t) => {
     to: '2017-11-02',
   };
 
-  API.post('fotos', '/query', {
+  api.post(apiUrl, '/query', {
     body: query,
-  })
+  }, creds)
     .then((responseBody) => {
       t.equal(responseBody.length, 1);
       const numericBirthTime = new Date(records[1].birthtime).getTime();
@@ -162,9 +171,9 @@ test('query by tag only', (t) => {
     to: '2017-11-02',
   };
 
-  API.post('fotos', '/query', {
+  api.post(apiUrl, '/query', {
     body: query,
-  })
+  }, creds)
     .then((responseBody) => {
       t.equal(responseBody.length, 2);
     })
@@ -183,9 +192,9 @@ test('query by person only', (t) => {
     to: '2017-11-02',
   };
 
-  API.post('fotos', '/query', {
+  api.post(apiUrl, '/query', {
     body: query,
-  })
+  }, creds)
     .then((responseBody) => {
       t.equal(responseBody.length, 2);
     })
@@ -195,7 +204,7 @@ test('query by person only', (t) => {
 test('get an item', (t) => {
   t.plan(1);
   const apiPath = getEndpointPath(records[0]);
-  API.get('fotos', apiPath)
+  api.get(apiUrl, apiPath, creds)
     .then((responseBody) => {
       t.equal(responseBody.id, records[0].id);
     })
@@ -206,7 +215,7 @@ test('get an item', (t) => {
 test('delete item one', (t) => {
   t.plan(2);
   const apiPath = getEndpointPath(records[0]);
-  API.del('fotos', apiPath)
+  api.del(apiUrl, apiPath, creds)
     .then((responseBody) => {
       t.equal(responseBody.userid, records[0].userid);
       t.equal(responseBody.birthtime, records[0].birthtime);
@@ -217,7 +226,7 @@ test('delete item one', (t) => {
 test('try and get deleted item', (t) => {
   t.plan(1);
   const apiPath = getEndpointPath(records[0]);
-  API.get('fotos', apiPath)
+  api.get(apiUrl, apiPath, creds)
     .then((responseBody) => {
       t.ok(responseBody.startsWith('No item found for'));
     })
