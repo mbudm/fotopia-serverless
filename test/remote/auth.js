@@ -7,7 +7,32 @@ import uuid from 'uuid';
 
 dotEnv.config();
 
-export default function auth(config) {
+
+function configureAmplify(config) {
+  Amplify.configure({
+    Auth: {
+      identityPoolId: config.IdentityPoolId,
+      region: config.Region,
+      userPoolId: config.UserPoolId,
+      userPoolWebClientId: config.UserPoolClientId,
+    },
+    Storage: {
+      region: config.Region,
+      bucket: config.Bucket,
+      identityPoolId: config.IdentityPoolId,
+    },
+    API: {
+      endpoints: [
+        {
+          name: 'fotos',
+          endpoint: config.ServiceEndpoint,
+          region: config.Region,
+        },
+      ],
+    },
+  });
+}
+function authenticateNewUser(config) {
   return new Promise((resolve, reject) => {
     const cognitoISP = new AWS.CognitoIdentityServiceProvider({
       region: config.Region,
@@ -36,28 +61,7 @@ export default function auth(config) {
         reject(err);
       } else {
         console.log(JSON.stringify(data, null, 2));
-        Amplify.configure({
-          Auth: {
-            identityPoolId: config.IdentityPoolId,
-            region: config.Region,
-            userPoolId: config.UserPoolId,
-            userPoolWebClientId: config.UserPoolClientId,
-          },
-          Storage: {
-            region: config.Region,
-            bucket: config.Bucket,
-            identityPoolId: config.IdentityPoolId,
-          },
-          API: {
-            endpoints: [
-              {
-                name: 'fotos',
-                endpoint: config.ServiceEndpoint,
-                region: config.Region,
-              },
-            ],
-          },
-        });
+        configureAmplify(config);
         Amplify.Auth.signIn(username, process.env.TEST_USER_TEMP_PWD)
           .then(user => Amplify.Auth.completeNewPassword(user, process.env.TEST_USER_PWD))
           .then(resolve)
@@ -65,4 +69,19 @@ export default function auth(config) {
       }
     });
   });
+}
+
+function authenticateExistingUser(config) {
+  return new Promise((resolve, reject) => {
+    configureAmplify(config);
+    Amplify.Auth.signIn(process.env.TEST_EXISTING_USER, process.env.TEST_EXISTING_USER_PWD)
+      .then(resolve)
+      .catch(reject);
+  });
+}
+
+export default function auth(config) {
+  return process.env.TEST_EXISTING_USER ?
+    authenticateExistingUser(config) :
+    authenticateNewUser(config);
 }

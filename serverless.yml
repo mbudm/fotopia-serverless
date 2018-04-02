@@ -173,7 +173,6 @@ resources:
       DeletionPolicy: Delete
       Properties:
         BucketName: ${self:provider.environment.S3_BUCKET}
-        AccessControl: PublicRead
         CorsConfiguration:
           CorsRules:
             - AllowedHeaders:
