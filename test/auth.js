@@ -36,7 +36,7 @@ function createTestUserSignInAndGetCredentials(config) {
       if (err) {
         reject(err);
       } else {
-        console.log(JSON.stringify(data, null, 2));
+        // console.log(JSON.stringify(data, null, 2));
         const authenticationData = {
           Username: username,
           Password: process.env.TEST_USER_TEMP_PWD,
