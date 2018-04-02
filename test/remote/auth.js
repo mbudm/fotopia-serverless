@@ -7,7 +7,7 @@ import uuid from 'uuid';
 
 dotEnv.config();
 
-function createTestUserSignInAndGetCredentials(config) {
+export default function auth(config) {
   return new Promise((resolve, reject) => {
     const cognitoISP = new AWS.CognitoIdentityServiceProvider({
       region: config.Region,
@@ -65,17 +65,4 @@ function createTestUserSignInAndGetCredentials(config) {
       }
     });
   });
-}
-
-export function auth(config) {
-  if (process.env.IS_OFFLINE) {
-    return new Promise(resolve => resolve({ username: uuid.v1() }));
-  }
-  return createTestUserSignInAndGetCredentials(config);
-}
-
-export function destroy() {
-  if (!process.env.IS_OFFLINE) {
-    delete Amplify.Auth;
-  }
 }

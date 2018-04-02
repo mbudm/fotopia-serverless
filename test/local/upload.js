@@ -1,7 +1,6 @@
 import AWS from 'aws-sdk';
-import { Storage } from 'aws-amplify';
 
-function uploadLocal(key, object, options) {
+export default function upload(key, object, options) {
   return new Promise((resolve, reject) => {
     const s3config = {
       s3ForcePathStyle: true,
@@ -25,11 +24,3 @@ function uploadLocal(key, object, options) {
     });
   });
 }
-
-function uploadRemote(key, object, options) {
-  return Storage.vault.put(key, object, options);
-}
-
-const upload = process.env.IS_OFFLINE ? uploadLocal : uploadRemote;
-
-export default upload;
