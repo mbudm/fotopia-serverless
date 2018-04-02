@@ -3,10 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import test from 'tape';
 
-import auth from './auth';
+import * as auth from './auth';
 import * as api from './api';
 import upload from './upload';
-
 
 const configPath = path.join(process.cwd(), './output/config.json');
 const config = process.env.IS_OFFLINE ?
@@ -30,31 +29,20 @@ const formatError = (e) => {
 /*
 
 todos
-- logs not working?
-- create user using aws sdk
-- get hostname using sls cli
 - set up cloudfront (sep stack? just for prod)
 - switch stages
 - CI tool
-
-- auto get exif data on create (use s3 create event? can we get user id from the iam creds?)
+- auto get exif data on create
 
 */
 let userid = '';
-let creds = null;
 let images = [];
 let records = [];
 
 test('setup', (t) => {
-  auth(config)
+  auth.auth(config)
     .then((signedIn) => {
       userid = signedIn.username;
-      console.log('hello!', signedIn);
-      creds = process.env.IS_OFFLINE ? null : {
-        secretAccessKey: signedIn.credentials.secretAccessKey,
-        accessKeyId: signedIn.credentials.accessKeyId,
-        sessionToken: signedIn.credentials.sessionToken,
-      };
       images = [{
         path: path.resolve(__dirname, './mock/one.jpg'),
         key: `${userid}/one.jpg`,
@@ -111,7 +99,7 @@ test('create image one meta data', (t) => {
   t.plan(1);
   api.post(apiUrl, '/create', {
     body: records[0],
-  }, creds, config)
+  })
     .then((responseBody) => {
       console.log(JSON.stringify(responseBody, null, 2));
       const utcBirthTime = new Date(responseBody.birthtime).toISOString();
@@ -126,7 +114,7 @@ test('create image two meta data', (t) => {
   t.plan(1);
   api.post(apiUrl, '/create', {
     body: records[1],
-  }, creds)
+  })
     .then((responseBody) => {
       const utcBirthTime = new Date(responseBody.birthtime).toISOString();
       t.equal(utcBirthTime, records[1].birthtime);
@@ -152,7 +140,7 @@ test('query by tag and person', (t) => {
 
   api.post(apiUrl, '/query', {
     body: query,
-  }, creds)
+  })
     .then((responseBody) => {
       t.equal(responseBody.length, 1);
       const numericBirthTime = new Date(records[1].birthtime).getTime();
@@ -175,7 +163,7 @@ test('query by tag only', (t) => {
 
   api.post(apiUrl, '/query', {
     body: query,
-  }, creds)
+  })
     .then((responseBody) => {
       t.equal(responseBody.length, 2);
     })
@@ -196,7 +184,7 @@ test('query by person only', (t) => {
 
   api.post(apiUrl, '/query', {
     body: query,
-  }, creds)
+  })
     .then((responseBody) => {
       t.equal(responseBody.length, 2);
     })
@@ -206,7 +194,7 @@ test('query by person only', (t) => {
 test('get an item', (t) => {
   t.plan(1);
   const apiPath = getEndpointPath(records[0]);
-  api.get(apiUrl, apiPath, creds)
+  api.get(apiUrl, apiPath)
     .then((responseBody) => {
       t.equal(responseBody.id, records[0].id);
     })
@@ -217,20 +205,10 @@ test('get an item', (t) => {
 test('delete item one', (t) => {
   t.plan(2);
   const apiPath = getEndpointPath(records[0]);
-  api.del(apiUrl, apiPath, creds)
+  api.del(apiUrl, apiPath)
     .then((responseBody) => {
       t.equal(responseBody.userid, records[0].userid);
       t.equal(responseBody.birthtime, records[0].birthtime);
-    })
-    .catch(formatError);
-});
-
-test('try and get deleted item', (t) => {
-  t.plan(1);
-  const apiPath = getEndpointPath(records[0]);
-  api.get(apiUrl, apiPath, creds)
-    .then((responseBody) => {
-      t.ok(responseBody.startsWith('No item found for'));
     })
     .catch(formatError);
 });

@@ -2,8 +2,7 @@ import dotEnv from 'dotenv';
 import 'isomorphic-fetch';
 
 import AWS from 'aws-sdk';
-import { AuthenticationDetails, CognitoUserPool, CognitoUser } from 'amazon-cognito-identity-js';
-// import Amplify from 'aws-amplify';
+import Amplify from 'aws-amplify';
 import uuid from 'uuid';
 
 dotEnv.config();
@@ -36,65 +35,47 @@ function createTestUserSignInAndGetCredentials(config) {
       if (err) {
         reject(err);
       } else {
-        // console.log(JSON.stringify(data, null, 2));
-        const authenticationData = {
-          Username: username,
-          Password: process.env.TEST_USER_TEMP_PWD,
-        };
-        const authenticationDetails = new AuthenticationDetails(authenticationData);
-        const poolData = {
-          UserPoolId: config.UserPoolId,
-          ClientId: config.UserPoolClientId,
-        };
-        const userPool = new CognitoUserPool(poolData);
-        const userData = {
-          Username: username,
-          Pool: userPool,
-        };
-        const cognitoUser = new CognitoUser(userData);
-        cognitoUser.authenticateUser(authenticationDetails, {
-          onSuccess(session) {
-            // now do AWS.CognitoIdentityCredentials
-            // like https://github.com/aws/aws-amplify/blob/master/packages/aws-amplify/src/Auth/Auth.ts#L1108
-            AWS.config.region = config.Region;
-
-            // Configure the credentials provider to use your identity pool
-            AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-              IdentityPoolId: config.IdentityPoolId,
-            });
-
-            // Make the call to obtain credentials
-            AWS.config.credentials.get(() => {
-              resolve({
-                username,
-                cognitoUser,
-                credentials: {
-                  accessKeyId: AWS.config.credentials.accessKeyId,
-                  secretAccessKey: AWS.config.credentials.secretAccessKey,
-                  sessionToken: AWS.config.credentials.sessionToken,
-                },
-                email: process.env.TEST_USER_EMAIL,
-                pwd: process.env.TEST_USER_PWD,
-                session,
-                config,
-              });
-            });
+        console.log(JSON.stringify(data, null, 2));
+        Amplify.configure({
+          Auth: {
+            identityPoolId: config.IdentityPoolId,
+            region: config.Region,
+            userPoolId: config.UserPoolId,
+            userPoolWebClientId: config.UserPoolClientId,
           },
-          onFailure(e) {
-            reject(e);
+          Storage: {
+            region: config.Region,
+            bucket: config.Bucket,
+            identityPoolId: config.IdentityPoolId,
           },
-          newPasswordRequired() {
-            cognitoUser.completeNewPasswordChallenge(process.env.TEST_USER_PWD, null, this);
+          API: {
+            endpoints: [
+              {
+                name: 'fotos',
+                endpoint: config.ServiceEndpoint,
+                region: config.Region,
+              },
+            ],
           },
         });
+        Amplify.Auth.signIn(username, process.env.TEST_USER_TEMP_PWD)
+          .then(user => Amplify.Auth.completeNewPassword(user, process.env.TEST_USER_PWD))
+          .then(resolve)
+          .catch(reject);
       }
     });
   });
 }
 
-export default function (config) {
+export function auth(config) {
   if (process.env.IS_OFFLINE) {
     return new Promise(resolve => resolve({ username: uuid.v1() }));
   }
   return createTestUserSignInAndGetCredentials(config);
+}
+
+export function destroy() {
+  if (!process.env.IS_OFFLINE) {
+    delete Amplify.Auth;
+  }
 }
