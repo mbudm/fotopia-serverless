@@ -49,10 +49,11 @@ test('setup', (t) => {
   auth(config)
     .then((signedIn) => {
       userid = signedIn.username;
+      console.log('hello!', signedIn);
       creds = process.env.IS_OFFLINE ? null : {
-        secretAccessKey: signedIn.secretAccessKey,
-        accessKeyId: signedIn.accessKeyId,
-        sessionToken: signedIn.token,
+        secretAccessKey: signedIn.credentials.secretAccessKey,
+        accessKeyId: signedIn.credentials.accessKeyId,
+        sessionToken: signedIn.credentials.sessionToken,
       };
       images = [{
         path: path.resolve(__dirname, './mock/one.jpg'),
@@ -110,8 +111,9 @@ test('create image one meta data', (t) => {
   t.plan(1);
   api.post(apiUrl, '/create', {
     body: records[0],
-  }, creds)
+  }, creds, config)
     .then((responseBody) => {
+      console.log(JSON.stringify(responseBody, null, 2));
       const utcBirthTime = new Date(responseBody.birthtime).toISOString();
       t.equal(utcBirthTime, records[0].birthtime);
       records[0].id = responseBody.id;
