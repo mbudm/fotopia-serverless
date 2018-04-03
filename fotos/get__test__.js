@@ -1,9 +1,8 @@
 import test from 'tape';
-import uuid from 'uuid';
 import * as get from './get';
 
 const request = {
-  userid: uuid.v1(),
+  username: 'ahmed',
   birthtime: 123,
 };
 
@@ -33,7 +32,7 @@ test('get.getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {
     const params = get.getDynamoDbParams(request);
-    t.equal(params.Key.userid, request.userid);
+    t.equal(params.Key.username, request.username);
     t.end();
   } catch (e) {
     t.fail(e);

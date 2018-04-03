@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 export const requestSchema = Joi.object().keys({
-  userid: Joi.string().guid().required(),
+  username: Joi.string().required(),
   birthtime: Joi.date().required(),
   location: Joi.string().uri({
     scheme: [
@@ -17,7 +17,7 @@ export const requestSchema = Joi.object().keys({
 export const ddbParamsSchema = Joi.object().keys({
   TableName: Joi.string().required(),
   Item: Joi.object().keys({
-    userid: Joi.string().guid().required(),
+    username: Joi.string().required(),
     id: Joi.string().guid().required(),
     birthtime: Joi.number().required(),
     tags: Joi.array().items(Joi.string()).unique(),

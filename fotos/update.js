@@ -18,7 +18,7 @@ export function getDynamoDbParams(data) {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
-      userid: data.userid,
+      username: data.username,
       birthtime: data.birthtime * 1,
     },
     ExpressionAttributeNames: {

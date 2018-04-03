@@ -3,7 +3,7 @@
         "TableName": "fotopia-dev",
         "KeySchema": [
             {
-              "AttributeName": "userid", // only one user at first but will scale
+              "AttributeName": "username", // only one user at first but will scale
               "KeyType": "HASH"
             },
             {
@@ -13,7 +13,7 @@
         ],
         "AttributeDefinitions": [
             {
-              "AttributeName": "userid",
+              "AttributeName": "username",
               "AttributeType": "S"
             },
             {

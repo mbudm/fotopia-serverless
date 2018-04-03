@@ -18,7 +18,7 @@ export default function (auth, api, upload) {
     config.ServiceEndpoint;
 
 
-  const getEndpointPath = rec => `/foto/${rec.userid}/${rec.birthtime}`;
+  const getEndpointPath = rec => `/foto/${rec.username}/${rec.birthtime}`;
   const getLocation = key => `${s3Url}/${key}`;
   const formatError = (e) => {
     console.log('error', util.inspect(e));
@@ -32,28 +32,28 @@ export default function (auth, api, upload) {
   - auto get exif data on create
 
   */
-  let userid = '';
+  let username = '';
   let images = [];
   let records = [];
 
   test('setup', (t) => {
     auth(config)
       .then((signedIn) => {
-        userid = signedIn.username;
+        username = signedIn.username;
         images = [{
           path: path.resolve(__dirname, './mock/one.jpg'),
-          key: `${userid}/one.jpg`,
+          key: `${username}/one.jpg`,
         }, {
           path: path.resolve(__dirname, './mock/two.jpeg'),
-          key: `${userid}/two.jpg`,
+          key: `${username}/two.jpg`,
         }];
         records = [{
-          userid,
+          username,
           birthtime: '2012-06-28T00:55:11.000Z',
           tags: ['blue', 'red'],
           people: ['Steve', 'Oren'],
         }, {
-          userid,
+          username,
           birthtime: '2014-06-28T00:55:11.000Z',
           tags: ['blue', 'yellow'],
           people: ['Miki', 'Oren'],
@@ -126,7 +126,7 @@ export default function (auth, api, upload) {
     t.plan(2);
 
     const query = {
-      userid,
+      username,
       criteria: {
         tags: ['yellow'],
         people: ['Miki'],
@@ -150,7 +150,7 @@ export default function (auth, api, upload) {
     t.plan(1);
 
     const query = {
-      userid,
+      username,
       criteria: {
         tags: ['blue'],
       },
@@ -171,7 +171,7 @@ export default function (auth, api, upload) {
     t.plan(1);
 
     const query = {
-      userid,
+      username,
       criteria: {
         people: ['Oren'],
       },
@@ -204,7 +204,7 @@ export default function (auth, api, upload) {
     const apiPath = getEndpointPath(records[0]);
     api.del(apiUrl, apiPath)
       .then((responseBody) => {
-        t.equal(responseBody.userid, records[0].userid);
+        t.equal(responseBody.username, records[0].username);
         t.equal(responseBody.birthtime, records[0].birthtime);
       })
       .catch(formatError);

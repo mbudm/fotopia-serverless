@@ -16,7 +16,7 @@ export function getDynamoDbParams(request) {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
-      userid: request.userid,
+      username: request.username,
       birthtime: request.birthtime * 1,
     },
   };
@@ -29,7 +29,7 @@ export function getDynamoDbParams(request) {
 }
 
 export function getResponseBody(ddbResponse, request) {
-  return ddbResponse.Item || `No item found for ${request.userid} & ${request.birthtime}`;
+  return ddbResponse.Item || `No item found for ${request.username} & ${request.birthtime}`;
 }
 
 export async function getItem(event, context, callback) {

@@ -33,7 +33,7 @@ https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-event-refe
          "awsRegion":"us-east-1",
          "eventTime":null,
          "eventName":"ObjectCreated:Put",
-         "userIdentity":{
+         "usernameentity":{
             "principalId":"AWS:9DA289650539D950A8F22"
          },
          "requestParameters":{
@@ -75,7 +75,7 @@ START RequestId: dba963bf-2f15-11e8-8276-b957ab2966ac Version: $LATEST
         "awsRegion": "us-east-1",
         "eventTime": "2018-03-24T03:45:56.043Z",
         "eventName": "ObjectCreated:Put",
-        "userIdentity": {
+        "usernameentity": {
           "principalId": "AWS:AROAJLYCABBFD7YZWEFHY:CognitoIdentityCredentials"
         },
         "requestParameters": {

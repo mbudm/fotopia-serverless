@@ -1,9 +1,9 @@
 import test from 'tape';
-import uuid from 'uuid';
 import * as deleteFns from './delete';
 
+const username = 'billy-mae';
 const request = {
-  userid: uuid.v1(),
+  username,
   birthtime: 123,
 };
 

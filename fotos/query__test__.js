@@ -1,9 +1,8 @@
 import test from 'tape';
-import uuid from 'uuid';
 import * as query from './query';
 
 const requestBody = {
-  userid: uuid.v1(),
+  username: 'saloni',
   criteria: {
     people: ['Lucy', 'Ahmed'],
     tags: ['flowers', 'trees'],
@@ -85,7 +84,7 @@ test('getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {
     const params = query.getDynamoDbParams(requestBody);
-    t.equal(params.ExpressionAttributeValues[':userid'], requestBody.userid);
+    t.equal(params.ExpressionAttributeValues[':username'], requestBody.username);
     t.end();
   } catch (e) {
     t.fail(e);

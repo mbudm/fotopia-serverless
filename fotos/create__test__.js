@@ -2,13 +2,15 @@ import test from 'tape';
 import uuid from 'uuid';
 import * as create from './create';
 
+const username = 'jethro';
+
 const requestBody = {
-  userid: uuid.v1(),
+  username,
   birthtime: 123,
   people: ['Bob'],
   tags: [],
-  key: `${uuid.v1()}-me.jpg`,
-  location: 'https://location.of.image.com/me.jpg',
+  key: `${username}/me.jpg`,
+  location: `https://location.of.image.com/${username}/me.jpg`,
 };
 
 const recordId = uuid.v1();
@@ -27,7 +29,7 @@ test('getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {
     const params = create.getDynamoDbParams(requestBody, recordId);
-    t.deepEqual(params.Item.userid, requestBody.userid);
+    t.deepEqual(params.Item.username, requestBody.username);
     t.end();
   } catch (e) {
     t.fail(e);

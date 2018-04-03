@@ -21,7 +21,7 @@ export function getDynamoDbParams(data, id) {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Item: {
-      userid: data.userid,
+      username: data.username,
       id,
       birthtime: new Date(data.birthtime).getTime(),
       tags: data.tags,

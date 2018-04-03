@@ -119,7 +119,7 @@ functions:
     handler: fotos/get.getItem
     events:
       - http:
-          path: foto/{userid}/{birthtime}
+          path: foto/{username}/{birthtime}
           method: get
           cors: true
           authorizer: aws_iam
@@ -128,7 +128,7 @@ functions:
     handler: fotos/update.updateItem
     events:
       - http:
-          path: foto/{userid}/{birthtime}
+          path: foto/{username}/{birthtime}
           method: put
           cors: true
           authorizer: aws_iam
@@ -137,7 +137,7 @@ functions:
     handler: fotos/delete.deleteItem
     events:
       - http:
-          path: foto/{userid}/{birthtime}
+          path: foto/{username}/{birthtime}
           method: delete
           cors: true
           authorizer: aws_iam
@@ -155,12 +155,12 @@ resources:
       DeletionPolicy: Delete
       Properties:
         AttributeDefinitions:
-          - AttributeName: userid
+          - AttributeName: username
             AttributeType: S
           - AttributeName: birthtime
             AttributeType: N
         KeySchema:
-          - AttributeName: userid
+          - AttributeName: username
             KeyType: HASH
           - AttributeName: birthtime
             KeyType: RANGE

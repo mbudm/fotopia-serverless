@@ -16,13 +16,13 @@ export function validateRequest(requestBody) {
 export const getDynamoDbParams = (data) => {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
-    KeyConditionExpression: '#userid = :userid AND #birthtime BETWEEN :from AND :to',
+    KeyConditionExpression: '#username = :username AND #birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
-      '#userid': 'userid',
+      '#username': 'username',
       '#birthtime': 'birthtime',
     },
     ExpressionAttributeValues: {
-      ':userid': data.userid,
+      ':username': data.username,
       ':from': new Date(data.from).getTime(),
       ':to': new Date(data.to).getTime(),
     },

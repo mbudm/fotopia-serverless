@@ -3,7 +3,7 @@ import uuid from 'uuid';
 import * as update from './update';
 
 const requestBody = {
-  userid: uuid.v1(),
+  username: 'pedro',
   birthtime: 123,
   people: ['Bob'],
   tags: [],
@@ -28,7 +28,7 @@ test('getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {
     const params = update.getDynamoDbParams(requestBody, recordId);
-    t.deepEqual(params.Key.userid, requestBody.userid);
+    t.deepEqual(params.Key.username, requestBody.username);
     t.end();
   } catch (e) {
     t.fail(e);
