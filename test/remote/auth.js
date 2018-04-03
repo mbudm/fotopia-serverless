@@ -3,7 +3,6 @@ import 'isomorphic-fetch';
 
 import AWS from 'aws-sdk';
 import Amplify from 'aws-amplify';
-import uuid from 'uuid';
 
 dotEnv.config();
 
@@ -38,7 +37,7 @@ function authenticateNewUser(config) {
       region: config.Region,
     });
 
-    const username = uuid.v1();
+    const username = process.env.TEST_USER_NAME;
 
     const params = {
       UserPoolId: config.UserPoolId,
