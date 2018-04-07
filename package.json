@@ -24,6 +24,7 @@
     "aws4": "^1.6.0",
     "babel-runtime": "^6.26.0",
     "dotenv": "^5.0.1",
+    "exif": "^0.6.0",
     "joi": "^13.0.2",
     "leaked-handles": "^5.2.0",
     "serverless-s3-remover": "^0.4.1",
