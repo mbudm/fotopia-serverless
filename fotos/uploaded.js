@@ -1,13 +1,19 @@
-import ExifImage from 'exif';
-import request from 'request';
+// import ExifImage from 'exif';
+import ExifParser from 'exif-parser';
+// import S3FS from 's3fs';
+// import AWS from 'aws-sdk';
+// import fs from 'fs';
+import url from 'url';
+import http from 'http';
+// import sizeOf from 'image-size';
+// import { stat } from 'fs-resolver-fs';
+// import request from 'request';
+// import { encode } from 'node-base64-image';
 
 import { validateRequest } from './create';
 import lambda from './lib/lambda';
 
-request.defaults({ encoding: null });
-const s3Url = process.env.IS_OFFLINE ?
-  'http://localhost:5000' :
-  `https://${process.env.S3_BUCKET}.s3.amazonaws.com`;
+// request.defaults({ encoding: null });
 
 export function logger(msg) {
   console.log('uploaded triggered', msg);
@@ -26,9 +32,23 @@ export function getInvokeCreateParams(req) {
   };
 }
 
-export function createPathParams(event) {
+export function parseEvent(event) {
   const s3Key = event.Records[0].s3.object.key;
+  const bucket = event.Records[0].s3.bucket.name;
+  const s3Url = event.Records[0].requestParameters.sourceIPAddress === '127.0.0.1' ?
+    `http://localhost:5000/${bucket}` :
+    `https://${bucket}.s3.amazonaws.com`;
   const username = s3Key.split('/')[0];
+  return {
+    s3Key,
+    bucket,
+    s3Url,
+    username,
+  };
+}
+
+export function createPathParams(eventData) {
+  const { s3Key, s3Url, username } = eventData;
   console.log('createPathParams', username, s3Key);
   return {
     username,
@@ -47,30 +67,91 @@ export function addImageMetaDataToPathParams(params, meta) {
   };
 }
 
-function createNewExifImage(image, callback) {
-  return new ExifImage({ image }, callback);
-}
+// function createNewExifImage(buffer, callback) {
+//   return new ExifImage(buffer, callback);
+// }
 
-export async function getImageData(url) {
-  return new Promise((resolve, reject) => {
-    request.get(url, (error, response, body) => {
-      if (error || response.statusCode !== 200) {
-        reject(error);
-      }
-      const data = `data:${response.headers['content-type']};base64,${Buffer.from(body).toString('base64')}`;
-      createNewExifImage(data, resolve);
+export async function getImageData(imgUrl) {
+  return new Promise((resolve) => {
+    console.log('getImageData', imgUrl, 'offline? ', process.env.IS_OFFLINE);
+
+    const options = url.parse(imgUrl);
+    http.get(options, (response) => {
+      const chunks = [];
+      response.on('data', (chunk) => {
+        chunks.push(chunk);
+      }).on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        const parser = ExifParser.create(buffer);
+        const result = parser.parse();
+        resolve(result);
+      });
     });
+    //     // const size = sizeOf(buffer);
+    //     // createNewExifImage(buffer, (err, exifData) => {
+    //     //   console.log('exif callback', exifData);
+    //     //   if (exifData.exif.DateTimeOriginal) {
+    //     //     resolve({
+    //     //       exifData,
+    //     //       size,
+    //     //     });
+    //     //   } else {
+    //     const buffString = buffer.toString('utf8');
+    //     console.log('buffString', buffString);
+    //     fs.stat(buffString, (error, stat) => {
+    //       if (error) {
+    //         resolve(error);
+    //       } else if (typeof stat !== 'object') {
+    //         resolve({
+    //           nostat: true,
+    //           stat,
+    //         });
+    //       } else {
+    //         resolve({
+    //           size: stat.size,
+    //           birthtime: (stat.birthtime ? stat.birthtime : stat.mtime),
+    //           // exifData,
+    //         });
+    //       }
+    //     });
+    //     // }
+    //     // });
+    //   });
+    // });
+    // encode(url, { string: true }, (err, image) => {
+    //   if (err) {
+    //     reject(err);
+    //   } else{
+    //     console.log('encode', image);
+    //     createNewExifImage(image, (exifResponse) => {
+    //       console.log('exif callback', exifResponse);
+    //       resolve(exifResponse);
+    //     });
+    //   }
+    // });
+    // request.get(url, (error, response, body) => {
+    //   if (error) {
+    //     console.error('get image error', error);
+    //     reject(error);
+    //   } else if (response.statusCode !== 200) {
+    //     reject(new Error(`${response.statusCode}: ${response.statusMessage}`));
+    //   } else {
+    //     const data = Buffer.from(body);
+    //     console.log('buffer', data);
+    //     createNewExifImage(data, (exifResponse) => {
+    //       console.log('exif callback', exifResponse);
+    //       resolve(exifResponse);
+    //     });
+    //   }
+    // });
   });
 }
 
-export async function uploadedItem(event, context) {
-  logger(JSON.stringify({
-    event,
-    context,
-  }, null, 2));
+export async function uploadedItem(event) {
   try {
-    const initParams = createPathParams(event);
-    const imageData = await getImageData(initParams.location);
+    const eventData = parseEvent(event);
+    const initParams = createPathParams(eventData);
+    const imageData = await getImageData(initParams.location, eventData);
     // do amazon rekognition
     const updatedParams = addImageMetaDataToPathParams(initParams, imageData);
     const req = validateRequest(updatedParams);
@@ -78,7 +159,7 @@ export async function uploadedItem(event, context) {
     const dbCreateResponse = await lambda.invoke(params).promise();
     console.log('dbCreateResponse', dbCreateResponse);
   } catch (e) {
-    console.error('upladedItem error', e);
+    console.error('uploadedItem error', e);
   }
 }
 

@@ -25,8 +25,13 @@
     "babel-runtime": "^6.26.0",
     "dotenv": "^5.0.1",
     "exif": "^0.6.0",
+    "exif-js": "^2.3.0",
+    "exif-parser": "^0.1.12",
+    "image-size": "^0.6.2",
     "joi": "^13.0.2",
     "leaked-handles": "^5.2.0",
+    "node-base64-image": "^1.0.4",
+    "s3fs": "^2.5.0",
     "serverless-s3-remover": "^0.4.1",
     "serverless-stack-output": "^0.2.3",
     "uuid": "^3.1.0"

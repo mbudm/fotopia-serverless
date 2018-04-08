@@ -8,25 +8,25 @@ test('getInvokeCreateParams', (t) => {
   t.end();
 });
 
-test('createPathParams', (t) => {
-  const event = {
-    Records: [{
-      s3: {
-        bucket: {
-          name: 'yo-yo-bucket',
-        },
-        object: {
-          key: 'meh/mah-object',
-        },
-      },
-    }],
-  };
-  const res = uploaded.createPathParams(event);
-  t.equal(res.username, 'meh');
-  t.equal(res.key, event.Records[0].s3.object.key);
-  t.ok(res.location.includes(res.key));
-  t.end();
-});
+// test('createPathParams', (t) => {
+//   const event = {
+//     Records: [{
+//       s3: {
+//         bucket: {
+//           name: 'yo-yo-bucket',
+//         },
+//         object: {
+//           key: 'meh/mah-object',
+//         },
+//       },
+//     }],
+//   };
+//   const res = uploaded.createPathParams(event);
+//   t.equal(res.username, 'meh');
+//   t.equal(res.key, event.Records[0].s3.object.key);
+//   t.ok(res.location.includes(res.key));
+//   t.end();
+// });
 
 test('addImageMetaDataToPathParams', (t) => {
   const params = { username: 'blah' };
