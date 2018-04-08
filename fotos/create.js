@@ -23,7 +23,7 @@ export function getDynamoDbParams(data, id) {
     Item: {
       username: data.username,
       id,
-      birthtime: new Date(data.birthtime).getTime(),
+      birthtime: new Date(data.birthtime).getTime() + Math.round(Math.random() * 1000),
       tags: data.tags,
       people: data.people, // for rekognition categorisation
       location: data.location, // s3 object (image) url

@@ -98,9 +98,7 @@ export default function (auth, api, upload) {
       body: records[0],
     })
       .then((responseBody) => {
-        console.log(JSON.stringify(responseBody, null, 2));
-        const utcBirthTime = new Date(responseBody.birthtime).toISOString();
-        t.equal(utcBirthTime, records[0].birthtime);
+        t.equal(responseBody.key, records[0].key);
         records[0].id = responseBody.id;
         records[0].birthtime = responseBody.birthtime;
       })
@@ -113,8 +111,7 @@ export default function (auth, api, upload) {
       body: records[1],
     })
       .then((responseBody) => {
-        const utcBirthTime = new Date(responseBody.birthtime).toISOString();
-        t.equal(utcBirthTime, records[1].birthtime);
+        t.equal(responseBody.key, records[1].key);
         records[1].id = responseBody.id;
         records[1].birthtime = responseBody.birthtime;
       })
@@ -139,15 +136,14 @@ export default function (auth, api, upload) {
       body: query,
     })
       .then((responseBody) => {
-        t.equal(responseBody.length, 1);
-        const numericBirthTime = new Date(records[1].birthtime).getTime();
-        t.equal(responseBody[0].birthtime, numericBirthTime);
+        t.notOk(responseBody.find(rec => rec.id === records[0].id));
+        t.ok(responseBody.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });
 
   test('query by tag only', (t) => {
-    t.plan(1);
+    t.plan(2);
 
     const query = {
       username,
@@ -162,13 +158,14 @@ export default function (auth, api, upload) {
       body: query,
     })
       .then((responseBody) => {
-        t.equal(responseBody.length, 2);
+        t.ok(responseBody.find(rec => rec.id === records[0].id));
+        t.ok(responseBody.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });
 
   test('query by person only', (t) => {
-    t.plan(1);
+    t.plan(2);
 
     const query = {
       username,
@@ -183,7 +180,8 @@ export default function (auth, api, upload) {
       body: query,
     })
       .then((responseBody) => {
-        t.equal(responseBody.length, 2);
+        t.ok(responseBody.find(rec => rec.id === records[0].id));
+        t.ok(responseBody.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });
