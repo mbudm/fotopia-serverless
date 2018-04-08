@@ -16,7 +16,7 @@ export function getS3Params(dbGetResponse) {
 export function getInvokeGetParams(request) {
   return {
     InvocationType: 'RequestResponse',
-    FunctionName: process.env.IS_OFFLINE ? process.env.LAMBDA_GET_OFFLINE : process.env.LAMBDA_GET,
+    FunctionName: process.env.IS_OFFLINE ? 'get' : `${process.env.LAMBDA_PREFIX}get`,
     LogType: 'Tail',
     Payload: JSON.stringify({
       pathParameters: {

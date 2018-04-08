@@ -48,8 +48,7 @@ provider:
     S3_BUCKET: ${self:service}-${opt:stage, self:provider.stage}
     S3_OUTPUT_BUCKET: ${self:service}-${opt:stage, self:provider.stage}-output
     S3_OUTPUT_FILENAME: config.json
-    LAMBDA_GET: ${self:service}-${opt:stage, self:provider.stage}-get
-    LAMBDA_GET_OFFLINE: get
+    LAMBDA_PREFIX: ${self:service}-${opt:stage, self:provider.stage}-
     USER_POOL_NAME: ${self:service}-${opt:stage, self:provider.stage}-user-pool
     USER_POOL_APP_CLIENT: ${self:service}-${opt:stage, self:provider.stage}-user-pool-client
     IDENTITY_POOL: fotopia ${opt:stage, self:provider.stage} identity pool
@@ -93,10 +92,6 @@ provider:
       Resource: "arn:aws:s3:::${self:provider.environment.S3_OUTPUT_BUCKET}/*"
 
 functions:
-  uploaded:
-    handler: fotos/uploaded.uploadedItem
-    events:
-      - s3: fotos
   create:
     handler: fotos/create.createItem
     events:
