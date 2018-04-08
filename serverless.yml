@@ -50,8 +50,6 @@ provider:
     S3_OUTPUT_FILENAME: config.json
     LAMBDA_GET: ${self:service}-${opt:stage, self:provider.stage}-get
     LAMBDA_GET_OFFLINE: get
-    LAMBDA_CREATE: ${self:service}-${opt:stage, self:provider.stage}-get
-    LAMBDA_CREATE_OFFLINE: get
     USER_POOL_NAME: ${self:service}-${opt:stage, self:provider.stage}-user-pool
     USER_POOL_APP_CLIENT: ${self:service}-${opt:stage, self:provider.stage}-user-pool-client
     IDENTITY_POOL: fotopia ${opt:stage, self:provider.stage} identity pool

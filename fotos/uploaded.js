@@ -1,66 +1,6 @@
-import ExifImage from 'exif';
-import request from 'request';
-
-import { validateRequest } from './create';
-import lambda from './lib/lambda';
-
-request.defaults({ encoding: null });
-const s3Url = process.env.IS_OFFLINE ?
-  'http://localhost:5000' :
-  `https://${process.env.S3_BUCKET}.s3.amazonaws.com`;
 
 export function logger(msg) {
   console.log('uploaded triggered', msg);
-}
-
-export function getInvokeCreateParams(req) {
-  return {
-    InvocationType: 'RequestResponse',
-    FunctionName: process.env.IS_OFFLINE ? 'create' : `${process.env.LAMBDA_PREFIX}create`,
-    LogType: 'Tail',
-    Payload: JSON.stringify({
-      pathParameters: {
-        ...req,
-      },
-    }),
-  };
-}
-
-export function createPathParams(event) {
-  const s3Key = event.Records[0].s3.object.key;
-  const username = s3Key.split('/')[0];
-  console.log('createPathParams', username, s3Key);
-  return {
-    username,
-    location: `${s3Url}/${s3Key}`,
-    key: s3Key,
-    people: [],
-    tags: [],
-  };
-}
-
-export function addImageMetaDataToPathParams(params, meta) {
-  return {
-    ...params,
-    birthtime: new Date(meta.exif.DateTimeOriginal).toISOString(),
-    meta,
-  };
-}
-
-function createNewExifImage(image, callback) {
-  return new ExifImage({ image }, callback);
-}
-
-export async function getImageData(url) {
-  return new Promise((resolve, reject) => {
-    request.get(url, (error, response, body) => {
-      if (error || response.statusCode !== 200) {
-        reject(error);
-      }
-      const data = `data:${response.headers['content-type']};base64,${Buffer.from(body).toString('base64')}`;
-      createNewExifImage(data, resolve);
-    });
-  });
 }
 
 export async function uploadedItem(event, context) {
@@ -68,18 +8,16 @@ export async function uploadedItem(event, context) {
     event,
     context,
   }, null, 2));
-  try {
-    const initParams = createPathParams(event);
-    const imageData = await getImageData(initParams.location);
-    // do amazon rekognition
-    const updatedParams = addImageMetaDataToPathParams(initParams, imageData);
-    const req = validateRequest(updatedParams);
-    const params = getInvokeCreateParams(req);
-    const dbCreateResponse = await lambda.invoke(params).promise();
-    console.log('dbCreateResponse', dbCreateResponse);
-  } catch (e) {
-    console.error('upladedItem error', e);
-  }
+
+
+  /*
+  call config
+  call cognito
+  get user id
+  // get image config
+  // do amazon rekognition
+  // invoke create
+  */
 }
 
 /*
