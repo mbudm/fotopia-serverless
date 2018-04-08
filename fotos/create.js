@@ -44,7 +44,7 @@ export function getDynamoDbParams(data, id) {
 
 export async function createItem(event, context, callback) {
   const id = uuid.v1();
-  console.log('create', JSON.stringify(event.body, null, 2));
+  console.log('create', event.body);
   try {
     const request = validateRequest(event.body);
     const ddbParams = getDynamoDbParams(request, id);

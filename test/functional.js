@@ -19,7 +19,7 @@ export default function (auth, api, upload) {
 
 
   const getEndpointPath = rec => `/foto/${rec.username}/${rec.birthtime}`;
-  const getLocation = key => `${s3Url}/${key}`;
+  const getLocation = key => (process.env.IS_OFFLINE ? `${s3Url}/fotopia-web-app-prod/${key}` : `${s3Url}/${key}`);
   const formatError = (e) => {
     console.log('error', util.inspect(e));
   };
