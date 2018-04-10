@@ -2,13 +2,13 @@ import Joi from 'joi';
 
 export const requestSchema = Joi.object().keys({
   username: Joi.string().required(),
-  birthtime: Joi.date().required(),
+  id: Joi.string().guid().required(),
 });
 
 export const ddbParamsSchema = Joi.object().keys({
   TableName: Joi.string().required(),
   Key: Joi.object().keys({
     username: Joi.string().required(),
-    birthtime: Joi.number().required(),
+    id: Joi.string().guid().required(),
   }),
 });

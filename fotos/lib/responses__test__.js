@@ -10,9 +10,9 @@ test('success', (t) => {
 });
 
 test('failure', (t) => {
-  const body = { error: 'Oops' };
+  const body = 'Oops';
   const res = failure(body);
   t.equal(res.statusCode, 500);
-  t.equal(res.body, JSON.stringify(body));
+  t.equal(res.body, JSON.stringify({ error: body }));
   t.end();
 });

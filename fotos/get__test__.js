@@ -1,9 +1,10 @@
 import test from 'tape';
+import uuid from 'uuid';
 import * as get from './get';
 
 const request = {
   username: 'ahmed',
-  birthtime: 123,
+  id: uuid.v1(),
 };
 
 test('validateRequest', (t) => {

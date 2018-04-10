@@ -4,6 +4,7 @@ import * as update from './update';
 
 const requestBody = {
   username: 'pedro',
+  id: uuid.v1(),
   birthtime: 123,
   people: ['Bob'],
   tags: [],
@@ -11,8 +12,6 @@ const requestBody = {
     location: 'Peru',
   },
 };
-
-const recordId = uuid.v1();
 
 test('validateRequest', (t) => {
   try {
@@ -27,7 +26,7 @@ test('validateRequest', (t) => {
 test('getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {
-    const params = update.getDynamoDbParams(requestBody, recordId);
+    const params = update.getDynamoDbParams(requestBody);
     t.deepEqual(params.Key.username, requestBody.username);
     t.end();
   } catch (e) {

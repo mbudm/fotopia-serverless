@@ -114,7 +114,7 @@ functions:
     handler: fotos/get.getItem
     events:
       - http:
-          path: foto/{username}/{birthtime}
+          path: foto/{username}/{id}
           method: get
           cors: true
           authorizer: aws_iam
@@ -123,7 +123,7 @@ functions:
     handler: fotos/update.updateItem
     events:
       - http:
-          path: foto/{username}/{birthtime}
+          path: foto/{username}/{id}
           method: put
           cors: true
           authorizer: aws_iam
@@ -132,7 +132,7 @@ functions:
     handler: fotos/delete.deleteItem
     events:
       - http:
-          path: foto/{username}/{birthtime}
+          path: foto/{username}/{id}
           method: delete
           cors: true
           authorizer: aws_iam
@@ -152,17 +152,33 @@ resources:
         AttributeDefinitions:
           - AttributeName: username
             AttributeType: S
+          - AttributeName: id
+            AttributeType: S
           - AttributeName: birthtime
             AttributeType: N
         KeySchema:
           - AttributeName: username
             KeyType: HASH
-          - AttributeName: birthtime
+          - AttributeName: id
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        LocalSecondaryIndexes:
+        -
+          IndexName: "UsernameBirthtimeIndex"
+          KeySchema:
+            -
+              AttributeName: "username"
+              KeyType: "HASH"
+            -
+              AttributeName: "birthtime"
+              KeyType: "RANGE"
+          Projection:
+            NonKeyAttributes:
+              - "id"
+            ProjectionType: "INCLUDE"
     S3BucketFotos:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete

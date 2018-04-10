@@ -12,7 +12,9 @@ export const requestSchema = Joi.object().keys({
 
 export const ddbParamsSchema = Joi.object().keys({
   TableName: Joi.string().required(),
+  IndexName: Joi.string().required(),
   KeyConditionExpression: Joi.string().required(),
+  ProjectionExpression: Joi.string().required(),
   ExpressionAttributeNames: Joi.object().required(),
   ExpressionAttributeValues: Joi.object().required(),
 });

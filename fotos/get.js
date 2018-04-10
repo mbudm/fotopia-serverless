@@ -4,6 +4,7 @@ import { success, failure } from './lib/responses';
 import { requestSchema, ddbParamsSchema } from './joi/pathParams';
 
 export function validateRequest(pathParameters) {
+  console.log('get', pathParameters);
   const result = Joi.validate(pathParameters, requestSchema);
   if (result.error !== null) {
     throw result.error;
@@ -17,7 +18,7 @@ export function getDynamoDbParams(request) {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
       username: request.username,
-      birthtime: request.birthtime * 1,
+      id: request.id,
     },
   };
   const result = Joi.validate(params, ddbParamsSchema);
@@ -29,7 +30,7 @@ export function getDynamoDbParams(request) {
 }
 
 export function getResponseBody(ddbResponse, request) {
-  return ddbResponse.Item || `No item found for ${request.username} & ${request.birthtime}`;
+  return ddbResponse.Item || `No item found for ${request.username} & ${request.id}`;
 }
 
 export async function getItem(event, context, callback) {

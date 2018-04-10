@@ -18,7 +18,7 @@ export default function (auth, api, upload) {
     config.ServiceEndpoint;
 
 
-  const getEndpointPath = rec => `/foto/${rec.username}/${rec.birthtime}`;
+  const getEndpointPath = rec => `/foto/${rec.username}/${rec.id}`;
   const getLocation = key => (process.env.IS_OFFLINE ? `${s3Url}/fotopia-web-app-prod/${key}` : `${s3Url}/${key}`);
   const formatError = (e) => {
     console.log('error', util.inspect(e));
@@ -203,7 +203,7 @@ export default function (auth, api, upload) {
     api.del(apiUrl, apiPath)
       .then((responseBody) => {
         t.equal(responseBody.username, records[0].username);
-        t.equal(responseBody.birthtime, records[0].birthtime);
+        t.equal(responseBody.id, records[0].id);
       })
       .catch(formatError);
   });

@@ -19,12 +19,13 @@ export function getDynamoDbParams(data) {
     TableName: process.env.DYNAMODB_TABLE,
     Key: {
       username: data.username,
-      birthtime: data.birthtime * 1,
+      id: data.id,
     },
     ExpressionAttributeNames: {
       '#meta': 'meta',
       '#people': 'people',
       '#tags': 'tags',
+      '#birthtime': 'birthtime',
     },
     ExpressionAttributeValues: {
       ':meta': data.meta,
@@ -32,7 +33,7 @@ export function getDynamoDbParams(data) {
       ':tags': data.tags,
       ':people': data.people,
     },
-    UpdateExpression: 'SET #meta = :meta, #people = :people, #tags = :tags, updatedAt = :updatedAt',
+    UpdateExpression: 'SET #birthtime = :birthtime, #meta = :meta, #people = :people, #tags = :tags, updatedAt = :updatedAt',
     ReturnValues: 'ALL_NEW',
   };
 

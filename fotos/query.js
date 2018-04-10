@@ -16,6 +16,8 @@ export function validateRequest(requestBody) {
 export const getDynamoDbParams = (data) => {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
+    IndexName: 'UsernameBirthtimeIndex',
+    ProjectionExpression: 'id, meta, people, tags',
     KeyConditionExpression: '#username = :username AND #birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
       '#username': 'username',
@@ -40,7 +42,7 @@ export const filterByCriteria = (item, criteriaKey, criteriaData) =>
   criteriaData.some(criteriaDataItem => item[criteriaKey].includes(criteriaDataItem));
 
 export const filterItemsByCriteria = (items, data) =>
-  items.filter(item =>
+  items.filter(item => item &&
     Object.keys(data.criteria).some(criteriaKey =>
       filterByCriteria(item, criteriaKey, data.criteria[criteriaKey])));
 
@@ -55,6 +57,7 @@ export async function queryItems(event, context, callback) {
     const request = validateRequest(event.body);
     const ddbParams = getDynamoDbParams(request);
     const ddbResponse = await dynamodb.query(ddbParams).promise();
+    console.log('ddbResponse', JSON.stringify(ddbResponse, null, 2));
     const responseBody = getResponseBody(ddbResponse, request);
     return callback(null, success(responseBody));
   } catch (err) {
