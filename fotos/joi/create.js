@@ -3,12 +3,12 @@ import Joi from 'joi';
 export const requestSchema = Joi.object().keys({
   username: Joi.string().required(),
   birthtime: Joi.date().required(),
-  location: Joi.string().uri({
+  img_location: Joi.string().uri({
     scheme: [
       /https?/,
     ],
   }).required(),
-  key: Joi.string().required(),
+  img_key: Joi.string().required(),
   people: Joi.array().items(Joi.string()).unique(),
   tags: Joi.array().items(Joi.string()).unique(),
   meta: Joi.object(),
@@ -22,12 +22,12 @@ export const ddbParamsSchema = Joi.object().keys({
     birthtime: Joi.number().required(),
     tags: Joi.array().items(Joi.string()).unique(),
     people: Joi.array().items(Joi.string()).unique(),
-    location: Joi.string().uri({
+    img_location: Joi.string().uri({
       scheme: [
         /https?/,
       ],
     }).required(),
-    key: Joi.string().required(),
+    img_key: Joi.string().required(),
     meta: Joi.object(),
     createdAt: Joi.number().required(),
     updatedAt: Joi.number().required(),

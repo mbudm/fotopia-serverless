@@ -4,7 +4,6 @@ import { success, failure } from './lib/responses';
 import { requestSchema, ddbParamsSchema } from './joi/pathParams';
 
 export function validateRequest(pathParameters) {
-  console.log('get', pathParameters);
   const result = Joi.validate(pathParameters, requestSchema);
   if (result.error !== null) {
     throw result.error;
@@ -41,7 +40,6 @@ export async function getItem(event, context, callback) {
     const responseBody = getResponseBody(ddbResponse, request);
     return callback(null, success(responseBody));
   } catch (err) {
-    console.error(err, event.pathParameters);
     return callback(null, failure(err));
   }
 }

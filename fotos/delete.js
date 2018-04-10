@@ -9,7 +9,7 @@ export function getS3Params(dbGetResponse) {
   const body = JSON.parse(payload.body);
   return {
     Bucket: 'fotopia-web-app-prod',
-    Key: body.key,
+    Key: body.img_key,
   };
 }
 
@@ -37,7 +37,6 @@ export async function deleteItem(event, context, callback) {
     await dynamodb.delete(ddbParams).promise();
     return callback(null, success(ddbParams.Key));
   } catch (err) {
-    console.error(err, event.pathParameters);
     return callback(null, failure(err));
   }
 }

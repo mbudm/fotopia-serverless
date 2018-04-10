@@ -17,7 +17,7 @@ export const getDynamoDbParams = (data) => {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     IndexName: 'UsernameBirthtimeIndex',
-    ProjectionExpression: 'id, meta, people, tags',
+    ProjectionExpression: 'id, meta, people, tags, img_location, img_key',
     KeyConditionExpression: '#username = :username AND #birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
       '#username': 'username',
@@ -57,7 +57,6 @@ export async function queryItems(event, context, callback) {
     const request = validateRequest(event.body);
     const ddbParams = getDynamoDbParams(request);
     const ddbResponse = await dynamodb.query(ddbParams).promise();
-    console.log('ddbResponse', JSON.stringify(ddbResponse, null, 2));
     const responseBody = getResponseBody(ddbResponse, request);
     return callback(null, success(responseBody));
   } catch (err) {

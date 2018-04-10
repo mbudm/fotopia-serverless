@@ -26,8 +26,8 @@ export function getDynamoDbParams(data, id) {
       birthtime: new Date(data.birthtime).getTime(),
       tags: data.tags,
       people: data.people, // for rekognition categorisation
-      location: data.location, // s3 object (image) url
-      key: data.key, // s3 object key
+      img_location: data.img_location, // s3 object (image) url
+      img_key: data.img_key, // s3 object key
       meta: data.meta, // whatever metadata we've got for this item
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -44,12 +44,10 @@ export function getDynamoDbParams(data, id) {
 
 export async function createItem(event, context, callback) {
   const id = uuid.v1();
-  console.log('create', event.body);
   try {
     const request = validateRequest(event.body);
     const ddbParams = getDynamoDbParams(request, id);
     await dynamodb.put(ddbParams).promise();
-    console.log('Created Item', JSON.stringify(ddbParams.Item));
     return callback(null, success(ddbParams.Item));
   } catch (err) {
     return callback(null, failure(err));

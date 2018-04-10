@@ -72,8 +72,8 @@ export default function (auth, api, upload) {
     })
       .then((responseBody) => {
         t.equal(responseBody.key, images[0].key);
-        records[0].key = responseBody.key;
-        records[0].location = getLocation(responseBody.key);
+        records[0].img_key = responseBody.key;
+        records[0].img_location = getLocation(responseBody.key);
       })
       .catch(formatError);
   });
@@ -86,8 +86,8 @@ export default function (auth, api, upload) {
     })
       .then((responseBody) => {
         t.equal(responseBody.key, images[1].key);
-        records[1].key = responseBody.key;
-        records[1].location = getLocation(responseBody.key);
+        records[1].img_key = responseBody.key;
+        records[1].img_location = getLocation(responseBody.key);
       })
       .catch(formatError);
   });
