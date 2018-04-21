@@ -9,17 +9,12 @@ export default function (auth, api, upload) {
     null :
     JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-  const s3Url = process.env.IS_OFFLINE ?
-    'http://localhost:5000' :
-    `https://${config.Bucket}.s3.amazonaws.com`;
-
   const apiUrl = process.env.IS_OFFLINE ?
     'http://localhost:3000' :
     config.ServiceEndpoint;
 
 
   const getEndpointPath = rec => `/foto/${rec.username}/${rec.id}`;
-  const getLocation = key => (process.env.IS_OFFLINE ? `${s3Url}/fotopia-web-app-prod/${key}` : `${s3Url}/${key}`);
   const formatError = (e) => {
     console.log('error', util.inspect(e));
   };
@@ -73,7 +68,6 @@ export default function (auth, api, upload) {
       .then((responseBody) => {
         t.equal(responseBody.key, images[0].key);
         records[0].img_key = responseBody.key;
-        records[0].img_location = getLocation(responseBody.key);
       })
       .catch(formatError);
   });
@@ -87,7 +81,6 @@ export default function (auth, api, upload) {
       .then((responseBody) => {
         t.equal(responseBody.key, images[1].key);
         records[1].img_key = responseBody.key;
-        records[1].img_location = getLocation(responseBody.key);
       })
       .catch(formatError);
   });
