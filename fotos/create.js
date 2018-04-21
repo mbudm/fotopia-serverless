@@ -26,7 +26,6 @@ export function getDynamoDbParams(data, id) {
       birthtime: new Date(data.birthtime).getTime(),
       tags: data.tags,
       people: data.people, // for rekognition categorisation
-      img_location: data.img_location, // s3 object (image) url
       img_key: data.img_key, // s3 object key
       meta: data.meta, // whatever metadata we've got for this item
       createdAt: timestamp,

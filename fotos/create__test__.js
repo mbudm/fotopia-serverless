@@ -10,7 +10,6 @@ const requestBody = {
   people: ['Bob'],
   tags: [],
   img_key: `${username}/me.jpg`,
-  img_location: `https://location.of.image.com/${username}/me.jpg`,
 };
 
 const recordId = uuid.v1();
