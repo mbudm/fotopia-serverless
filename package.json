@@ -26,6 +26,7 @@
     "dotenv": "^5.0.1",
     "joi": "^13.0.2",
     "leaked-handles": "^5.2.0",
+    "serverless-domain-manager": "^2.3.6",
     "serverless-s3-remover": "^0.4.1",
     "serverless-stack-output": "^0.2.3",
     "uuid": "^3.1.0"

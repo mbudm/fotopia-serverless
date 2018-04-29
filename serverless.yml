@@ -4,6 +4,7 @@ frameworkVersion: ">=1.1.0 <2.0.0"
 
 plugins:
   - serverless-stack-output
+  - serverless-domain-manager
   - serverless-webpack
   - serverless-dynamodb-local
   - serverless-s3-sync
@@ -36,11 +37,15 @@ custom:
      buckets:
        - ${self:provider.environment.S3_OUTPUT_BUCKET}
        - ${self:provider.environment.S3_BUCKET}
+  customDomain:
+    domainName: ${self:provider.environment.CUSTOM_DOMAIN}
+    basePath: ''
+    stage: ${opt:stage, self:provider.stage}
+    createRoute53Record: true
 
 provider:
   name: aws
   runtime: nodejs6.10
-  stage: prod
   region: us-east-1
   profile: default
   environment:
@@ -57,6 +62,8 @@ provider:
     COGNITO_AUTHORIZED_S3_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-s3-policy
     COGNITO_AUTHORIZED_API_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-api-policy
     COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
+    CUSTOM_DOMAIN: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
+    CERTIFICATE_NAME: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.CERTIFICATE_NAME}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -347,27 +354,27 @@ resources:
       Value:
         Ref: UserPool
       Export:
-        Name: "UserPool::Id"
+        Name: "UserPool::Id-${opt:stage, self:provider.stage}"
     UserPoolClientId:
       Value:
         Ref: UserPoolClient
       Export:
-        Name: "UserPoolClient::Id"
+        Name: "UserPoolClient::Id-${opt:stage, self:provider.stage}"
     IdentityPoolId:
       Value:
         Ref: IdentityPool
       Export:
-        Name: "IdentityPool::Id"
+        Name: "IdentityPool::Id-${opt:stage, self:provider.stage}"
     CognitoAuthorizedRoleArn:
       Value:
         Fn::GetAtt: [ CognitoAuthorizedRole, Arn ]
       Export:
-        Name: "CognitoAuthorizedRole::Arn"
+        Name: "CognitoAuthorizedRole::Arn-${opt:stage, self:provider.stage}"
     CognitoUnauthorizedRoleArn:
       Value:
         Fn::GetAtt: [ CognitoUnauthorizedRole, Arn ]
       Export:
-        Name: "CognitoUnauthorizedRole::Arn"
+        Name: "CognitoUnauthorizedRole::Arn-${opt:stage, self:provider.stage}"
     Region:
       Value: ${self:provider.region}
     Bucket:
