@@ -8,7 +8,7 @@ export function getS3Params(dbGetResponse) {
   const payload = JSON.parse(dbGetResponse.Payload);
   const body = JSON.parse(payload.body);
   return {
-    Bucket: 'fotopia-web-app-prod',
+    Bucket: process.env.S3_BUCKET,
     Key: body.img_key,
   };
 }

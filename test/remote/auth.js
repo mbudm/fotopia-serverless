@@ -8,6 +8,10 @@ dotEnv.config();
 
 
 function configureAmplify(config) {
+  const stagedBucket = process.env.STAGE ? `${process.env.BUCKET_PREFIX}${process.env.STAGE}` : config.Bucket;
+
+  console.log('stagedBucket', stagedBucket);
+
   Amplify.configure({
     Auth: {
       identityPoolId: config.IdentityPoolId,
@@ -17,7 +21,7 @@ function configureAmplify(config) {
     },
     Storage: {
       region: config.Region,
-      bucket: config.Bucket,
+      bucket: stagedBucket,
       identityPoolId: config.IdentityPoolId,
     },
     API: {

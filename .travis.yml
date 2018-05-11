@@ -10,4 +10,8 @@ script:
     - npm install -g serverless
     - sls dynamodb install
     - sls offline start --exec "yarn functional-local"
+    - sls deploy -s dev
+    - yarn functional-remote-dev
+    - sls deploy -s prod
+    - yarn functional-remote-prod
 

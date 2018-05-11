@@ -200,4 +200,9 @@ export default function (auth, api, upload) {
       })
       .catch(formatError);
   });
+
+  test('force kill amplify process', (t) => {
+    t.end();
+    process.exit(0);
+  });
 }
