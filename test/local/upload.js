@@ -10,7 +10,7 @@ export default function upload(key, object, options) {
 
     const params = {
       Key: key,
-      Bucket: 'fotopia-web-app-prod',
+      Bucket: 'fotopia-web-app-dev',
       Body: object,
       ...options,
     };
