@@ -7,6 +7,5 @@ fotopia-web-app
 notes
 output/config.json
 yarn-error.log
-serverless.env.yml
 .vscode
 .env
