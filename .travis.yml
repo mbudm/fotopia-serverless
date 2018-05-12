@@ -11,7 +11,7 @@ script:
     - sls dynamodb install
     - sls offline start --exec "yarn functional-local"
     - sls deploy -s dev
-    - yarn functional-remote-dev
+    - yarn functional-dev
     - sls deploy -s prod
-    - yarn functional-remote-prod
+    - yarn functional-prod
 
