@@ -13,5 +13,4 @@ script:
     - sls deploy -s dev
     - yarn functional-dev
     - sls deploy -s prod
-    - yarn functional-prod
 
