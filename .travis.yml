@@ -5,12 +5,14 @@ cache:
   yarn: true
   directories:
     - node_modules
+before_script:
+  - sh serverless.env.sh
 script:
-    - yarn lint
-    - npm install -g serverless
-    - sls dynamodb install
-    - sls offline start --exec "yarn functional-local"
-    - sls deploy -s dev
-    - yarn functional-dev
-    - sls deploy -s prod
+  - yarn lint
+  - npm install -g serverless
+  - sls dynamodb install
+  - sls offline start --exec "yarn functional-local"
+  - sls deploy -s dev
+  - yarn functional-dev
+  - sls deploy -s prod
 
