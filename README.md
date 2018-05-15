@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/mbudm/fotopia-serverless.svg?branch=master)](https://travis-ci.org/mbudm/fotopia-serverless)
 # fotopia-serverless
 A photo archive using serverless framework
 
