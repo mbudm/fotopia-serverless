@@ -28,7 +28,7 @@ Serverless offline is a mock environment, which sometimes needs a bit of cleanin
 - kill dynamodb local `lsof -i:8000` then `kill [PID]`
 - - or use [kill-port](https://www.npmjs.com/package/kill-port) npm package to simply do `kill-port 8000` (recommended)
 
-## CI
+## CI/CD
 The `.travis.yml` file does the following steps on commit:
 
 - `sh serverless.env.sh` create env vars for serverless.yml

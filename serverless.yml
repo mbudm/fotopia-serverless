@@ -62,7 +62,6 @@ provider:
     COGNITO_AUTHORIZED_API_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-api-policy
     COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
     CUSTOM_DOMAIN: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
-    CERTIFICATE_NAME: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.CERTIFICATE_NAME}
   iamRoleStatements:
     - Effect: Allow
       Action:
