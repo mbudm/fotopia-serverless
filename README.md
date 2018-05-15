@@ -11,6 +11,14 @@ A photo archive using serverless framework
 
 ## Local development
 
+### Env vars
+- create a `.env` file with vars that serverless.yml expects. These aren't needed for offline use but need to be defined. See CI section below for more info.
+```sh
+CUSTOM_DOMAIN_DEV=dev-api.yourdomain.com
+CUSTOM_DOMAIN_PROD=api.yourdomain.com
+```
+- Then do `sh serverless.env.sh` to create the expected `serverlees.env.yml` file.
+
 ### Run locally
 - `sls login` (log in to serverless platform account -  optional)
 - `yarn`
