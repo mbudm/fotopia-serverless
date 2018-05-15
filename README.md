@@ -20,7 +20,7 @@ A photo archive using serverless framework
 - `yarn functional-local` to run functional (api) tests against local
 
 ### Local cleanup 
-Serveless oflline is a mock environment, which sometimes needs a bit of cleaning up.
+Serverless offline is a mock environment, which sometimes needs a bit of cleaning up.
 
 - remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-prod" already exists`
 `rm -R /tmp/s3Bucket/fotopia-web-app-prod/ && rm -R /tmp/s3Bucket/fotopia-web-app-prod-client/`
