@@ -17,7 +17,7 @@ A photo archive using serverless framework
 CUSTOM_DOMAIN_DEV=dev-api.yourdomain.com
 CUSTOM_DOMAIN_PROD=api.yourdomain.com
 ```
-- Then do `sh serverless.env.sh` to create the expected `serverlees.env.yml` file.
+- Then do `sh serverless.env.sh` to create the expected `serverless.env.yml` file.
 
 ### Run locally
 - `sls login` (log in to serverless platform account -  optional)
@@ -31,7 +31,7 @@ CUSTOM_DOMAIN_PROD=api.yourdomain.com
 ### Local cleanup 
 Serverless offline is a mock environment, which sometimes needs a bit of cleaning up.
 
-- remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-prod" already exists`
+- remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-prod" already exists`. To avoid this do these two remove cmds
 `rm -R /tmp/s3Bucket/fotopia-web-app-prod/ && rm -R /tmp/s3Bucket/fotopia-web-app-prod-client/`
 - kill node server `killall node` (warning: kills all node scripts)
 - kill dynamodb local `lsof -i:8000` then `kill [PID]`
@@ -60,8 +60,8 @@ TEST_EXISTING_USER=YourTestUserName
 TEST_EXISTING_USER_PWD=Y0urTestP*ssword
 ```
 
-If you are setting up a test user for anew stack or a new user each time then, remove `TEST_EXISTING_USER` and use:
-```
+If you are setting up a test user for a new stack or a new user each time then, remove `TEST_EXISTING_USER` and use:
+```sh
 TEST_USER_EMAIL=test-user@yourdomain.com.com
 TEST_USER_NAME=YourTestUserName
 TEST_USER_TEMP_PWD=TempPwd123!
