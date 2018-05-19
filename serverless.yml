@@ -201,7 +201,7 @@ resources:
               - "id"
             ProjectionType: "INCLUDE"
         StreamSpecification:
-          StreamViewType: NEW_IMAGES
+          StreamViewType: NEW_IMAGE
     S3BucketFotos:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
