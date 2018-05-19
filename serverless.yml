@@ -71,6 +71,10 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
+        - dynamodb:DescribeStream
+        - dynamodb:GetRecords
+        - dynamodb:GetShardIterator
+        - dynamodb:ListStreams
       Resource:
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
         - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}/index/*"
@@ -144,12 +148,22 @@ functions:
           cors: true
           authorizer: aws_iam
   config:
-      handler: fotos/config.getItem
-      events:
-        - http:
-            path: foto/config
-            method: get
-            cors: true
+    handler: fotos/config.getItem
+    events:
+      - http:
+          path: foto/config
+          method: get
+          cors: true
+  stream:
+    handler: fotos/stream.indexRecords
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt:
+              - FotopiaDynamoDbTable
+              - StreamArn
+              # https://github.com/boazdejong/serverless-graphql-api/blob/master/serverless.yml
 resources:
   Resources:
     FotopiaDynamoDbTable:
@@ -186,6 +200,8 @@ resources:
             NonKeyAttributes:
               - "id"
             ProjectionType: "INCLUDE"
+        StreamSpecification:
+          StreamViewType: NEW_IMAGES
     S3BucketFotos:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
