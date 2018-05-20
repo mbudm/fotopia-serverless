@@ -62,6 +62,7 @@ provider:
     COGNITO_AUTHORIZED_API_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-api-policy
     COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
     CUSTOM_DOMAIN: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
+    FOTOPIA_GROUP: ${file(./serverless.env.yml):FOTOPIA_GROUP}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -177,6 +178,8 @@ resources:
             AttributeType: S
           - AttributeName: birthtime
             AttributeType: N
+          - AttributeName: group
+            AttributeType: S
         KeySchema:
           - AttributeName: username
             KeyType: HASH
@@ -187,19 +190,37 @@ resources:
           WriteCapacityUnits: 1
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
         LocalSecondaryIndexes:
-        -
-          IndexName: "UsernameBirthtimeIndex"
-          KeySchema:
-            -
-              AttributeName: "username"
-              KeyType: "HASH"
-            -
-              AttributeName: "birthtime"
-              KeyType: "RANGE"
-          Projection:
-            NonKeyAttributes:
-              - "id"
-            ProjectionType: "INCLUDE"
+          -
+            IndexName: "UsernameBirthtimeIndex"
+            KeySchema:
+              -
+                AttributeName: "username"
+                KeyType: "HASH"
+              -
+                AttributeName: "birthtime"
+                KeyType: "RANGE"
+            Projection:
+              NonKeyAttributes:
+                - "id"
+              ProjectionType: "INCLUDE"
+        GlobalSecondaryIndexes:
+          -
+            IndexName: "GroupBirthtimeIndex"
+            KeySchema:
+              -
+                AttributeName: "group"
+                KeyType: "HASH"
+              -
+                AttributeName: "birthtime"
+                KeyType: "RANGE"
+            Projection:
+              NonKeyAttributes:
+                - "id"
+                - "username"
+              ProjectionType: "INCLUDE"
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
         StreamSpecification:
           StreamViewType: NEW_IMAGE
     S3BucketFotos:

@@ -13,7 +13,7 @@ export function validateRequest(requestBody) {
   }
 }
 
-export const getDynamoDbParams = (data) => {
+export const getUserDynamoDbParams = (data) => {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     IndexName: 'UsernameBirthtimeIndex',
@@ -36,6 +36,38 @@ export const getDynamoDbParams = (data) => {
     return params;
   }
 };
+
+export const getGroupDynamoDbParams = (data) => {
+  const params = {
+    TableName: process.env.DYNAMODB_TABLE,
+    IndexName: 'GroupBirthtimeIndex',
+    ProjectionExpression: 'id, meta, people, tags, img_location, img_key',
+    KeyConditionExpression: '#group = :group AND #birthtime BETWEEN :from AND :to',
+    ExpressionAttributeNames: {
+      '#group': 'group',
+      '#birthtime': 'birthtime',
+    },
+    ExpressionAttributeValues: {
+      ':group': process.env.FOTOPIA_GROUP,
+      ':from': new Date(data.from).getTime(),
+      ':to': new Date(data.to).getTime(),
+    },
+  };
+  const result = Joi.validate(params, ddbParamsSchema);
+  if (result.error !== null) {
+    throw result.error;
+  } else {
+    return params;
+  }
+};
+
+export const getDynamoDbParams = (data) => {
+  if (data.username) {
+    return getUserDynamoDbParams(data);
+  }
+  return getGroupDynamoDbParams(data);
+};
+
 
 export const filterByCriteria = (item, criteriaKey, criteriaData) =>
   criteriaData.length === 0 ||
@@ -63,4 +95,3 @@ export async function queryItems(event, context, callback) {
     return callback(null, failure(err));
   }
 }
-

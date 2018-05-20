@@ -5,6 +5,7 @@ import dynamodb from './lib/dynamodb';
 import { success, failure } from './lib/responses';
 import { requestSchema, ddbParamsSchema } from './joi/create';
 
+const fotopiaGroup = process.env.FOTOPIA_GROUP;
 
 export function validateRequest(requestBody) {
   const data = JSON.parse(requestBody);
@@ -16,12 +17,13 @@ export function validateRequest(requestBody) {
   }
 }
 
-export function getDynamoDbParams(data, id) {
+export function getDynamoDbParams(data, id, group) {
   const timestamp = new Date().getTime();
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Item: {
       username: data.username,
+      group,
       id,
       birthtime: new Date(data.birthtime).getTime(),
       tags: data.tags,
@@ -45,7 +47,7 @@ export async function createItem(event, context, callback) {
   const id = uuid.v1();
   try {
     const request = validateRequest(event.body);
-    const ddbParams = getDynamoDbParams(request, id);
+    const ddbParams = getDynamoDbParams(request, id, fotopiaGroup);
     await dynamodb.put(ddbParams).promise();
     return callback(null, success(ddbParams.Item));
   } catch (err) {

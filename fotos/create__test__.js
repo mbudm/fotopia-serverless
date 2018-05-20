@@ -14,6 +14,8 @@ const requestBody = {
 
 const recordId = uuid.v1();
 
+const fotopiaGroup = 'my-group';
+
 test('validateRequest', (t) => {
   try {
     const result = create.validateRequest(JSON.stringify(requestBody));
@@ -27,7 +29,7 @@ test('validateRequest', (t) => {
 test('getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {
-    const params = create.getDynamoDbParams(requestBody, recordId);
+    const params = create.getDynamoDbParams(requestBody, recordId, fotopiaGroup);
     t.deepEqual(params.Item.username, requestBody.username);
     t.end();
   } catch (e) {

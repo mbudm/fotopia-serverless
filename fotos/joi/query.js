@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 export const requestSchema = Joi.object().keys({
-  username: Joi.string().required(),
+  username: Joi.string(),
   from: Joi.date().required(),
   to: Joi.date().required(),
   criteria: Joi.object().keys({

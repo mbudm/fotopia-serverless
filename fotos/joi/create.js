@@ -13,6 +13,7 @@ export const ddbParamsSchema = Joi.object().keys({
   TableName: Joi.string().required(),
   Item: Joi.object().keys({
     username: Joi.string().required(),
+    group: Joi.string().required(),
     id: Joi.string().guid().required(),
     birthtime: Joi.number().required(),
     tags: Joi.array().items(Joi.string()).unique(),

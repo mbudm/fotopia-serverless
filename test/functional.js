@@ -116,7 +116,6 @@ export default function (auth, api, upload) {
     t.plan(2);
 
     const query = {
-      username,
       criteria: {
         tags: ['yellow'],
         people: ['Miki'],
@@ -139,7 +138,6 @@ export default function (auth, api, upload) {
     t.plan(2);
 
     const query = {
-      username,
       criteria: {
         tags: ['blue'],
       },

@@ -58,6 +58,7 @@ CUSTOM_DOMAIN_DEV=dev-api.yourdomain.com
 CUSTOM_DOMAIN_PROD=api.yourdomain.com
 TEST_EXISTING_USER=YourTestUserName
 TEST_EXISTING_USER_PWD=Y0urTestP*ssword
+FOTOPIA_GROUP=my-group # a string used as dynamodb global index key to allow queries across all users photos. in future this will allow for a simple way to have separate groups in one fotopia instance
 ```
 
 If you are setting up a test user for a new stack or a new user each time then, remove `TEST_EXISTING_USER` and use:
