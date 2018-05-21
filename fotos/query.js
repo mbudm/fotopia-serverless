@@ -87,9 +87,13 @@ export function getResponseBody(ddbResponse, data) {
 export async function queryItems(event, context, callback) {
   try {
     const request = validateRequest(event.body);
+    console.log('request', request);
     const ddbParams = getDynamoDbParams(request);
+    console.log('ddbParams', ddbParams);
     const ddbResponse = await dynamodb.query(ddbParams).promise();
+    console.log('ddbResponse', ddbResponse);
     const responseBody = getResponseBody(ddbResponse, request);
+    console.log('responseBody', responseBody);
     return callback(null, success(responseBody));
   } catch (err) {
     return callback(null, failure(err));
