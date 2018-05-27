@@ -15,7 +15,7 @@ const formatError = (e) => {
 export function getConfig(){
   return new Promise((res, rej) => {
     if(process.env.IS_OFFLINE){
-      resolve({
+      res({
         ServiceEndpoint: 'http://localhost:3000'
       })
     } else {

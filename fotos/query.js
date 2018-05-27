@@ -41,7 +41,7 @@ export const getGroupDynamoDbParams = (data) => {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     IndexName: 'GroupBirthtimeIndex',
-    ProjectionExpression: '#group, #birthtime, id, meta, people, tags, img_location, img_key',
+    ProjectionExpression: '#group, #birthtime, id, people, tags, img_key',
     KeyConditionExpression: '#group = :group AND #birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
       '#group': 'group',

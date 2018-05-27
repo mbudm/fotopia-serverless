@@ -217,6 +217,9 @@ resources:
               NonKeyAttributes:
                 - "id"
                 - "username"
+                - "people"
+                - "tags"
+                - "img_key"
               ProjectionType: "INCLUDE"
             ProvisionedThroughput:
               ReadCapacityUnits: 1
