@@ -1,17 +1,10 @@
-import dotEnv from 'dotenv';
 import 'isomorphic-fetch';
 
 import AWS from 'aws-sdk';
 import Amplify from 'aws-amplify';
 
-dotEnv.config();
-
 
 function configureAmplify(config) {
-  const stagedBucket = process.env.STAGE ? `${process.env.BUCKET_PREFIX}${process.env.STAGE}` : config.Bucket;
-
-  console.log('stagedBucket', stagedBucket);
-
   Amplify.configure({
     Auth: {
       identityPoolId: config.IdentityPoolId,
@@ -21,7 +14,7 @@ function configureAmplify(config) {
     },
     Storage: {
       region: config.Region,
-      bucket: stagedBucket,
+      bucket: config.Bucket,
       identityPoolId: config.IdentityPoolId,
     },
     API: {

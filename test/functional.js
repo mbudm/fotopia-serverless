@@ -1,38 +1,48 @@
+import dotEnv from 'dotenv';
 import util from 'util';
 import fs from 'fs';
 import path from 'path';
 import test from 'tape';
 
+
+dotEnv.config();
+
+const getEndpointPath = rec => `/foto/${rec.username}/${rec.id}`;
+const formatError = (e) => {
+  console.log('error', util.inspect(e));
+};
+
+export function getConfig(){
+  return new Promise((res, rej) => {
+    if(process.env.IS_OFFLINE){
+      resolve({
+        ServiceEndpoint: 'http://localhost:3000'
+      })
+    } else {
+      const stage = process.env.STAGE || 'dev';
+      const customDomainKey = `CUSTOM_DOMAIN_${stage.toUpperCase()}`;
+      const configEndpoint = `https://${process.env[customDomainKey]}/foto/config`;
+      fetch(configEndpoint)
+        .then(response => res(response.json()))
+        .catch(rej);
+    }
+  })
+}
+
 export default function (auth, api, upload) {
-  const configPath = path.join(process.cwd(), './output/config.json');
-  const config = process.env.IS_OFFLINE ?
-    null :
-    JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-  const apiUrl = process.env.IS_OFFLINE ?
-    'http://localhost:3000' :
-    config.ServiceEndpoint;
-
-
-  const getEndpointPath = rec => `/foto/${rec.username}/${rec.id}`;
-  const formatError = (e) => {
-    console.log('error', util.inspect(e));
-  };
-  /*
-
-  todos
-  - set up cloudfront (sep stack? just for prod)
-  - switch stages
-  - CI tool
-  - auto get exif data on create
-
-  */
-  let username = '';
+  let username;
   let images = [];
   let records = [];
+  let apiUrl;
 
   test('setup', (t) => {
-    auth(config)
+    getConfig()
+      .then((config) => {
+        console.log('config', config);
+        apiUrl = config.ServiceEndpoint;
+        return auth(config);
+      })
       .then((signedIn) => {
         username = signedIn.username;
         images = [{

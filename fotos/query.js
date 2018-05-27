@@ -96,6 +96,7 @@ export async function queryItems(event, context, callback) {
     console.log('responseBody', responseBody);
     return callback(null, success(responseBody));
   } catch (err) {
+    console.log('error', err);
     return callback(null, failure(err));
   }
 }
