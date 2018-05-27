@@ -22,6 +22,7 @@ export function getConfig(){
       const stage = process.env.STAGE || 'dev';
       const customDomainKey = `CUSTOM_DOMAIN_${stage.toUpperCase()}`;
       const configEndpoint = `https://${process.env[customDomainKey]}/foto/config`;
+      console.log('configEndpoint', configEndpoint);
       fetch(configEndpoint)
         .then(response => res(response.json()))
         .catch(rej);
@@ -39,7 +40,6 @@ export default function (auth, api, upload) {
   test('setup', (t) => {
     getConfig()
       .then((config) => {
-        console.log('config', config);
         apiUrl = config.ServiceEndpoint;
         return auth(config);
       })
