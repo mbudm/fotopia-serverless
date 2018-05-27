@@ -19,10 +19,11 @@ export function getConfig(){
         ServiceEndpoint: 'http://localhost:3000'
       })
     } else {
-      const stage = process.env.STAGE || 'dev';
-      const customDomainKey = `CUSTOM_DOMAIN_${stage.toUpperCase()}`;
-      const configEndpoint = `https://${process.env[customDomainKey]}/foto/config`;
-      console.log('configEndpoint', configEndpoint);
+      const customDomain = process.env.STAGE === 'prod' ?
+        process.env.CUSTOM_DOMAIN_PROD :
+        process.env.CUSTOM_DOMAIN_DEV;
+      const configEndpoint = `https://${customDomain}/foto/config`;
+      console.log('configEndpoint', configEndpoint, customDomain);
       fetch(configEndpoint)
         .then(response => res(response.json()))
         .catch(rej);
