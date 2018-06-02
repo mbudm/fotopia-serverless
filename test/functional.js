@@ -9,7 +9,10 @@ dotEnv.config();
 
 const getEndpointPath = rec => `/foto/${rec.username}/${rec.id}`;
 const formatError = (e) => {
-  console.log('error', util.inspect(e));
+  const data = e.response.data ?
+    JSON.stringify(e.response.data, null, 2) :
+    util.inspect(e);
+  console.log('error', data);
 };
 
 export function getConfig(){
@@ -23,7 +26,6 @@ export function getConfig(){
         process.env.CUSTOM_DOMAIN_PROD :
         process.env.CUSTOM_DOMAIN_DEV;
       const configEndpoint = `https://${customDomain}/foto/config`;
-      console.log('configEndpoint', configEndpoint, customDomain);
       fetch(configEndpoint)
         .then(response => res(response.json()))
         .catch(rej);
@@ -55,11 +57,13 @@ export default function (auth, api, upload) {
         }];
         records = [{
           username,
+          userIdentityId: signedIn.userIdentityId,
           birthtime: '2012-06-28T00:55:11.000Z',
           tags: ['blue', 'red'],
           people: ['Steve', 'Oren'],
         }, {
           username,
+          userIdentityId: signedIn.userIdentityId,
           birthtime: '2014-06-28T00:55:11.000Z',
           tags: ['blue', 'yellow'],
           people: ['Miki', 'Oren'],

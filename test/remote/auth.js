@@ -75,9 +75,18 @@ function authenticateExistingUser(config) {
       .catch(reject);
   });
 }
+export function getIdentityId(){
+  return Amplify.Auth.currentUserCredentials()
+    .then(res => res.params.IdentityId);
+}
 
 export default function auth(config) {
-  return process.env.TEST_EXISTING_USER ?
+  const authMethod = process.env.TEST_EXISTING_USER ?
     authenticateExistingUser(config) :
     authenticateNewUser(config);
+  return authMethod.then((response) => getIdentityId()
+      .then((userIdentityId) => ({
+        userIdentityId,
+        ...response
+      })));
 }

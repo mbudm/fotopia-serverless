@@ -6,6 +6,7 @@ const username = 'jethro';
 
 const requestBody = {
   username,
+  userIdentityId: username,
   birthtime: 123,
   people: ['Bob'],
   tags: [],

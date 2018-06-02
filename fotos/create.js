@@ -23,6 +23,7 @@ export function getDynamoDbParams(data, id, group) {
     TableName: process.env.DYNAMODB_TABLE,
     Item: {
       username: data.username,
+      userIdentityId: data.userIdentityId,
       group,
       id,
       birthtime: new Date(data.birthtime).getTime(),
