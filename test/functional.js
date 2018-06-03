@@ -9,7 +9,7 @@ dotEnv.config();
 
 const getEndpointPath = rec => `/foto/${rec.username}/${rec.id}`;
 const formatError = (e) => {
-  const data = e.response.data ?
+  const data = e && e.response && e.response.data ?
     JSON.stringify(e.response.data, null, 2) :
     util.inspect(e);
   console.log('error', data);
