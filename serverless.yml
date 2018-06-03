@@ -220,6 +220,8 @@ resources:
                 - "people"
                 - "tags"
                 - "img_key"
+                - "meta"
+                - "userIdentityId"
               ProjectionType: "INCLUDE"
             ProvisionedThroughput:
               ReadCapacityUnits: 1
