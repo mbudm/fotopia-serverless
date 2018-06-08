@@ -1,10 +1,6 @@
 
-import AWS from 'aws-sdk';
 import Sharp from 'sharp';
-
-const S3 = new AWS.S3({
-  signatureVersion: 'v4',
-});
+import s3 from './lib/s3';
 
 const {
   S3_BUCKET,
@@ -19,13 +15,13 @@ const SIZES = [
 }));
 
 export function getObject(key) {
-  return S3.getObject({ Bucket: S3_BUCKET, Key: key }).promise();
+  return s3.getObject({ Bucket: S3_BUCKET, Key: key }).promise();
 }
 
 export function putObject({
   buffer, key, width, height,
 }) {
-  return S3.putObject({
+  return s3.putObject({
     Body: buffer,
     Bucket: S3_BUCKET,
     ContentType: 'image/png',
