@@ -159,7 +159,7 @@ functions:
     handler: fotos/thumbs.createThumb
     events:
       - s3:
-          bucket: ${self:provider.environment.S3_BUCKET}
+          bucket: fotos
           event: s3:ObjectCreated:*
   stream:
     handler: fotos/stream.indexRecords
