@@ -4,6 +4,7 @@ import s3 from './lib/s3';
 
 const {
   S3_BUCKET,
+  S3_THUMBNAILS_BUCKET,
 } = process.env;
 const SIZES = [
   [80, 80],
@@ -23,7 +24,7 @@ export function putObject({
 }) {
   return s3.putObject({
     Body: buffer,
-    Bucket: S3_BUCKET,
+    Bucket: S3_THUMBNAILS_BUCKET,
     ContentType: 'image/png',
     Key: `${width}x${height}/${key}`,
   }).promise();
