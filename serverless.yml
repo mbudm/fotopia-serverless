@@ -248,6 +248,18 @@ resources:
                 - PUT
               AllowedOrigins:
                 - "*"
+    ThumbnailsLambdaPermissionFotosS3:
+      Type: "AWS::Lambda::Permission"
+      Properties:
+        FunctionName:
+          "Fn::GetAtt":
+            - ThumbnailsLambdaFunction
+            - Arn
+        Principal: "s3.amazonaws.com"
+        Action: "lambda:InvokeFunction"
+        SourceAccount:
+          Ref: AWS::AccountId
+        SourceArn: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}"
     FotopiaOutput:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
