@@ -155,6 +155,12 @@ functions:
           path: foto/config
           method: get
           cors: true
+  thumbnails:
+    handler: fotos/thumbs.createThumb
+    events:
+      - s3:
+          bucket: ${self:provider.environment.S3_BUCKET}
+          event: s3:ObjectCreated:*
   stream:
     handler: fotos/stream.indexRecords
     events:
