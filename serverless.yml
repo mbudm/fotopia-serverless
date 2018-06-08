@@ -253,18 +253,20 @@ resources:
                 - PUT
               AllowedOrigins:
                 - "*"
-    ThumbnailsLambdaPermissionFotosS3:
-      Type: "AWS::Lambda::Permission"
+    S3BucketThumbnails:
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Delete
       Properties:
-        FunctionName:
-          "Fn::GetAtt":
-            - ThumbnailsLambdaFunction
-            - Arn
-        Principal: "s3.amazonaws.com"
-        Action: "lambda:InvokeFunction"
-        SourceAccount:
-          Ref: AWS::AccountId
-        SourceArn: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}"
+        BucketName: ${self:provider.environment.S3_THUMBNAILS_BUCKET}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - GET
+                - PUT
+              AllowedOrigins:
+                - "*"
     FotopiaOutput:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
@@ -393,7 +395,9 @@ resources:
                 - Effect: "Allow"
                   Action:
                     - "s3:*"
-                  Resource: arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*
+                  Resource:
+                  - arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*
+                  - arn:aws:s3:::${self:provider.environment.S3_THUMBNAILS_BUCKET}/*
           - PolicyName: ${self:provider.environment.COGNITO_AUTHORIZED_API_POLICY}
             PolicyDocument:
               Version: "2012-10-17"
