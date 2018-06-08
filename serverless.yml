@@ -102,7 +102,7 @@ provider:
         - "s3:DeleteObject"
       Resource:
         - "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
-        - "arn:aws:s3:::${self:provider.environment.S3_THUMBNAIL_BUCKET}/*"
+        - "arn:aws:s3:::${self:provider.environment.S3_THUMBNAILS_BUCKET}/*"
     - Effect: "Allow"
       Action:
         - "s3:GetObject"
