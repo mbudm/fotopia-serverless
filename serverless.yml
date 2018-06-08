@@ -45,7 +45,7 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs6.10
   region: us-east-1
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
@@ -96,6 +96,7 @@ provider:
         - "arn:aws:logs:*:*:*"
     - Effect: "Allow"
       Action:
+        - "s3:PutObject"
         - "s3:DeleteObject"
       Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
     - Effect: "Allow"
