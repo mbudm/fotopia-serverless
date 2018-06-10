@@ -17,7 +17,7 @@ export const getUserDynamoDbParams = (data) => {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     IndexName: 'UsernameBirthtimeIndex',
-    ProjectionExpression: 'id, meta, people, tags, img_location, img_key',
+    ProjectionExpression: 'id, meta, people, tags, img_location, img_key, img_thumb_key',
     KeyConditionExpression: '#username = :username AND #birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
       '#username': 'username',
@@ -41,7 +41,7 @@ export const getGroupDynamoDbParams = (data) => {
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     IndexName: 'GroupBirthtimeIndex',
-    ProjectionExpression: '#group, #birthtime, userIdentityId, id, meta, people, tags, img_key',
+    ProjectionExpression: '#group, #birthtime, userIdentityId, id, meta, people, tags, img_key, img_thumb_key',
     KeyConditionExpression: '#group = :group AND #birthtime BETWEEN :from AND :to',
     ExpressionAttributeNames: {
       '#group': 'group',

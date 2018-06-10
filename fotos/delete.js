@@ -1,5 +1,5 @@
 import dynamodb from './lib/dynamodb';
-import s3 from './lib/s3';
+import createS3Client from './lib/s3';
 import lambda from './lib/lambda';
 import { success, failure } from './lib/responses';
 import { getDynamoDbParams, validateRequest } from './get';
@@ -27,6 +27,7 @@ export function getInvokeGetParams(request) {
 }
 
 export async function deleteItem(event, context, callback) {
+  const s3 = createS3Client();
   try {
     const request = validateRequest(event.pathParameters);
     const params = getInvokeGetParams(request);

@@ -1,38 +1,39 @@
 
 import Sharp from 'sharp';
-import s3 from './lib/s3';
+import createS3Client from './lib/s3';
 
-const {
-  S3_BUCKET,
-  S3_THUMBNAILS_BUCKET,
-} = process.env;
-const SIZES = [
-  [80, 80],
-  [160, 200],
-  [600, 400],
-].map(sizes => ({
-  width: sizes[0],
-  height: sizes[1],
-}));
+let s3;
 
-export function getObject(key) {
-  return s3.getObject({ Bucket: S3_BUCKET, Key: key }).promise();
+export const THUMB_SUFFIX = '-thumbnail';
+export const THUMB_WIDTH = 80;
+export const THUMB_HEIGHT = 80;
+
+export function getObject(Bucket, Key) {
+  console.log('getObject', Bucket, Key);
+  return s3.getObject({ Bucket, Key }).promise();
+}
+
+export function createThumbKey(key) {
+  const keySplit = key.split('.');
+  const ext = keySplit[keySplit.length - 1];
+  return `${key.substr(0, key.lastIndexOf(ext) - 1)}${THUMB_SUFFIX}.${ext}`;
 }
 
 export function putObject({
-  buffer, key, width, height,
+  buffer, bucket, key,
 }) {
+  const thumbKey = createThumbKey(key);
   return s3.putObject({
     Body: buffer,
-    Bucket: S3_THUMBNAILS_BUCKET,
+    Bucket: bucket,
     ContentType: 'image/png',
-    Key: `${width}x${height}/${key}`,
+    Key: thumbKey,
   }).promise();
 }
 
-export function resize({ data, width, height }) {
+export function resize({ data }) {
   return Sharp(data.Body)
-    .resize(width, height)
+    .resize(THUMB_WIDTH, THUMB_HEIGHT)
     .background({
       r: 255, g: 255, b: 255, alpha: 0,
     })
@@ -42,29 +43,35 @@ export function resize({ data, width, height }) {
 }
 
 export function resizeAndUpload({
-  data, width, height, key,
+  data, bucket, key,
 }) {
-  return resize({ data, width, height })
+  return resize({ data })
     .then(buffer => putObject({
-      buffer, key, width, height,
+      buffer, bucket, key,
     }));
 }
 
-export function resizeAndUploadSizes({ data, key }) {
-  return Promise.all(SIZES.map(({ width, height }) => resizeAndUpload({
-    width, height, data, key,
-  })));
+export function isValidThumbnailCandidate(key, bucket) {
+  return key && !key.includes(THUMB_SUFFIX) && !!bucket;
 }
 
 export async function createThumb(event) {
+  s3 = createS3Client();
   const record = event.Records[0].s3;
   const { key } = record.object;
-  console.log('thumbs', record, key);
+  const sourceBucket = record.bucket.name;
+  const destBucket = sourceBucket;
+  console.log('thumbs', record, key, sourceBucket, destBucket);
   try {
-    const data = await getObject(key);
-    const result = await resizeAndUploadSizes({ data, key });
-    console.log(result);
+    if (!isValidThumbnailCandidate(key, sourceBucket)) {
+      console.log('No thumbnail process for ', key, sourceBucket);
+      return;
+    }
+    const data = await getObject(sourceBucket, key);
+    console.log('data', data);
+    const result = await resizeAndUpload({ data, bucket: destBucket, key });
+    console.log('result', result);
   } catch (e) {
-    console.error('thumbs error:', e);
+    console.error('thumbs error:', key, sourceBucket, destBucket);
   }
 }

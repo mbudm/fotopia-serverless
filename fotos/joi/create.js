@@ -21,6 +21,7 @@ export const ddbParamsSchema = Joi.object().keys({
     tags: Joi.array().items(Joi.string()).unique(),
     people: Joi.array().items(Joi.string()).unique(),
     img_key: Joi.string().required(),
+    img_thumb_key: Joi.string().required(),
     meta: Joi.object(),
     createdAt: Joi.number().required(),
     updatedAt: Joi.number().required(),

@@ -4,6 +4,7 @@ import Joi from 'joi';
 import dynamodb from './lib/dynamodb';
 import { success, failure } from './lib/responses';
 import { requestSchema, ddbParamsSchema } from './joi/create';
+import { createThumbKey } from './thumbs';
 
 const fotopiaGroup = process.env.FOTOPIA_GROUP;
 
@@ -30,6 +31,7 @@ export function getDynamoDbParams(data, id, group) {
       tags: data.tags,
       people: data.people, // for rekognition categorisation
       img_key: data.img_key, // s3 object key
+      img_thumb_key: createThumbKey(data.img_key),
       meta: data.meta, // whatever metadata we've got for this item
       createdAt: timestamp,
       updatedAt: timestamp,
