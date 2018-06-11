@@ -1,5 +1,5 @@
 
-import s3 from './lib/s3';
+import createS3Client from './lib/s3';
 import { success, failure } from './lib/responses';
 
 export function getS3Params() {
@@ -13,6 +13,7 @@ export function getS3Params() {
 }
 
 export async function getItem(event, context, callback) {
+  const s3 = createS3Client();
   const s3Params = getS3Params();
   try {
     const s3Object = await s3.getObject(s3Params).promise();
