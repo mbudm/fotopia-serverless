@@ -26,15 +26,20 @@ export function createThumbKey(key) {
   return `${key.substr(0, key.lastIndexOf(ext) - 1)}${THUMB_SUFFIX}.${ext}`;
 }
 
+export function replicateAuthKey(data) {
+  return `protected/${data.userIdentityId}/${data.img_key}`;
+}
+
 export function getInvokeThumbnailsParams(data) {
+  const authKey = replicateAuthKey(data);
   return {
     InvocationType: 'RequestResponse',
     FunctionName: process.env.IS_OFFLINE ? 'thumbs' : `${process.env.LAMBDA_PREFIX}thumbs`,
     LogType: 'Tail',
     Payload: JSON.stringify({
       body: JSON.stringify({
-        key: data.img_key,
-        thumbKey: createThumbKey(data.img_key),
+        key: authKey,
+        thumbKey: createThumbKey(authKey),
       }),
     }),
   };
