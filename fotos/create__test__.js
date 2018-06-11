@@ -27,6 +27,22 @@ test('validateRequest', (t) => {
   }
 });
 
+test('createThumbKey - safe filename', (t) => {
+  const key = 'username/somefile.jpg';
+  const thumbKey = `username/somefile${create.THUMB_SUFFIX}.jpg`;
+  const result = create.createThumbKey(key);
+  t.equal(thumbKey, result);
+  t.end();
+});
+
+test('createThumbKey - filename extra dots', (t) => {
+  const key = 'user.name/some.file.jpg';
+  const thumbKey = `user.name/some.file${create.THUMB_SUFFIX}.jpg`;
+  const result = create.createThumbKey(key);
+  t.equal(thumbKey, result);
+  t.end();
+});
+
 test('getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {

@@ -158,12 +158,14 @@ functions:
           path: foto/config
           method: get
           cors: true
-  thumbnails:
+  thumbs:
     handler: fotos/thumbs.createThumb
     events:
-      - s3:
-          bucket: fotos
-          event: s3:ObjectCreated:*
+      - http:
+          path: foto/thumbs
+          method: post
+          cors: true
+          authorizer: aws_iam
   stream:
     handler: fotos/stream.indexRecords
     events:
@@ -380,8 +382,7 @@ resources:
                 - Effect: "Allow"
                   Action:
                     - "s3:*"
-                  Resource:
-                  - arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*
+                  Resource: arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*
           - PolicyName: ${self:provider.environment.COGNITO_AUTHORIZED_API_POLICY}
             PolicyDocument:
               Version: "2012-10-17"

@@ -1,34 +1,54 @@
 
 import Sharp from 'sharp';
+import Joi from 'joi';
 import createS3Client from './lib/s3';
+import { success, failure } from './lib/responses';
+import { requestSchema, putSchema } from './joi/thumbs';
 
 let s3;
 
-export const THUMB_SUFFIX = '-thumbnail';
 export const THUMB_WIDTH = 80;
 export const THUMB_HEIGHT = 80;
 
-export function getObject(Bucket, Key) {
-  console.log('getObject', Bucket, Key);
-  return s3.getObject({ Bucket, Key }).promise();
+export function validateRequest(requestBody) {
+  const data = JSON.parse(requestBody);
+  const result = Joi.validate(data, requestSchema);
+  console.log('thumb validated req', result);
+  if (result.error !== null) {
+    throw result.error;
+  } else {
+    return data;
+  }
 }
 
-export function createThumbKey(key) {
-  const keySplit = key.split('.');
-  const ext = keySplit[keySplit.length - 1];
-  return `${key.substr(0, key.lastIndexOf(ext) - 1)}${THUMB_SUFFIX}.${ext}`;
-}
-
-export function putObject({
-  buffer, bucket, key,
+export function validatePut({
+  buffer, key,
 }) {
-  const thumbKey = createThumbKey(key);
-  return s3.putObject({
+  const data = {
     Body: buffer,
-    Bucket: bucket,
-    ContentType: 'image/png',
-    Key: thumbKey,
+    Bucket: process.env.S3_BUCKET,
+    ContentType: 'image/jpg',
+    Key: key,
+  };
+  const result = Joi.validate(data, putSchema);
+  if (result.error !== null) {
+    throw result.error;
+  } else {
+    return data;
+  }
+}
+
+export function getObject(Key) {
+  console.log('getObject', Key, process.env.S3_BUCKET);
+  return s3.getObject({
+    Bucket: process.env.S3_BUCKET,
+    Key,
   }).promise();
+}
+
+export function putObject(params) {
+  const data = validatePut(params);
+  return s3.putObject(data).promise();
 }
 
 export function resize({ data }) {
@@ -43,35 +63,26 @@ export function resize({ data }) {
 }
 
 export function resizeAndUpload({
-  data, bucket, key,
+  data, key,
 }) {
   return resize({ data })
     .then(buffer => putObject({
-      buffer, bucket, key,
+      buffer, key,
     }));
 }
 
-export function isValidThumbnailCandidate(key, bucket) {
-  return key && !key.includes(THUMB_SUFFIX) && !!bucket;
-}
-
-export async function createThumb(event) {
+export async function createThumb(event, context, callback) {
+  console.log('createThumb called', event.body);
   s3 = createS3Client();
-  const record = event.Records[0].s3;
-  const { key } = record.object;
-  const sourceBucket = record.bucket.name;
-  const destBucket = sourceBucket;
-  console.log('thumbs', record, key, sourceBucket, destBucket);
   try {
-    if (!isValidThumbnailCandidate(key, sourceBucket)) {
-      console.log('No thumbnail process for ', key, sourceBucket);
-      return;
-    }
-    const data = await getObject(sourceBucket, key);
+    const request = validateRequest(event.body);
+    console.log('request', request);
+    const data = await getObject(request.key);
     console.log('data', data);
-    const result = await resizeAndUpload({ data, bucket: destBucket, key });
+    const result = await resizeAndUpload({ data, key: request.thumbKey });
     console.log('result', result);
-  } catch (e) {
-    console.error('thumbs error:', key, sourceBucket, destBucket);
+    return callback(null, success(result));
+  } catch (err) {
+    return callback(null, failure(err));
   }
 }

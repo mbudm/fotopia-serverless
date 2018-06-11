@@ -13,6 +13,5 @@ export default function createS3Client() {
       endpoint: new AWS.Endpoint('http://localhost:5000'),
     };
   }
-  console.log('creating s3 client w options: ', options);
   return new AWS.S3(options);
 }
