@@ -7,8 +7,8 @@ import { requestSchema, putSchema } from './joi/thumbs';
 
 let s3;
 
-export const THUMB_WIDTH = 80;
-export const THUMB_HEIGHT = 80;
+export const THUMB_WIDTH = 100;
+export const THUMB_HEIGHT = 100;
 
 export function validateRequest(requestBody) {
   const data = JSON.parse(requestBody);
@@ -54,10 +54,7 @@ export function putObject(params) {
 export function resize({ data }) {
   return Sharp(data.Body)
     .resize(THUMB_WIDTH, THUMB_HEIGHT)
-    .background({
-      r: 255, g: 255, b: 255, alpha: 0,
-    })
-    .embed()
+    .crop(Sharp.strategy.entropy)
     .toFormat('png')
     .toBuffer();
 }
