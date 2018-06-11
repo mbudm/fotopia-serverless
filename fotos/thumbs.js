@@ -83,6 +83,7 @@ export async function createThumb(event, context, callback) {
     console.log('result', result);
     return callback(null, success(result));
   } catch (err) {
+    console.log('err', err);
     return callback(null, failure(err));
   }
 }

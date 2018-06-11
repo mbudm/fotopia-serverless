@@ -36,6 +36,8 @@ function authenticateNewUser(config) {
 
     const username = process.env.TEST_USER_NAME;
 
+    const tempPassword = '@This1sChanged';
+
     const params = {
       UserPoolId: config.UserPoolId,
       Username: username,
@@ -44,7 +46,7 @@ function authenticateNewUser(config) {
       ],
       ForceAliasCreation: true,
       MessageAction: 'SUPPRESS',
-      TemporaryPassword: process.env.TEST_USER_TEMP_PWD,
+      TemporaryPassword: tempPassword,
       UserAttributes: [
         {
           Name: 'email',
@@ -58,7 +60,7 @@ function authenticateNewUser(config) {
       } else {
         console.log(JSON.stringify(data, null, 2));
         configureAmplify(config);
-        Amplify.Auth.signIn(username, process.env.TEST_USER_TEMP_PWD)
+        Amplify.Auth.signIn(username, tempPassword)
           .then(user => Amplify.Auth.completeNewPassword(user, process.env.TEST_USER_PWD))
           .then(resolve)
           .catch(reject);
@@ -70,23 +72,40 @@ function authenticateNewUser(config) {
 function authenticateExistingUser(config) {
   return new Promise((resolve, reject) => {
     configureAmplify(config);
-    Amplify.Auth.signIn(process.env.TEST_EXISTING_USER, process.env.TEST_EXISTING_USER_PWD)
+    Amplify.Auth.signIn(process.env.TEST_USER_NAME, process.env.TEST_USER_PWD)
       .then(resolve)
       .catch(reject);
   });
 }
-export function getIdentityId(){
+export function getIdentityId(response) {
   return Amplify.Auth.currentUserCredentials()
-    .then(res => res.params.IdentityId);
+    .then(res => ({
+      userIdentityId: res.params.IdentityId,
+      ...response,
+    }));
+}
+
+export function checkUserExists(config) {
+  const username = process.env.TEST_USER_NAME;
+  const cognitoISP = new AWS.CognitoIdentityServiceProvider({
+    region: config.Region,
+  });
+  return cognitoISP.listUsers({
+    UserPoolId: config.UserPoolId,
+    Filter: `username = "${username}"`,
+  }).promise();
 }
 
 export default function auth(config) {
-  const authMethod = process.env.TEST_EXISTING_USER ?
-    authenticateExistingUser(config) :
-    authenticateNewUser(config);
-  return authMethod.then((response) => getIdentityId()
-      .then((userIdentityId) => ({
-        userIdentityId,
-        ...response
-      })));
+  return checkUserExists(config)
+    .then((response) => {
+      console.log('checkUserExists', response);
+      return response.Users.length === 1 ?
+        authenticateExistingUser(config) :
+        authenticateNewUser(config);
+    })
+    .then(getIdentityId)
+    .catch((err) => {
+      console.log('check user err', err);
+    });
 }
