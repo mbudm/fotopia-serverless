@@ -27,7 +27,9 @@ export function createThumbKey(key) {
 }
 
 export function replicateAuthKey(data) {
-  return `protected/${data.userIdentityId}/${data.img_key}`;
+  return process.env.IS_OFFLINE ?
+    data.img_key :
+    `protected/${data.userIdentityId}/${data.img_key}`;
 }
 
 export function getInvokeThumbnailsParams(data) {
