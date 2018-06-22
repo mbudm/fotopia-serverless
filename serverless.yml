@@ -239,7 +239,7 @@ resources:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
         StreamSpecification:
-          StreamViewType: NEW_IMAGE
+          StreamViewType: NEW_AND_OLD_IMAGES
     S3BucketFotos:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete

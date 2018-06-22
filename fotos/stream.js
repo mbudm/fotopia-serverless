@@ -114,8 +114,8 @@ export function putIndex(index) {
   return s3.putObject(s3PutParams).promise();
 }
 
-export async function indexRecords(event, context, callback) {
-  console.log(event, context, callback);
+export async function indexRecords(event) {
+  console.log('stream indexRecords', event.Records);
   s3 = createS3Client();
   try {
     const existingIndex = await getExistingIndex();
