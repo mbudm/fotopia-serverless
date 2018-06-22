@@ -18,18 +18,61 @@ const records = [{
   dynamodb: {
     OldImage: {
       tags: {
-        S: 'blue,black,red',
+        L: [
+          {
+            S: 'blue',
+          },
+          {
+            S: 'black',
+          },
+          {
+            S: 'red',
+          },
+        ],
       },
       people: {
-        S: 'gaston,ahmed,leona',
+        L: [
+          {
+            S: 'gaston',
+          },
+          {
+            S: 'ahmed',
+          },
+          {
+            S: 'leona',
+          },
+        ],
       },
     },
     NewImage: {
       tags: {
-        S: 'blue,red,pink',
+        L: [
+          {
+            S: 'blue',
+          },
+          {
+            S: 'red',
+          },
+          {
+            S: 'pink',
+          },
+        ],
       },
       people: {
-        S: 'gaston,ahmed,leona,wilma',
+        L: [
+          {
+            S: 'gaston',
+          },
+          {
+            S: 'ahmed',
+          },
+          {
+            S: 'leona',
+          },
+          {
+            S: 'wilma',
+          },
+        ],
       },
     },
   },

@@ -55,13 +55,13 @@ export function normaliseArrayFields(record) {
   if (record && record.dynamodb) {
     if (record.dynamodb.NewImage) {
       const newImg = record.dynamodb.NewImage;
-      arrayFields.tags.new = newImg.tags ? newImg.tags.S.split(',') : [];
-      arrayFields.people.new = newImg.people ? newImg.people.S.split(',') : [];
+      arrayFields.tags.new = newImg.tags ? newImg.tags.L.map(item => item.S) : [];
+      arrayFields.people.new = newImg.people ? newImg.people.L.map(item => item.S) : [];
     }
     if (record.dynamodb.OldImage) {
       const oldImg = record.dynamodb.OldImage;
-      arrayFields.tags.old = oldImg.tags ? oldImg.tags.S.split(',') : [];
-      arrayFields.people.old = oldImg.people ? oldImg.people.S.split(',') : [];
+      arrayFields.tags.old = oldImg.tags ? oldImg.tags.L.map(item => item.S) : [];
+      arrayFields.people.old = oldImg.people ? oldImg.people.L.map(item => item.S) : [];
     }
   }
   return arrayFields;
@@ -128,14 +128,79 @@ export async function indexRecords(event) {
 }
 
 /* example payload
-
-{ Records:
-   [ { eventID: '9250194633637e7cd1e10b89912d1d7d',
-       eventName: 'INSERT',
-       eventVersion: '1.1',
-       eventSource: 'aws:dynamodb',
-       awsRegion: 'us-east-1',
-       dynamodb: [Object],
+[
+  {
+    "eventID": "9cbe27db657102695598580df16565b5",
+    "eventName": "REMOVE",
+    "eventVersion": "1.1",
+    "eventSource": "aws:dynamodb",
+    "awsRegion": "us-east-1",
+    "dynamodb": {
+      "ApproximateCreationDateTime": 1529636100,
+      "Keys": {
+        "id": {
+          "S": "bbf1ae40-75c7-11e8-b1f5-e7a9339da1f0"
+        },
+        "username": {
+          "S": "tester"
+        }
+      },
+      "OldImage": {
+        "createdAt": {
+          "N": "1529636135812"
+        },
+        "img_key": {
+          "S": "tester/one.jpg"
+        },
+        "img_thumb_key": {
+          "S": "tester/one-thumbnail.jpg"
+        },
+        "birthtime": {
+          "N": "1340844911000"
+        },
+        "id": {
+          "S": "bbf1ae40-75c7-11e8-b1f5-e7a9339da1f0"
+        },
+        "userIdentityId": {
+          "S": "us-east-1:7261e973-d20d-406a-828c-d8cf70fd888e"
+        },
+        "people": {
+          "L": [
+            {
+              "S": "Steve"
+            },
+            {
+              "S": "Oren"
+            }
+          ]
+        },
+        "group": {
+          "S": "sosnowski-roberts"
+        },
+        "tags": {
+          "L": [
+            {
+              "S": "blue"
+            },
+            {
+              "S": "red"
+            }
+          ]
+        },
+        "updatedAt": {
+          "N": "1529636135812"
+        },
+        "username": {
+          "S": "tester"
+        }
+      },
+      "SequenceNumber": "52444600000000035236636795",
+      "SizeBytes": 330,
+      "StreamViewType": "NEW_AND_OLD_IMAGES"
+    },
+    "eventSourceARN": "arn:am.."
+  }
+]
  */
 
 // write to tags and people 'indexes'
