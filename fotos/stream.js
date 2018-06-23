@@ -21,7 +21,7 @@ export function getS3Params() {
 
 export function getS3PutParams(indexData) {
   const data = {
-    Body: indexData,
+    Body: JSON.stringify(indexData),
     Bucket: process.env.S3_BUCKET,
     ContentType: 'image/jpg',
     Key,
