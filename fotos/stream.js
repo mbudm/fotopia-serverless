@@ -1,15 +1,15 @@
 import Joi from 'joi';
 
 import createS3Client from './lib/s3';
+import { INDEXES_KEY } from './lib/constants';
 import { getSchema, putSchema } from './joi/stream';
 
 let s3;
-const Key = 'indexes.json';
 
 export function getS3Params() {
   const data = {
     Bucket: process.env.S3_BUCKET,
-    Key,
+    Key: INDEXES_KEY,
   };
   const result = Joi.validate(data, getSchema);
   if (result.error !== null) {
@@ -24,7 +24,7 @@ export function getS3PutParams(indexData) {
     Body: JSON.stringify(indexData),
     Bucket: process.env.S3_BUCKET,
     ContentType: 'application/json',
-    Key,
+    Key: INDEXES_KEY,
   };
   const result = Joi.validate(data, putSchema);
   if (result.error !== null) {

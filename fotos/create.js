@@ -5,6 +5,7 @@ import dynamodb from './lib/dynamodb';
 import lambda from './lib/lambda';
 import { success, failure } from './lib/responses';
 import { requestSchema, ddbParamsSchema } from './joi/create';
+import { INVOCATION_REQUEST_RESPONSE } from './lib/constants';
 
 const fotopiaGroup = process.env.FOTOPIA_GROUP;
 export const THUMB_SUFFIX = '-thumbnail';
@@ -35,7 +36,7 @@ export function replicateAuthKey(data) {
 export function getInvokeThumbnailsParams(data) {
   const authKey = replicateAuthKey(data);
   return {
-    InvocationType: 'RequestResponse',
+    InvocationType: INVOCATION_REQUEST_RESPONSE,
     FunctionName: process.env.IS_OFFLINE ? 'thumbs' : `${process.env.LAMBDA_PREFIX}thumbs`,
     LogType: 'Tail',
     Payload: JSON.stringify({

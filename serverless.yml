@@ -166,6 +166,13 @@ functions:
           method: post
           cors: true
           authorizer: aws_iam
+  indexes:
+    handler: fotos/indexes.getItem
+    events:
+      - http:
+          path: foto/indexes
+          method: get
+          cors: true
   stream:
     handler: fotos/stream.indexRecords
     events:
@@ -175,7 +182,6 @@ functions:
             Fn::GetAtt:
               - FotopiaDynamoDbTable
               - StreamArn
-              # https://github.com/boazdejong/serverless-graphql-api/blob/master/serverless.yml
 resources:
   Resources:
     FotopiaDynamoDbTable:

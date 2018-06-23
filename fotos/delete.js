@@ -2,6 +2,7 @@ import dynamodb from './lib/dynamodb';
 import createS3Client from './lib/s3';
 import lambda from './lib/lambda';
 import { success, failure } from './lib/responses';
+import { INVOCATION_REQUEST_RESPONSE } from './lib/constants';
 import { getDynamoDbParams, validateRequest } from './get';
 
 export function getS3Params(dbGetResponse) {
@@ -15,7 +16,7 @@ export function getS3Params(dbGetResponse) {
 
 export function getInvokeGetParams(request) {
   return {
-    InvocationType: 'RequestResponse',
+    InvocationType: INVOCATION_REQUEST_RESPONSE,
     FunctionName: process.env.IS_OFFLINE ? 'get' : `${process.env.LAMBDA_PREFIX}get`,
     LogType: 'Tail',
     Payload: JSON.stringify({
