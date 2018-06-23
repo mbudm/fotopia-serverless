@@ -8,7 +8,7 @@ const Key = 'indexes.json';
 
 export function getS3Params() {
   const data = {
-    Bucket: process.env.S3_OUTPUT_BUCKET,
+    Bucket: process.env.S3_BUCKET,
     Key,
   };
   const result = Joi.validate(data, getSchema);
