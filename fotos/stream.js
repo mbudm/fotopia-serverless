@@ -23,7 +23,7 @@ export function getS3PutParams(indexData) {
   const data = {
     Body: JSON.stringify(indexData),
     Bucket: process.env.S3_BUCKET,
-    ContentType: 'image/jpg',
+    ContentType: 'application/json',
     Key,
   };
   const result = Joi.validate(data, putSchema);

@@ -6,10 +6,27 @@ const records = [{
   dynamodb: {
     NewImage: {
       tags: {
-        S: 'yellow,pink',
+        L: [
+          {
+            S: 'yellow',
+          },
+          {
+            S: 'pink',
+          },
+        ],
       },
       people: {
-        S: 'emma,leona,wilma',
+        L: [
+          {
+            S: 'emma',
+          },
+          {
+            S: 'leona',
+          },
+          {
+            S: 'wilma',
+          },
+        ],
       },
     },
   },
