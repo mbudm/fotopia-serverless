@@ -67,15 +67,19 @@ export const getDynamoDbParams = (data) => {
   }
   return getGroupDynamoDbParams(data);
 };
-
+export const hasCriteria = (criteria = {}) =>
+  Object.keys(criteria).every(key => Array.isArray(criteria[key])) &&
+  Object.keys(criteria).some(key => criteria[key].length > 0);
 
 export const filterByCriteria = (item, criteriaKey, criteriaData) =>
   criteriaData.some(criteriaDataItem => item[criteriaKey].includes(criteriaDataItem));
 
 export const filterItemsByCriteria = (items, data) =>
-  items.filter(item => item &&
-    Object.keys(data.criteria).some(criteriaKey =>
-      filterByCriteria(item, criteriaKey, data.criteria[criteriaKey])));
+  (hasCriteria(data.criteria) ?
+    items.filter(item => item &&
+      Object.keys(data.criteria).some(criteriaKey =>
+        filterByCriteria(item, criteriaKey, data.criteria[criteriaKey]))) :
+    items);
 
 
 export function getResponseBody(ddbResponse, data) {

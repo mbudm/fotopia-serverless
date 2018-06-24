@@ -126,6 +126,29 @@ export default function (auth, api, upload) {
       .catch(formatError);
   });
 
+  test('query all', (t) => {
+    t.plan(2);
+
+    const query = {
+      username,
+      criteria: {
+        people: [],
+        tags: [],
+      },
+      from: '2004-04-04',
+      to: '2017-11-02',
+    };
+
+    api.post(apiUrl, '/query', {
+      body: query,
+    })
+      .then((responseBody) => {
+        t.ok(responseBody.find(rec => rec.id === records[0].id));
+        t.ok(responseBody.find(rec => rec.id === records[1].id));
+      })
+      .catch(formatError);
+  });
+
 
   test('query by tag and person', (t) => {
     t.plan(2);

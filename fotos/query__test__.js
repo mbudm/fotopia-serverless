@@ -21,6 +21,46 @@ test('validateRequest', (t) => {
   }
 });
 
+test('hasCriteria - no arg', (t) => {
+  const result = query.hasCriteria();
+  t.equal(result, false);
+  t.end();
+});
+
+test('hasCriteria - no arrays', (t) => {
+  const result = query.hasCriteria({});
+  t.equal(result, false);
+  t.end();
+});
+
+test('hasCriteria - empty arrays', (t) => {
+  const result = query.hasCriteria({
+    tags: [],
+    someOtherCriteria: [],
+  });
+  t.equal(result, false);
+  t.end();
+});
+
+test('hasCriteria - one empty array', (t) => {
+  const result = query.hasCriteria({
+    tags: ['a tag'],
+    someOtherCriteria: [],
+    people: [],
+  });
+  t.equal(result, true);
+  t.end();
+});
+
+test('hasCriteria - no empty arrays', (t) => {
+  const result = query.hasCriteria({
+    tags: ['a tag'],
+    someOtherCriteria: ['a thing', 'another thing'],
+    people: ['some geezer'],
+  });
+  t.equal(result, true);
+  t.end();
+});
 
 test('getResponseBody - no results from db', (t) => {
   const result = query.getResponseBody({ Items: [] }, requestBody);
@@ -28,6 +68,29 @@ test('getResponseBody - no results from db', (t) => {
   t.end();
 });
 
+test('getResponseBody - items after filter', (t) => {
+  const requestBodyNoCriteria = {
+    ...requestBody,
+    criteria: {
+      people: [],
+      tags: [],
+    },
+  };
+  const result = query.getResponseBody({
+    Items: [{
+      people: ['Lucy', 'Bob'],
+      tags: [],
+    },
+    {
+      tags: ['trees'],
+      people: ['Ahmed'],
+    }],
+  }, requestBodyNoCriteria);
+
+  t.ok(Array.isArray(result));
+  t.equal(result.length, 2);
+  t.end();
+});
 
 test('getResponseBody - no items after filter', (t) => {
   const result = query.getResponseBody({
