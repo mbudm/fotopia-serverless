@@ -15,12 +15,12 @@ const formatError = (e) => {
   console.log('error', data);
 };
 
-export function getConfig(){
+export function getConfig() {
   return new Promise((res, rej) => {
-    if(process.env.IS_OFFLINE){
+    if (process.env.IS_OFFLINE) {
       res({
-        ServiceEndpoint: 'http://localhost:3000'
-      })
+        ServiceEndpoint: 'http://localhost:3000',
+      });
     } else {
       const customDomain = process.env.STAGE === 'prod' ?
         process.env.CUSTOM_DOMAIN_PROD :
@@ -30,15 +30,15 @@ export function getConfig(){
         .then(response => res(response.json()))
         .catch(rej);
     }
-  })
+  });
 }
 
 export default function (auth, api, upload) {
-
   let username;
   let images = [];
   let records = [];
   let apiUrl;
+  const uniqueTag = `_${Math.random().toString(36).substr(2, 9)}`;
 
   test('setup', (t) => {
     getConfig()
@@ -59,7 +59,7 @@ export default function (auth, api, upload) {
           username,
           userIdentityId: signedIn.userIdentityId,
           birthtime: '2012-06-28T00:55:11.000Z',
-          tags: ['blue', 'red'],
+          tags: ['blue', 'red', uniqueTag],
           people: ['Steve', 'Oren'],
         }, {
           username,
@@ -150,11 +150,11 @@ export default function (auth, api, upload) {
   });
 
   test('query by tag only', (t) => {
-    t.plan(2);
+    t.plan(3);
 
     const query = {
       criteria: {
-        tags: ['blue'],
+        tags: [uniqueTag],
       },
       from: '2004-04-04',
       to: '2017-11-02',
@@ -164,8 +164,9 @@ export default function (auth, api, upload) {
       body: query,
     })
       .then((responseBody) => {
+        t.equal(responseBody.length, 1);
         t.ok(responseBody.find(rec => rec.id === records[0].id));
-        t.ok(responseBody.find(rec => rec.id === records[1].id));
+        t.notOk(responseBody.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });

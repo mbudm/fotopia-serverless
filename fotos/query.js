@@ -70,7 +70,6 @@ export const getDynamoDbParams = (data) => {
 
 
 export const filterByCriteria = (item, criteriaKey, criteriaData) =>
-  criteriaData.length === 0 ||
   criteriaData.some(criteriaDataItem => item[criteriaKey].includes(criteriaDataItem));
 
 export const filterItemsByCriteria = (items, data) =>

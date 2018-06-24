@@ -55,6 +55,29 @@ test('getResponseBody - items after filter', (t) => {
   t.end();
 });
 
+test('getResponseBody - items after single criteria filter', (t) => {
+  const requestBodySingleCriteria = {
+    ...requestBody,
+    criteria: {
+      people: ['Lucy'],
+      tags: [],
+    },
+  };
+  const result = query.getResponseBody({
+    Items: [{
+      people: ['Lucy', 'Bob'],
+      tags: [],
+    },
+    {
+      tags: ['trees'],
+      people: ['Ahmed'],
+    }],
+  }, requestBodySingleCriteria);
+  t.equal(result.length, 1);
+  t.ok(result[0].people.includes('Lucy'));
+  t.end();
+});
+
 test('filterItemsByCriteria', (t) => {
   const items = [{
     people: ['Lucy', 'Bob'],
