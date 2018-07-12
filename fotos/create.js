@@ -82,12 +82,12 @@ export function logRekognitionError(e) {
   return null;
 }
 
-export function getRekognitionData(data) {
+export function getRekognitionData(data, id) {
   const params = {
     CollectionId: fotopiaGroup,
     DetectionAttributes: [
     ],
-    ExternalImageId: data.img_key,
+    ExternalImageId: id,
     Image: {
       S3Object: {
         Bucket: process.env.S3_BUCKET,
@@ -108,7 +108,7 @@ export async function createItem(event, context, callback) {
     console.log('invokeParams', invokeParams);
     const thumbCreateResponse = await lambda.invoke(invokeParams).promise();
     console.log('thumbCreateResponse', thumbCreateResponse);
-    const rekognitionData = await getRekognitionData(request);
+    const rekognitionData = await getRekognitionData(request, id);
     console.log('rekognitionData', rekognitionData);
     const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, thumbCreateResponse);
     await dynamodb.put(ddbParams).promise();
