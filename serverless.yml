@@ -105,7 +105,10 @@ provider:
       Action:
         - "s3:GetObject"
       Resource: "arn:aws:s3:::${self:provider.environment.S3_OUTPUT_BUCKET}/*"
-
+    - Effect: "Allow"
+      Action:
+        - "rekognition:IndexFaces",
+        - "rekognition:CreateCollection"
 functions:
   create:
     handler: fotos/create.createItem
