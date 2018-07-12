@@ -14,7 +14,7 @@ export const THUMB_SUFFIX = '-thumbnail';
 export function validateRequest(requestBody) {
   const data = JSON.parse(requestBody);
   const result = Joi.validate(data, requestSchema);
-  console.log('joi request', result);
+  // console.log('joi request', result);
   if (result.error !== null) {
     throw result.error;
   } else {
@@ -116,13 +116,13 @@ export async function createItem(event, context, callback) {
   const id = uuid.v1();
   try {
     const request = validateRequest(event.body);
-    console.log('create request', request);
+    // console.log('create request', request);
     const invokeParams = getInvokeThumbnailsParams(request);
-    console.log('invokeParams', invokeParams);
+    // console.log('invokeParams', invokeParams);
     const thumbCreateResponse = await lambda.invoke(invokeParams).promise();
-    console.log('thumbCreateResponse', thumbCreateResponse);
+    // console.log('thumbCreateResponse', thumbCreateResponse);
     const rekognitionData = await getRekognitionData(request, id);
-    console.log('rekognitionData', rekognitionData);
+    console.log('rekognitionData', JSON.stringify(rekognitionData, null, 2));
     const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, thumbCreateResponse);
     await dynamodb.put(ddbParams).promise();
     return callback(null, success(ddbParams.Item));
