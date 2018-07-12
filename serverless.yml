@@ -109,6 +109,7 @@ provider:
       Action:
         - "rekognition:IndexFaces"
         - "rekognition:CreateCollection"
+        - "rekognition:DetectLabels"
       Resource: "*"
 functions:
   create:
