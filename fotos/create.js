@@ -81,7 +81,7 @@ export function logRekognitionError(e, data, id) {
   console.log('rekognition error', e.code, id);
   if (e.code && e.code === 'ResourceNotFoundException') {
     const params = {
-      CollectionId: id,
+      CollectionId: fotopiaGroup,
     };
     return rekognition.createCollection(params)
       .promise()
