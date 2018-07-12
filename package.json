@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/mbudm/fotopia-serverless.git"
   },
-  "author": "Steve Roberts <mbudm@gmail.com>",
+  "author": "Steve Roberts <mbudm.com@gmail.com>",
   "license": "MIT",
   "scripts": {
     "test": "tape './fotos/**/*__test__.js' -r babel-register | tap-dot",

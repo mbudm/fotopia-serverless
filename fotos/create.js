@@ -3,6 +3,7 @@ import uuid from 'uuid';
 import Joi from 'joi';
 import dynamodb from './lib/dynamodb';
 import lambda from './lib/lambda';
+import rekognition from './lib/rekognition';
 import { success, failure } from './lib/responses';
 import { requestSchema, ddbParamsSchema } from './joi/create';
 import { INVOCATION_REQUEST_RESPONSE } from './lib/constants';
@@ -76,6 +77,28 @@ export function getDynamoDbParams(data, id, group) {
   }
 }
 
+export function logRekognitionError(e) {
+  console.log('rekognition error', e);
+  return null;
+}
+
+export function getRekognitionData(data) {
+  const params = {
+    CollectionId: fotopiaGroup,
+    DetectionAttributes: [
+    ],
+    ExternalImageId: data.img_key,
+    Image: {
+      S3Object: {
+        Bucket: process.env.S3_BUCKET,
+        Name: data.img_key,
+      },
+    },
+  };
+  console.log('getRekognitionData', params, rekognition);
+  return rekognition ? rekognition.indexFaces(params).promise().catch(logRekognitionError) : null;
+}
+
 export async function createItem(event, context, callback) {
   const id = uuid.v1();
   try {
@@ -85,6 +108,8 @@ export async function createItem(event, context, callback) {
     console.log('invokeParams', invokeParams);
     const thumbCreateResponse = await lambda.invoke(invokeParams).promise();
     console.log('thumbCreateResponse', thumbCreateResponse);
+    const rekognitionData = await getRekognitionData(request);
+    console.log('rekognitionData', rekognitionData);
     const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, thumbCreateResponse);
     await dynamodb.put(ddbParams).promise();
     return callback(null, success(ddbParams.Item));
