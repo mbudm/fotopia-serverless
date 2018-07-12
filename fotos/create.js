@@ -124,7 +124,9 @@ export function getRekognitionLabelData(data) {
     MinConfidence: 80,
   };
   return rekognition ?
-    rekognition.detectLabels(params).promise() :
+    rekognition.detectLabels(params)
+      .promise()
+      .catch(e => console.log('detectLabels error', e, params)) :
     null;
 }
 
