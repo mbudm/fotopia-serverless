@@ -100,7 +100,7 @@ export function getRekognitionData(data, id) {
     Image: {
       S3Object: {
         Bucket: process.env.S3_BUCKET,
-        Name: data.img_key,
+        Name: replicateAuthKey(data),
       },
     },
   };
