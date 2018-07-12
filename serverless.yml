@@ -109,6 +109,7 @@ provider:
       Action:
         - "rekognition:IndexFaces"
         - "rekognition:CreateCollection"
+      Resource: "*"
 functions:
   create:
     handler: fotos/create.createItem
