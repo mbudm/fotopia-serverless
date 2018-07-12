@@ -109,12 +109,10 @@ provider:
       Action:
         - "rekognition:IndexFaces"
         - "rekognition:CreateCollection"
-        - "rekognition:DetectLabels"
       Resource: "*"
 functions:
   create:
     handler: fotos/create.createItem
-    memorySize: 128
     events:
       - http:
           path: create
@@ -124,7 +122,6 @@ functions:
 
   query:
     handler: fotos/query.queryItems
-    memorySize: 128
     events:
       - http:
           path: query
@@ -134,7 +131,6 @@ functions:
 
   get:
     handler: fotos/get.getItem
-    memorySize: 128
     events:
       - http:
           path: foto/{username}/{id}
@@ -144,7 +140,6 @@ functions:
 
   update:
     handler: fotos/update.updateItem
-    memorySize: 128
     events:
       - http:
           path: foto/{username}/{id}
@@ -154,7 +149,6 @@ functions:
 
   delete:
     handler: fotos/delete.deleteItem
-    memorySize: 128
     events:
       - http:
           path: foto/{username}/{id}
@@ -163,7 +157,6 @@ functions:
           authorizer: aws_iam
   config:
     handler: fotos/config.getItem
-    memorySize: 128
     events:
       - http:
           path: foto/config
@@ -171,7 +164,6 @@ functions:
           cors: true
   thumbs:
     handler: fotos/thumbs.createThumb
-    memorySize: 128
     events:
       - http:
           path: foto/thumbs
@@ -180,7 +172,6 @@ functions:
           authorizer: aws_iam
   indexes:
     handler: fotos/indexes.getItem
-    memorySize: 128
     events:
       - http:
           path: foto/indexes
@@ -188,7 +179,6 @@ functions:
           cors: true
   stream:
     handler: fotos/stream.indexRecords
-    memorySize: 128
     events:
       - stream:
           type: dynamodb

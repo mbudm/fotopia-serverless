@@ -81,7 +81,6 @@ export default function (auth, api, upload) {
       contentType: 'image/jpeg',
     })
       .then((responseBody) => {
-        console.log('image one reponse', responseBody);
         t.equal(responseBody.key, images[0].key);
         records[0].img_key = responseBody.key;
       })
