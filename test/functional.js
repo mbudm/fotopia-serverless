@@ -60,13 +60,11 @@ export default function (auth, api, upload) {
           userIdentityId: signedIn.userIdentityId,
           birthtime: '2012-06-28T00:55:11.000Z',
           tags: ['blue', 'red', uniqueTag],
-          people: ['Steve', 'Oren'],
         }, {
           username,
           userIdentityId: signedIn.userIdentityId,
           birthtime: '2014-06-28T00:55:11.000Z',
           tags: ['blue', 'yellow'],
-          people: ['Miki', 'Oren'],
         }];
         t.end();
       })
@@ -110,6 +108,7 @@ export default function (auth, api, upload) {
         t.equal(responseBody.key, records[0].key);
         records[0].id = responseBody.id;
         records[0].birthtime = responseBody.birthtime;
+        records[0].people = responseBody.people;
       })
       .catch(formatError);
   });
@@ -123,6 +122,7 @@ export default function (auth, api, upload) {
         t.equal(responseBody.key, records[1].key);
         records[1].id = responseBody.id;
         records[1].birthtime = responseBody.birthtime;
+        records[1].people = responseBody.people;
       })
       .catch(formatError);
   });
@@ -157,7 +157,7 @@ export default function (auth, api, upload) {
     const query = {
       criteria: {
         tags: ['yellow'],
-        people: ['Miki'],
+        people: records[1].people,
       },
       from: '2004-04-04',
       to: '2017-11-02',
@@ -196,12 +196,12 @@ export default function (auth, api, upload) {
   });
 
   test('query by person only', (t) => {
-    t.plan(2);
+    t.plan(1);
 
     const query = {
       username,
       criteria: {
-        people: ['Oren'],
+        people: records[0].people,
       },
       from: '2004-04-04',
       to: '2017-11-02',
@@ -212,7 +212,6 @@ export default function (auth, api, upload) {
     })
       .then((responseBody) => {
         t.ok(responseBody.find(rec => rec.id === records[0].id));
-        t.ok(responseBody.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });
