@@ -48,8 +48,19 @@ export function getInvokeThumbnailsParams(data) {
     }),
   };
 }
+export function getPeopleFromRekognitionFaces(faces) {
+  return faces && faces.FaceRecords && Array.isArray(faces.FaceRecords) ?
+    faces.FaceRecords.map(faceRecord => faceRecord.Face.FaceId) :
+    [];
+}
 
-export function getDynamoDbParams(data, id, group) {
+export function getTagsFromRekognitionLabels(labels) {
+  return labels && labels.Labels && Array.isArray(labels.Labels) ?
+    labels.Labels.map(label => label.Name) :
+    [];
+}
+
+export function getDynamoDbParams(data, id, group, faces, labels) {
   const timestamp = new Date().getTime();
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
@@ -59,8 +70,8 @@ export function getDynamoDbParams(data, id, group) {
       group,
       id,
       birthtime: new Date(data.birthtime).getTime(),
-      tags: data.tags,
-      people: data.people, // for rekognition categorisation
+      tags: [...data.tags, ...getTagsFromRekognitionLabels(labels)],
+      people: getPeopleFromRekognitionFaces(faces), // for rekognition categorisation
       img_key: data.img_key, // s3 object key
       img_thumb_key: createThumbKey(data.img_key),
       meta: data.meta, // whatever metadata we've got for this item
@@ -332,4 +343,30 @@ export async function createItem(event, context, callback) {
 //     }
 //   ],
 //   "FaceModelVersion": "3.0"
+// }
+
+
+// rekognitionLabelData {
+//   "Labels": [
+//     {
+//       "Name": "Human",
+//       "Confidence": 99.29840850830078
+//     },
+//     {
+//       "Name": "People",
+//       "Confidence": 99.29840850830078
+//     },
+//     {
+//       "Name": "Person",
+//       "Confidence": 99.29840850830078
+//     },
+//     {
+//       "Name": "Face",
+//       "Confidence": 89.55351257324219
+//     },
+//     {
+//       "Name": "Portrait",
+//       "Confidence": 89.55351257324219
+//     }
+//   ]
 // }
