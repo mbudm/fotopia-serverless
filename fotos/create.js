@@ -157,6 +157,7 @@ export async function createItem(event, context, callback) {
     console.log('faces', JSON.stringify(faces, null, 2));
     console.log('labels', JSON.stringify(labels, null, 2));
     const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, thumb, faces, labels);
+    console.log('ddbParams', JSON.stringify(ddbParams, null, 2));
     await dynamodb.put(ddbParams).promise();
     return callback(null, success(ddbParams.Item));
   } catch (err) {
