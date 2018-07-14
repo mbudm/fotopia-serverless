@@ -148,11 +148,15 @@ export async function createItem(event, context, callback) {
     // console.log('create request', request);
     const invokeParams = getInvokeThumbnailsParams(request);
     // console.log('invokeParams', invokeParams);
-    const thumb = await lambda.invoke(invokeParams).promise();
-    // console.log('thumbCreateResponse', thumbCreateResponse);
-    const faces = await getRekognitionFaceData(request, id);
-    const labels = await getRekognitionLabelData(request);
-    console.log('rekognitionLabelData', JSON.stringify(labels, null, 2));
+    const thumbPromise = lambda.invoke(invokeParams).promise();
+    const facesPromise = getRekognitionFaceData(request, id);
+    const labelsPromise = getRekognitionLabelData(request);
+
+    const thumb = await thumbPromise;
+    const faces = await facesPromise;
+    const labels = await labelsPromise;
+    console.log('faces', JSON.stringify(faces, null, 2));
+    console.log('labels', JSON.stringify(labels, null, 2));
     const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, thumb, faces, labels);
     await dynamodb.put(ddbParams).promise();
     return callback(null, success(ddbParams.Item));
