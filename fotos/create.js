@@ -115,7 +115,6 @@ export function getRekognitionFaceData(data, id) {
       },
     },
   };
-  console.log('getRekognitionFaceData', params, rekognition);
   return rekognition ?
     rekognition.indexFaces(params)
       .promise()
