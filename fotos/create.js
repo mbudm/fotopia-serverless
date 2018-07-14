@@ -62,6 +62,13 @@ export function getTagsFromRekognitionLabels(labels) {
 
 export function getDynamoDbParams(data, id, group, faces, labels) {
   const timestamp = new Date().getTime();
+
+  const tags = [...data.tags, ...getTagsFromRekognitionLabels(labels)];
+  const people = getPeopleFromRekognitionFaces(faces);
+
+  console.log('faces', JSON.stringify(faces, null, 2));
+  console.log('labels', JSON.stringify(labels, null, 2));
+  console.log('tags & people', tags, people);
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Item: {
@@ -70,8 +77,8 @@ export function getDynamoDbParams(data, id, group, faces, labels) {
       group,
       id,
       birthtime: new Date(data.birthtime).getTime(),
-      tags: [...data.tags, ...getTagsFromRekognitionLabels(labels)],
-      people: getPeopleFromRekognitionFaces(faces), // for rekognition categorisation
+      tags,
+      people,
       img_key: data.img_key, // s3 object key
       img_thumb_key: createThumbKey(data.img_key),
       meta: data.meta, // whatever metadata we've got for this item
@@ -151,13 +158,11 @@ export async function createItem(event, context, callback) {
     const facesPromise = getRekognitionFaceData(request, id);
     const labelsPromise = getRekognitionLabelData(request);
 
-    const thumb = await thumbPromise;
+    await thumbPromise;
     const faces = await facesPromise;
     const labels = await labelsPromise;
-    console.log('faces', JSON.stringify(faces, null, 2));
-    console.log('labels', JSON.stringify(labels, null, 2));
-    const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, thumb, faces, labels);
-    console.log('ddbParams', JSON.stringify(ddbParams, null, 2));
+
+    const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, faces, labels);
     await dynamodb.put(ddbParams).promise();
     return callback(null, success(ddbParams.Item));
   } catch (err) {
