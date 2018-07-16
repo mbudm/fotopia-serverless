@@ -3,6 +3,7 @@ import Joi from 'joi';
 import createS3Client from './lib/s3';
 import { INDEXES_KEY } from './lib/constants';
 import { getSchema, putSchema } from './joi/stream';
+import { success, failure } from './lib/responses';
 
 let s3;
 
@@ -114,16 +115,17 @@ export function putIndex(index) {
   return s3.putObject(s3PutParams).promise();
 }
 
-export async function indexRecords(event) {
+export async function indexRecords(event, context, callback) {
   console.log('stream indexRecords', JSON.stringify(event.Records, null, 2));
   s3 = createS3Client();
   try {
     const existingIndex = await getExistingIndex();
     const updatedIndexes = getUpdatedIndexes(existingIndex, event.Records);
-    const success = await putIndex(updatedIndexes);
-    console.log('updatedIndexes', success, updatedIndexes);
+    const response = await putIndex(updatedIndexes);
+    console.log('updatedIndexes', response, updatedIndexes);
+    return callback(null, success(response));
   } catch (err) {
-    console.error(err);
+    return callback(null, failure(err));
   }
 }
 

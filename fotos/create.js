@@ -147,6 +147,30 @@ export function getRekognitionLabelData(data) {
     null;
 }
 
+export function getInvokeStreamParams(ddbParams) {
+  return {
+    InvocationType: INVOCATION_REQUEST_RESPONSE,
+    FunctionName: 'stream',
+    LogType: 'Tail',
+    Payload: JSON.stringify({
+      Records: [
+        {
+          dynamodb: {
+            NewImage: {
+              tags: {
+                L: ddbParams.Item.tags.map(item => ({ S: item })),
+              },
+              people: {
+                L: ddbParams.Item.people.map(item => ({ S: item })),
+              },
+            },
+          },
+        },
+      ],
+    }),
+  };
+}
+
 export async function createItem(event, context, callback) {
   const id = uuid.v1();
   try {
@@ -164,6 +188,10 @@ export async function createItem(event, context, callback) {
 
     const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, faces, labels);
     await dynamodb.put(ddbParams).promise();
+    if (process.env.IS_OFFLINE) {
+      const params = getInvokeStreamParams(ddbParams);
+      await lambda.invoke(params).promise();
+    }
     return callback(null, success(ddbParams.Item));
   } catch (err) {
     return callback(null, failure(err));
