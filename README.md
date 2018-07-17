@@ -31,8 +31,8 @@ CUSTOM_DOMAIN_PROD=api.yourdomain.com
 ### Local cleanup 
 Serverless offline is a mock environment, which sometimes needs a bit of cleaning up.
 
-- remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-prod" already exists`. To avoid this do these two remove cmds
-`rm -R /tmp/s3Bucket/fotopia-web-app-prod/ && rm -R /tmp/s3Bucket/fotopia-web-app-prod-client/`
+- remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-dev" already exists`. To avoid this do these two remove cmds
+`rm -R /tmp/s3Bucket/fotopia-web-app-dev/ && rm -R /tmp/s3Bucket/fotopia-web-app-dev-output/`
 - kill node server `killall node` (warning: kills all node scripts)
 - kill dynamodb local `lsof -i:8000` then `kill [PID]`
 - - or use [kill-port](https://www.npmjs.com/package/kill-port) npm package to simply do `kill-port 8000` (recommended)

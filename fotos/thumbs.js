@@ -7,8 +7,8 @@ import { requestSchema, putSchema } from './joi/thumbs';
 
 let s3;
 
-export const THUMB_WIDTH = 100;
-export const THUMB_HEIGHT = 100;
+export const THUMB_WIDTH = 200;
+export const THUMB_HEIGHT = 200;
 
 export function validateRequest(requestBody) {
   const data = JSON.parse(requestBody);
