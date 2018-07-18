@@ -19,7 +19,7 @@ const fotopiaGroup = 'my-group';
 
 test('validateRequest', (t) => {
   try {
-    const result = create.validateRequest(JSON.stringify(requestBody));
+    const result = create.validateRequest(requestBody);
     t.deepEqual(result, requestBody);
     t.end();
   } catch (e) {

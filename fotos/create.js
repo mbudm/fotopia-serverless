@@ -7,14 +7,13 @@ import rekognition from './lib/rekognition';
 import { success, failure } from './lib/responses';
 import { requestSchema, ddbParamsSchema } from './joi/create';
 import { INVOCATION_REQUEST_RESPONSE } from './lib/constants';
+import logger from './lib/logger';
 
 const fotopiaGroup = process.env.FOTOPIA_GROUP;
 export const THUMB_SUFFIX = '-thumbnail';
 
-export function validateRequest(requestBody) {
-  const data = JSON.parse(requestBody);
+export function validateRequest(data) {
   const result = Joi.validate(data, requestSchema);
-  // console.log('joi request', result);
   if (result.error !== null) {
     throw result.error;
   } else {
@@ -66,9 +65,6 @@ export function getDynamoDbParams(data, id, group, faces, labels) {
   const tags = [...data.tags, ...getTagsFromRekognitionLabels(labels)];
   const people = getPeopleFromRekognitionFaces(faces);
 
-  console.log('faces', JSON.stringify(faces, null, 2));
-  console.log('labels', JSON.stringify(labels, null, 2));
-  console.log('tags & people', tags, people);
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
     Item: {
@@ -96,7 +92,6 @@ export function getDynamoDbParams(data, id, group, faces, labels) {
 }
 
 export function logRekognitionError(e, data, id) {
-  console.log('rekognition error', e.code, id);
   if (e.code && e.code === 'ResourceNotFoundException') {
     const params = {
       CollectionId: fotopiaGroup,
@@ -142,8 +137,7 @@ export function getRekognitionLabelData(data) {
   };
   return rekognition ?
     rekognition.detectLabels(params)
-      .promise()
-      .catch(e => console.log('detectLabels error', e, params)) :
+      .promise() :
     null;
 }
 
@@ -156,6 +150,14 @@ export function getInvokeStreamParams(ddbParams) {
       Records: [
         {
           dynamodb: {
+            Keys: {
+              id: {
+                S: 'bbf1ae40-75c7-11e8-b1f5-e7a9339da1f0',
+              },
+              username: {
+                S: 'tester',
+              },
+            },
             NewImage: {
               tags: {
                 L: ddbParams.Item.tags.map(item => ({ S: item })),
@@ -172,12 +174,12 @@ export function getInvokeStreamParams(ddbParams) {
 }
 
 export async function createItem(event, context, callback) {
+  const startTime = Date.now();
   const id = uuid.v1();
+  const data = JSON.parse(event.body);
   try {
-    const request = validateRequest(event.body);
-    // console.log('create request', request);
+    const request = validateRequest(data);
     const invokeParams = getInvokeThumbnailsParams(request);
-    // console.log('invokeParams', invokeParams);
     const thumbPromise = lambda.invoke(invokeParams).promise();
     const facesPromise = getRekognitionFaceData(request, id);
     const labelsPromise = getRekognitionLabelData(request);
@@ -192,8 +194,10 @@ export async function createItem(event, context, callback) {
       const params = getInvokeStreamParams(ddbParams);
       await lambda.invoke(params).promise();
     }
+    logger(context, startTime, { ...ddbParams });
     return callback(null, success(ddbParams.Item));
   } catch (err) {
+    logger(context, startTime, { err, ...data });
     return callback(null, failure(err));
   }
 }

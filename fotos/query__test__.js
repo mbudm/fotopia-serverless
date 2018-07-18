@@ -13,7 +13,7 @@ const requestBody = {
 
 test('validateRequest', (t) => {
   try {
-    const result = query.validateRequest(JSON.stringify(requestBody));
+    const result = query.validateRequest(requestBody);
     t.deepEqual(result, requestBody);
     t.end();
   } catch (e) {

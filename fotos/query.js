@@ -1,10 +1,10 @@
 import Joi from 'joi';
 import dynamodb from './lib/dynamodb';
 import { success, failure } from './lib/responses';
+import logger from './lib/logger';
 import { requestSchema, ddbParamsSchema } from './joi/query';
 
-export function validateRequest(requestBody) {
-  const data = JSON.parse(requestBody);
+export function validateRequest(data) {
   const result = Joi.validate(data, requestSchema);
   if (result.error !== null) {
     throw result.error;
@@ -88,18 +88,17 @@ export function getResponseBody(ddbResponse, data) {
 }
 
 export async function queryItems(event, context, callback) {
+  const startTime = Date.now();
+  const data = JSON.parse(event.body);
   try {
-    const request = validateRequest(event.body);
-    console.log('request', request);
+    const request = validateRequest(data);
     const ddbParams = getDynamoDbParams(request);
-    console.log('ddbParams', ddbParams);
     const ddbResponse = await dynamodb.query(ddbParams).promise();
-    console.log('ddbResponse', ddbResponse);
     const responseBody = getResponseBody(ddbResponse, request);
-    console.log('responseBody', responseBody);
+    logger(context, startTime, { ...data });
     return callback(null, success(responseBody));
   } catch (err) {
-    console.log('error', err);
+    logger(context, startTime, { err, ...data });
     return callback(null, failure(err));
   }
 }

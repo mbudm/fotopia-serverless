@@ -1,10 +1,10 @@
 import Joi from 'joi';
 import dynamodb from './lib/dynamodb';
 import { success, failure } from './lib/responses';
+import logger from './lib/logger';
 import { requestSchema, ddbParamsSchema } from './joi/update';
 
-export function validateRequest(requestBody) {
-  const data = JSON.parse(requestBody);
+export function validateRequest(data) {
   const result = Joi.validate(data, requestSchema);
   if (result.error !== null) {
     throw result.error;
@@ -47,12 +47,16 @@ export function getDynamoDbParams(data) {
 
 
 export async function updateItem(event, context, callback) {
+  const startTime = Date.now();
+  const data = JSON.parse(event.body);
   try {
-    const request = validateRequest(event.body);
+    const request = validateRequest(data);
     const ddbParams = getDynamoDbParams(request);
     await dynamodb.update(ddbParams).promise();
+    logger(context, startTime, { ...data });
     return callback(null, success(ddbParams.Item));
   } catch (err) {
+    logger(context, startTime, { err, ...data });
     return callback(null, failure(err));
   }
 }

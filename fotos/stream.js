@@ -2,6 +2,7 @@ import Joi from 'joi';
 
 import createS3Client from './lib/s3';
 import { INDEXES_KEY } from './lib/constants';
+import logger from './lib/logger';
 import { getSchema, putSchema } from './joi/stream';
 import { success, failure } from './lib/responses';
 
@@ -115,16 +116,27 @@ export function putIndex(index) {
   return s3.putObject(s3PutParams).promise();
 }
 
+export function getRecordFields(records) {
+  return Array.isArray(records) && records.length > 0 ? {
+    eventName: records[0].eventName,
+    eventID: records[0].eventID,
+    ApproximateCreationDateTime: records[0].dynamodb.ApproximateCreationDateTime,
+    id: records[0].dynamodb.Keys.id.S,
+    username: records[0].dynamodb.Keys.username.S,
+  } : {};
+}
+
 export async function indexRecords(event, context, callback) {
-  console.log('stream indexRecords', JSON.stringify(event.Records, null, 2));
+  const startTime = Date.now();
   s3 = createS3Client();
   try {
     const existingIndex = await getExistingIndex();
     const updatedIndexes = getUpdatedIndexes(existingIndex, event.Records);
     const response = await putIndex(updatedIndexes);
-    console.log('updatedIndexes', response, updatedIndexes);
+    logger(context, startTime, getRecordFields(event.Records));
     return callback(null, success(response));
   } catch (err) {
+    logger(context, startTime, { err, ...getRecordFields(event.Records) });
     return callback(null, failure(err));
   }
 }

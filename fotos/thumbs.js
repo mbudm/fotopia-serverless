@@ -3,6 +3,7 @@ import Sharp from 'sharp';
 import Joi from 'joi';
 import createS3Client from './lib/s3';
 import { success, failure } from './lib/responses';
+import logger from './lib/logger';
 import { requestSchema, putSchema } from './joi/thumbs';
 
 let s3;
@@ -10,8 +11,7 @@ let s3;
 export const THUMB_WIDTH = 200;
 export const THUMB_HEIGHT = 200;
 
-export function validateRequest(requestBody) {
-  const data = JSON.parse(requestBody);
+export function validateRequest(data) {
   const result = Joi.validate(data, requestSchema);
   console.log('thumb validated req', result);
   if (result.error !== null) {
@@ -69,18 +69,17 @@ export function resizeAndUpload({
 }
 
 export async function createThumb(event, context, callback) {
-  console.log('createThumb called', event.body);
+  const startTime = Date.now();
+  const data = JSON.parse(event.body);
   s3 = createS3Client();
   try {
-    const request = validateRequest(event.body);
-    console.log('request', request);
-    const data = await getObject(request.key);
-    console.log('data', data);
-    const result = await resizeAndUpload({ data, key: request.thumbKey });
-    console.log('result', result);
+    const request = validateRequest(data);
+    const objData = await getObject(request.key);
+    const result = await resizeAndUpload({ data: objData, key: request.thumbKey });
+    logger(context, startTime, { ...data });
     return callback(null, success(result));
   } catch (err) {
-    console.log('err', err);
+    logger(context, startTime, { err, ...data });
     return callback(null, failure(err));
   }
 }

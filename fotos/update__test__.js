@@ -15,7 +15,7 @@ const requestBody = {
 
 test('validateRequest', (t) => {
   try {
-    const result = update.validateRequest(JSON.stringify(requestBody));
+    const result = update.validateRequest(requestBody);
     t.deepEqual(result, requestBody);
     t.end();
   } catch (e) {

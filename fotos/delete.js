@@ -3,6 +3,7 @@ import createS3Client from './lib/s3';
 import lambda from './lib/lambda';
 import { success, failure } from './lib/responses';
 import { INVOCATION_REQUEST_RESPONSE } from './lib/constants';
+import logger from './lib/logger';
 import { getDynamoDbParams, validateRequest } from './get';
 
 export function getS3Params(dbGetResponse) {
@@ -28,6 +29,7 @@ export function getInvokeGetParams(request) {
 }
 
 export async function deleteItem(event, context, callback) {
+  const startTime = Date.now();
   const s3 = createS3Client();
   try {
     const request = validateRequest(event.pathParameters);
@@ -37,8 +39,10 @@ export async function deleteItem(event, context, callback) {
     await s3.deleteObject(s3Params).promise();
     const ddbParams = getDynamoDbParams(request);
     await dynamodb.delete(ddbParams).promise();
+    logger(context, startTime, { ...ddbParams });
     return callback(null, success(ddbParams.Key));
   } catch (err) {
+    logger(context, startTime, { err, ...event.pathParameters });
     return callback(null, failure(err));
   }
 }
