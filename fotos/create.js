@@ -99,7 +99,7 @@ export function logRekognitionError(e, data, id) {
     return rekognition.createCollection(params)
       .promise()
       // eslint-disable-next-line
-      .then(() => getRekognitionData(data, id));
+      .then(() => getRekognitionFaceData(data, id));
   }
   return null;
 }
@@ -137,7 +137,8 @@ export function getRekognitionLabelData(data) {
   };
   return rekognition ?
     rekognition.detectLabels(params)
-      .promise() :
+      .promise()
+      .catch(e => console.log('detectLabels error', e, params)) :
     null;
 }
 
