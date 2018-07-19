@@ -123,6 +123,7 @@ export function getRecordFields(records) {
     ApproximateCreationDateTime: records[0].dynamodb.ApproximateCreationDateTime,
     id: records[0].dynamodb.Keys.id.S,
     username: records[0].dynamodb.Keys.username.S,
+    newFaces: records[0].dynamodb.NewImage && records[0].dynamodb.NewImage.faces,
   } : {};
 }
 

@@ -63,7 +63,6 @@ export function getDynamoDbParams(data, id, group, faces, labels) {
   const timestamp = new Date().getTime();
 
   const tags = [...data.tags, ...getTagsFromRekognitionLabels(labels)];
-  const people = getPeopleFromRekognitionFaces(faces);
 
   const params = {
     TableName: process.env.DYNAMODB_TABLE,
@@ -74,7 +73,8 @@ export function getDynamoDbParams(data, id, group, faces, labels) {
       id,
       birthtime: new Date(data.birthtime).getTime(),
       tags,
-      people,
+      people: [],
+      faces,
       img_key: data.img_key, // s3 object key
       img_thumb_key: createThumbKey(data.img_key),
       meta: data.meta, // whatever metadata we've got for this item
@@ -122,7 +122,7 @@ export function getRekognitionFaceData(data, id) {
     rekognition.indexFaces(params)
       .promise()
       .catch(e => logRekognitionError(e, data, id)) :
-    null;
+    [];
 }
 
 export function getRekognitionLabelData(data) {
@@ -140,7 +140,7 @@ export function getRekognitionLabelData(data) {
     rekognition.detectLabels(params)
       .promise()
       .catch(e => console.log('detectLabels error', e, params)) :
-    null;
+    [];
 }
 
 export function getInvokeStreamParams(ddbParams) {
@@ -164,8 +164,8 @@ export function getInvokeStreamParams(ddbParams) {
               tags: {
                 L: ddbParams.Item.tags.map(item => ({ S: item })),
               },
-              people: {
-                L: ddbParams.Item.people.map(item => ({ S: item })),
+              faces: {
+                L: [],
               },
             },
           },
