@@ -1,0 +1,284 @@
+/*
+ for new images
+
+ load persons json file
+
+ run SearchFaces for each faceId in the image (max 3..? to limit costs)
+
+ loop through each face match
+  - log the persons that each face match is assigned to
+  - add this face to the person with the most face matches
+  - if number of faces in persons is equal assign to the higher match confidence
+
+ if no faces match then create a new person for this face.
+
+*/
+import Joi from 'joi';
+// import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
+
+import createS3Client from './lib/s3';
+import { PEOPLE_KEY } from './lib/constants';
+import logger from './lib/logger';
+import { getSchema, putSchema } from './joi/stream';
+import { success, failure } from './lib/responses';
+
+let s3;
+
+export function getS3Params() {
+  const data = {
+    Bucket: process.env.S3_BUCKET,
+    Key: PEOPLE_KEY,
+  };
+  const result = Joi.validate(data, getSchema);
+  if (result.error !== null) {
+    throw result.error;
+  } else {
+    return data;
+  }
+}
+
+export function getS3PutParams(indexData) {
+  const data = {
+    Body: JSON.stringify(indexData),
+    Bucket: process.env.S3_BUCKET,
+    ContentType: 'application/json',
+    Key: PEOPLE_KEY,
+  };
+  const result = Joi.validate(data, putSchema);
+  if (result.error !== null) {
+    throw result.error;
+  } else {
+    return data;
+  }
+}
+
+export function getExistingPeople() {
+  const s3Params = getS3Params();
+  return s3.getObject(s3Params).promise()
+    .then(s3Object => JSON.parse(s3Object.Body.toString()))
+    .catch(error => ({ error, people: {} }));
+}
+
+export function putPeople(people) {
+  const s3PutParams = getS3PutParams(people);
+  return s3.putObject(s3PutParams).promise();
+}
+
+export function getPeopleForFaces(records, existingPeople) {
+  return {
+    ...existingPeople,
+    ...records,
+  };
+}
+
+export function getUpdatedPeople(existingPeople, peopleForTheseFaces) {
+  return {
+    ...existingPeople,
+    ...peopleForTheseFaces,
+  };
+}
+
+export function updateDynamoDb(records, peopleForTheseFaces) {
+  return {
+    ...records,
+    ...peopleForTheseFaces,
+  };
+}
+
+export function getRecordFields(records) {
+  return records;
+}
+
+export async function addToPerson(event, context, callback) {
+  const startTime = Date.now();
+  s3 = createS3Client();
+  try {
+    const existingPeople = await getExistingPeople();
+    const peopleForTheseFaces = getPeopleForFaces(event.Records, existingPeople);
+    const updatedPeople = getUpdatedPeople(existingPeople, peopleForTheseFaces);
+    const putPeoplePromise = putPeople(updatedPeople);
+    const updateDynamoDbPromise = updateDynamoDb(event.Records, peopleForTheseFaces);
+    const peopleResponse = await putPeoplePromise;
+    const updateResponse = await updateDynamoDbPromise;
+    logger(context, startTime, getRecordFields(event.Records));
+    return callback(null, success({ peopleResponse, updateResponse }));
+  } catch (err) {
+    logger(context, startTime, { err, ...getRecordFields(event.Records) });
+    return callback(null, failure(err));
+  }
+}
+
+
+/*
+const payloadEG = [
+  {
+    eventID: '9cbe27db657102695598580df16565b5',
+    eventName: 'REMOVE',
+    eventVersion: '1.1',
+    eventSource: 'aws:dynamodb',
+    awsRegion: 'us-east-1',
+    dynamodb: {
+      ApproximateCreationDateTime: 1529636100,
+      Keys: {
+        id: {
+          S: 'bbf1ae40-75c7-11e8-b1f5-e7a9339da1f0',
+        },
+        username: {
+          S: 'tester',
+        },
+      },
+      OldImage: {
+        createdAt: {
+          N: '1529636135812',
+        },
+        img_key: {
+          S: 'tester/one.jpg',
+        },
+        img_thumb_key: {
+          S: 'tester/one-thumbnail.jpg',
+        },
+        birthtime: {
+          N: '1340844911000',
+        },
+        id: {
+          S: 'bbf1ae40-75c7-11e8-b1f5-e7a9339da1f0',
+        },
+        userIdentityId: {
+          S: 'us-east-1:7261e973-d20d-406a-828c-d8cf70fd888e',
+        },
+        people: {
+          L: [
+            {
+              S: 'Steve',
+            },
+            {
+              S: 'Oren',
+            },
+          ],
+        },
+        group: {
+          S: 'sosnowski-roberts',
+        },
+        tags: {
+          L: [
+            {
+              S: 'blue',
+            },
+            {
+              S: 'red',
+            },
+          ],
+        },
+        faces: {
+          L: [{
+            M: {
+              Face: {
+                M: {
+                  BoundingBox: {
+                    M: {
+                      Height: {
+                        N: '0.4197828769683838'
+                      },
+                      Left: { N: '0.13826367259025574' },
+                      Top: { N: '0.2267792522907257' },
+                      Width: { N: '0.2797427773475647' },
+                    },
+                  },
+                  Confidence: { N: '99.99995422363281' },
+                  ExternalImageId: { S: 'ec78b570-8b6d-11e8-b919-37f6f1b199a5' },
+                  FaceId: { S: '33f3f7cb-fa29-4610-91d0-db30a5b6488b' },
+                  ImageId: { S: '9722f933-31ee-5bfd-8bea-a6dc639fa811' },
+                },
+              },
+              FaceDetail: {
+                M: {
+                  BoundingBox: {
+                    M: {
+                      Height: { N: '0.4197828769683838' },
+                      Left: { N: '0.13826367259025574' },
+                      Top: { N: '0.2267792522907257' },
+                      Width: { N: '0.2797427773475647' },
+                    },
+                  },
+                  Confidence: { N: '99.99995422363281' },
+                  Landmarks: { L: [{ M: {
+                    Type: { S: 'eyeLeft' },
+                    X: { N: '0.231573686003685' },
+                    Y: { N: '0.39553382992744446' } } },
+                    { M: { Type: { S: 'eyeRight' },
+                    X: { N: '0.31014081835746765' },
+                    Y: { N: '0.38730013370513916' } } },
+                    { M: { Type: { S: 'nose' },
+                    X: { N: '0.241814523935318' },
+                    Y: { N: '0.4583139717578888' } } },
+                    { M: { Type: { S: 'mouthLeft' },
+                    X: { N: '0.23912177979946136' },
+                    Y: { N: '0.5443535447120667' } } },
+                    { M: { Type: { S: 'mouthRight' },
+                    X: { N: '0.3028641939163208' },
+                    Y: { N: '0.5434433221817017' } } }] },
+                  Pose: { M: { Pitch: { N: '4.236342430114746' },
+                  Roll: { N: '-2.4419784545898438' },
+                  Yaw: { N: '-27.07720947265625' } } },
+                  Quality: { M: {
+                    Brightness: { N: '38.81555938720703' },
+                    Sharpness: { N: '99.99671173095703' } } },
+                },
+              },
+            },
+          },
+          ],
+        },
+        updatedAt: {
+          N: '1529636135812',
+        },
+        username: {
+          S: 'tester',
+        },
+      },
+      SequenceNumber: '52444600000000035236636795',
+      SizeBytes: 330,
+      StreamViewType: 'NEW_AND_OLD_IMAGES',
+    },
+    eventSourceARN: 'arn:am..',
+  },
+];
+*/
+// write to tags and people 'indexes'
+/*
+    {
+      people: {
+        'oren': {
+          rekognitionId: 'some guid'
+          count:
+        }
+      },
+      tags: {
+        tagname: {
+          // what goes here - rough count?
+        }
+      }
+    }
+
+    or add people and tag objects to algolia? keep under the 10k records and get text search
+    use NEW_AND_OLD_IMAGES so can check the diffs in people and tags and
+    update the tag / people record accordingly
+    how to keep counts...? have to query algloia to get the existing count and
+    modify the count number
+
+    get tag/people diffs
+    query algolia with tags
+    update if changed
+
+    or just read write a json file? that way the client can also have all
+    that and do basic search client side?
+
+    */
+//  const people = [{
+//   Name: 'Oren',
+//   Faces: [{
+//     FaceId: 'f81bb045-9d24-4d0b-a928-b0267cbbd7c6',
+//     img_key:
+//   }],
+// }];
+

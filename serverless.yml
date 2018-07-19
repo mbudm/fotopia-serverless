@@ -186,8 +186,26 @@ functions:
           path: foto/indexes
           method: get
           cors: true
+  getPeople:
+    handler: fotos/people.getItem
+    memorySize: 128
+    events:
+      - http:
+          path: foto/people
+          method: get
+          cors: true
   stream:
     handler: fotos/stream.indexRecords
+    memorySize: 128
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt:
+              - FotopiaDynamoDbTable
+              - StreamArn
+  faces:
+    handler: fotos/faces.addToPerson
     memorySize: 128
     events:
       - stream:
@@ -458,3 +476,4 @@ package:
     - '!node_modules/uuid/**'
     - '!node_modules/babel-runtime/**'
     - '!node_modules/sharp/**'
+    - '!node_modules/dynamodb-data-types/**'
