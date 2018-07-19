@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
 
 import createS3Client from './lib/s3';
 import { INDEXES_KEY } from './lib/constants';
@@ -56,14 +57,14 @@ export function normaliseArrayFields(record) {
   };
   if (record && record.dynamodb) {
     if (record.dynamodb.NewImage) {
-      const newImg = record.dynamodb.NewImage;
-      arrayFields.tags.new = newImg.tags ? newImg.tags.L.map(item => item.S) : [];
-      arrayFields.people.new = newImg.people ? newImg.people.L.map(item => item.S) : [];
+      const newImg = ddbAttVals.unwrap(record.dynamodb.NewImage);
+      arrayFields.tags.new = Array.isArray(newImg.tags) ? [...newImg.tags] : [];
+      arrayFields.people.new = Array.isArray(newImg.people) ? [...newImg.people] : [];
     }
     if (record.dynamodb.OldImage) {
-      const oldImg = record.dynamodb.OldImage;
-      arrayFields.tags.old = oldImg.tags ? oldImg.tags.L.map(item => item.S) : [];
-      arrayFields.people.old = oldImg.people ? oldImg.people.L.map(item => item.S) : [];
+      const oldImg = ddbAttVals.unwrap(record.dynamodb.OldImage);
+      arrayFields.tags.old = Array.isArray(oldImg.tags) ? [...oldImg.tags] : [];
+      arrayFields.people.old = Array.isArray(oldImg.people) ? [...oldImg.people] : [];
     }
   }
   return arrayFields;
@@ -248,3 +249,26 @@ export async function indexRecords(event, context, callback) {
     that and do basic search client side?
 
     */
+//  const people = [{
+//   Name: 'Oren',
+//   Faces: [{
+//     FaceId: 'f81bb045-9d24-4d0b-a928-b0267cbbd7c6',
+//     img_key:
+//   }],
+// }];
+
+/*
+ for new images
+
+ load persons json file
+
+ run SearchFaces for each faceId in the image (max 3..? to limit costs)
+
+ loop through each face match
+  - log the persons that each face match is assigned to
+  - add this face to the person with the most face matches
+  - if number of faces in persons is equal assign to the higher match confidence
+
+ if no faces match then create a new person for this face.
+
+*/
