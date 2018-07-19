@@ -121,6 +121,7 @@ export function getRekognitionFaceData(data, id) {
   return rekognition ?
     rekognition.indexFaces(params)
       .promise()
+      .then(response => response.FaceRecords)
       .catch(e => logRekognitionError(e, data, id)) :
     [];
 }
