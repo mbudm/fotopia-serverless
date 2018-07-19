@@ -74,7 +74,7 @@ export function getDynamoDbParams(data, id, group, faces, labels) {
       birthtime: new Date(data.birthtime).getTime(),
       tags,
       people: [],
-      faces,
+      faces: (faces || []), // prob null from rekognition error, hack for now
       img_key: data.img_key, // s3 object key
       img_thumb_key: createThumbKey(data.img_key),
       meta: data.meta, // whatever metadata we've got for this item
