@@ -14,15 +14,21 @@
 
 */
 import Joi from 'joi';
-// import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
+import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
+import uuid from 'uuid';
 
 import createS3Client from './lib/s3';
 import { PEOPLE_KEY } from './lib/constants';
 import logger from './lib/logger';
+// import lambda from './lib/lambda';
+import rekognition from './lib/rekognition';
+
 import { getSchema, putSchema } from './joi/stream';
 import { success, failure } from './lib/responses';
 
 let s3;
+const MATCH_THRESHOLD = 80;
+const fotopiaGroup = process.env.FOTOPIA_GROUP;
 
 export function getS3Params() {
   const data = {
@@ -64,18 +70,68 @@ export function putPeople(people) {
   return s3.putObject(s3PutParams).promise();
 }
 
-export function getPeopleForFaces(records, existingPeople) {
-  return {
-    ...existingPeople,
-    ...records,
+export function getFaceMatch(face, faceToMatch) {
+  const params = {
+    CollectionId: fotopiaGroup,
+    Image: face,
+    Compare: faceToMatch,
   };
+  return rekognition ?
+    rekognition.searchFaces(params)
+      .promise() :
+    {
+      Match: Math.random() * 100,
+    };
 }
 
-export function getUpdatedPeople(existingPeople, peopleForTheseFaces) {
-  return {
-    ...existingPeople,
-    ...peopleForTheseFaces,
-  };
+export function getPeopleForFace(faceId, existingPeople, faceMatcher) {
+  return Promise.all(existingPeople.map(person => ({
+    Person: person.id,
+    Match: faceMatcher(faceId, person.keyFaceId),
+  })));
+}
+
+export function getNewImageRecords(records) {
+  return records.filter(record => record.dynamodb &&
+    record.dynamodb.NewImage &&
+    !record.dynamodb.OldImage)
+    .map(record => ddbAttVals.unwrap(record.dynamodb.NewImage));
+}
+
+export function getPeopleForFaces(newImages, existingPeople, faceMatcher) {
+  return Promise.all(newImages[0].faces
+    .map(face => getPeopleForFace(face.Face.FaceId, existingPeople, faceMatcher)
+      .then(matches => ({
+        FaceId: face.Face.FaceId,
+        ExternalImageId: face.Face.ExternalImageId,
+        img_thumb_key: newImages[0].img_thumb_key,
+        userIdentityId: newImages[0].userIdentityId,
+        People: matches,
+      }))));
+}
+
+export function getFacesThatMatchThisPerson(person, faces) {
+  return faces.filter(face => face.People
+    .find(p => p.Person === person.id && p.Match >= MATCH_THRESHOLD));
+}
+
+export function getNewPeople(facesWithPeople) {
+  const newFaces = facesWithPeople
+    .filter(face => !face.People.find(person => person.Match >= MATCH_THRESHOLD));
+  return newFaces.map(newFace => ({
+    name: '',
+    id: uuid.v1(),
+    keyFaceId: newFace.FaceId,
+    faces: [newFace],
+  }));
+}
+
+
+export function getUpdatedPeople(existingPeople, facesWithPeople) {
+  return existingPeople.map(person => ({
+    ...person,
+    faces: person.faces.concat(getFacesThatMatchThisPerson(person, facesWithPeople)),
+  })).concat(getNewPeople(facesWithPeople));
 }
 
 export function updateDynamoDb(records, peopleForTheseFaces) {
@@ -91,19 +147,20 @@ export function getRecordFields(records) {
 
 export async function addToPerson(event, context, callback) {
   const startTime = Date.now();
+  const newImageRecords = getNewImageRecords(event.Records);
   s3 = createS3Client();
   try {
     const existingPeople = await getExistingPeople();
-    const peopleForTheseFaces = getPeopleForFaces(event.Records, existingPeople);
-    const updatedPeople = getUpdatedPeople(existingPeople, peopleForTheseFaces);
+    const facesWithPeople = await getPeopleForFaces(newImageRecords, existingPeople, getFaceMatch);
+    const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
     const putPeoplePromise = putPeople(updatedPeople);
-    const updateDynamoDbPromise = updateDynamoDb(event.Records, peopleForTheseFaces);
+    const updateDynamoDbPromise = updateDynamoDb(newImageRecords, facesWithPeople);
     const peopleResponse = await putPeoplePromise;
     const updateResponse = await updateDynamoDbPromise;
-    logger(context, startTime, getRecordFields(event.Records));
+    logger(context, startTime, getRecordFields(newImageRecords));
     return callback(null, success({ peopleResponse, updateResponse }));
   } catch (err) {
-    logger(context, startTime, { err, ...getRecordFields(event.Records) });
+    logger(context, startTime, { err, ...getRecordFields(newImageRecords) });
     return callback(null, failure(err));
   }
 }
