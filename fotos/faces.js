@@ -70,25 +70,36 @@ export function putPeople(people) {
   return s3.putObject(s3PutParams).promise();
 }
 
-export function getFaceMatch(face, faceToMatch) {
+export function getFaceMatch(face) {
   const params = {
     CollectionId: fotopiaGroup,
-    Image: face,
-    Compare: faceToMatch,
+    FaceId: face,
+    FaceMatchThreshold: MATCH_THRESHOLD,
   };
   return rekognition ?
     rekognition.searchFaces(params)
       .promise() :
     {
-      Match: Math.random() * 100,
+      FaceMatches: [],
+      SearchedFaceId: face,
     };
 }
 
-export function getPeopleForFace(faceId, existingPeople, faceMatcher) {
-  return Promise.all(existingPeople.map(person => ({
+export function getSimilarityAggregate(person, faceMatches) {
+  const personFacesWithSimilarity = person.faces.map((personFace) => {
+    const faceMatch = faceMatches
+      .find(matchedFace => matchedFace.Face.FaceId === personFace.FaceId);
+    return faceMatch ? faceMatch.Similarity : 0;
+  });
+  return personFacesWithSimilarity
+    .reduce((accum, sim) => accum + sim, 0) / person.faces.length;
+}
+
+export function getPeopleForFace(existingPeople, faceMatches) {
+  return existingPeople.map(person => ({
     Person: person.id,
-    Match: faceMatcher(faceId, person.keyFaceId),
-  })));
+    Match: getSimilarityAggregate(person, faceMatches),
+  }));
 }
 
 export function getNewImageRecords(records) {
@@ -98,16 +109,20 @@ export function getNewImageRecords(records) {
     .map(record => ddbAttVals.unwrap(record.dynamodb.NewImage));
 }
 
+// can there be multiple insert records in one event? probably?
 export function getPeopleForFaces(newImages, existingPeople, faceMatcher) {
   return Promise.all(newImages[0].faces
-    .map(face => getPeopleForFace(face.Face.FaceId, existingPeople, faceMatcher)
-      .then(matches => ({
-        FaceId: face.Face.FaceId,
-        ExternalImageId: face.Face.ExternalImageId,
-        img_thumb_key: newImages[0].img_thumb_key,
-        userIdentityId: newImages[0].userIdentityId,
-        People: matches,
-      }))));
+    .map(face => faceMatcher(face.Face.FaceId)
+      .then(({ FaceMatches, SearchedFaceId }) => {
+        const peopleMatches = getPeopleForFace(existingPeople, FaceMatches);
+        return {
+          FaceId: SearchedFaceId,
+          ExternalImageId: face.Face.ExternalImageId,
+          img_thumb_key: newImages[0].img_thumb_key,
+          userIdentityId: newImages[0].userIdentityId,
+          People: peopleMatches,
+        };
+      })));
 }
 
 export function getFacesThatMatchThisPerson(person, faces) {
