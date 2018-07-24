@@ -125,8 +125,8 @@ export function getPeopleForFaces(newImages, existingPeople, faceMatcher) {
       })));
 }
 
-export function getFacesThatMatchThisPerson(person, faces) {
-  return faces.filter(face => face.People
+export function getFacesThatMatchThisPerson(person, facesWithPeopleMatches) {
+  return facesWithPeopleMatches.filter(face => face.People
     .find(p => p.Person === person.id && p.Match >= MATCH_THRESHOLD));
 }
 

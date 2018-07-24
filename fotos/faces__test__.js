@@ -220,28 +220,95 @@ test('getPeopleForFaces', (t) => {
     t.fail(e);
   }
 });
-/*
-test('getNewPeople', (t) => {
-  faces.getPeopleForFaces(faces.getNewImageRecords(records), existingPeople, mockFaceMatcher)
-    .then((facesWithPeople) => {
-      const result = faces.getNewPeople(facesWithPeople);
-      t.equal(result.length, 1);
-      t.equal(result[0].keyFaceId, 'zab');
-      t.end();
-    });
+
+test('getNewPeople - faces that don\'t match an existing person', (t) => {
+  const facesWithMatchedPeople = [{
+    FaceId: 'face1',
+    People: [{
+      Person: 'fred',
+      Match: 23,
+    }],
+  }, {
+    FaceId: 'face2',
+    People: [{
+      Person: 'ginger',
+      Match: 85,
+    }],
+  }];
+  const result = faces.getNewPeople(facesWithMatchedPeople);
+  t.equal(result.length, 1);
+  t.equal(result[0].keyFaceId, 'face1');
+  t.end();
+});
+
+
+test('getFacesThatMatchThisPerson', (t) => {
+  const person = {
+    id: 'ginger',
+  };
+  const facesWithMatchedPeople = [{
+    FaceId: 'face1',
+    People: [{
+      Person: 'ginger',
+      Match: 23,
+    }],
+  }, {
+    FaceId: 'face2',
+    People: [{
+      Person: 'ginger',
+      Match: 85,
+    }],
+  }];
+  const result = faces.getFacesThatMatchThisPerson(person, facesWithMatchedPeople);
+  t.equal(result.length, 1);
+  t.equal(result[0].FaceId, facesWithMatchedPeople[1].FaceId);
+  t.end();
 });
 
 test('getUpdatedPeople', (t) => {
-  faces.getPeopleForFaces(faces.getNewImageRecords(records), existingPeople, mockFaceMatcher)
-    .then((facesWithPeople) => {
-      const result = faces.getUpdatedPeople(existingPeople, facesWithPeople);
-
-      t.equal(result[0].faces.length, existingPeople[0].faces.length + 1, 'add face to oren');
-      const idForInsertedRecord = result[0].faces
-        .find(face => face.ExternalImageId === records[0].dynamodb.Keys.id.S)
-      t.ok(, 'should find the id for the inserted record');
-      t.equal(result.length, existingPeople.length + 1, 'add a new person for the unmatched face');
-      t.end();
-    });
+  const people = [{
+    id: 'ginger',
+    faces: [{
+      FaceId: 'face0',
+    }],
+  }, {
+    id: 'fred',
+    faces: [{
+      FaceId: 'face99',
+    }],
+  }];
+  const facesWithMatchedPeople = [{
+    FaceId: 'face1',
+    People: [{
+      Person: 'ginger',
+      Match: 23,
+    }],
+  }, {
+    FaceId: 'face2',
+    People: [{
+      Person: 'ginger',
+      Match: 85,
+    }],
+  }];
+  const result = faces.getUpdatedPeople(people, facesWithMatchedPeople);
+  t.equal(result[0].faces.length, 2, 'add face to ginger');
+  t.equal(result[0].faces[1].FaceId, facesWithMatchedPeople[1].FaceId, 'should find the id for the inserted record');
+  t.equal(result.length, people.length + 1, 'add a new person for the unmatched face');
+  t.equal(result[2].name, '', 'new person has an empty name field');
+  t.equal(result[2].keyFaceId, facesWithMatchedPeople[0].FaceId, 'face with low ginger match is key face for new person');
+  t.end();
 });
-*/
+
+
+test('getUpdatedPeople - new person with no matching faces', (t) => {
+  const people = [];
+  const facesWithMatchedPeople = [{
+    FaceId: 'face1',
+    People: [],
+  }];
+  const result = faces.getUpdatedPeople(people, facesWithMatchedPeople);
+  t.equal(result.length, 1, 'add a new person for the unmatched face');
+  t.equal(result[0].name, '', 'new person has an empty name field');
+  t.equal(result[0].keyFaceId, facesWithMatchedPeople[0].FaceId, 'face with no people matches is key face for new person');
+  t.end();
+});
