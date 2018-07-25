@@ -52,6 +52,12 @@ const records = [{
       userIdentityId: {
         S: 'us-east-1:7261e973-d20d-406a-828c-d8cf70fd888e',
       },
+      birthtime: {
+        N: 454654654,
+      },
+      group: {
+        S: 'mygroup',
+      },
     },
   },
 }, {
@@ -340,5 +346,40 @@ test('getUpdatedPeople - new person with no matching faces', (t) => {
   t.equal(result.length, 1, 'add a new person for the unmatched face');
   t.equal(result[0].name, '', 'new person has an empty name field');
   t.equal(result[0].keyFaceId, facesWithMatchedPeople[0].FaceId, 'face with no people matches is key face for new person');
+  t.end();
+});
+
+test('getUpdatePathParameters - no people', (t) => {
+  const newImageRecords = faces.getNewImageRecords(records);
+  faces.getPeopleForFaces(newImageRecords, existingPeople, mockFaceMatcher)
+    .then((facesWithPeople) => {
+      const result = faces.getUpdatePathParameters(newImageRecords, facesWithPeople);
+      t.deepEqual(result.people.length, 0, 'passes joi validation but has 0 results, as none over threshold');
+      t.end();
+    });
+});
+
+test('getUpdatePathParameters - has people', (t) => {
+  const newImageRecords = [{
+    id: uuid.v1(),
+    username: 'bob',
+    birthtime: 34354345,
+    tags: [],
+  }];
+  const facesWithPeople = [{
+    FaceId: 'face1',
+    People: [{
+      Person: 'ginger',
+      Match: 23,
+    }],
+  }, {
+    FaceId: 'face2',
+    People: [{
+      Person: 'ginger',
+      Match: 85,
+    }],
+  }];
+  const result = faces.getUpdatePathParameters(newImageRecords, facesWithPeople);
+  t.deepEqual(result.people, ['ginger'], 'passes joi validation and 1 results, as one face is over threshold');
   t.end();
 });

@@ -18,12 +18,16 @@ import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
 import uuid from 'uuid';
 
 import createS3Client from './lib/s3';
-import { PEOPLE_KEY } from './lib/constants';
+import {
+  PEOPLE_KEY,
+  INVOCATION_REQUEST_RESPONSE,
+} from './lib/constants';
 import logger from './lib/logger';
-// import lambda from './lib/lambda';
+import lambda from './lib/lambda';
 import rekognition from './lib/rekognition';
 
 import { getSchema, putSchema, peopleSchema } from './joi/stream';
+import { requestSchema } from './joi/update';
 import { success, failure } from './lib/responses';
 
 const MATCH_THRESHOLD = 80;
@@ -112,7 +116,10 @@ export function getNewImageRecords(records) {
   return records.filter(record => record.dynamodb &&
     record.dynamodb.NewImage &&
     !record.dynamodb.OldImage)
-    .map(record => ddbAttVals.unwrap(record.dynamodb.NewImage));
+    .map(record => ({
+      ...ddbAttVals.unwrap(record.dynamodb.Keys),
+      ...ddbAttVals.unwrap(record.dynamodb.NewImage),
+    }));
 }
 
 // can there be multiple insert records in one event? probably?
@@ -155,10 +162,35 @@ export function getUpdatedPeople(existingPeople, facesWithPeople) {
   })).concat(getNewPeople(facesWithPeople));
 }
 
-export function updateDynamoDb(records, peopleForTheseFaces) {
+export function getUpdatePathParameters(newImages, peopleForTheseFaces) {
+  const pathParameters = {
+    username: newImages[0].username,
+    id: newImages[0].id,
+    birthtime: newImages[0].birthtime,
+    tags: newImages[0].tags,
+    meta: newImages[0].meta,
+    people: peopleForTheseFaces.map(face => face.People
+      .filter(person => person.Match >= MATCH_THRESHOLD)
+      .map(person => person.Person))
+      .filter(people => people.length > 0)
+      .reduce((accum, item) => accum.concat(item), []),
+  };
+  const result = Joi.validate(pathParameters, requestSchema);
+  if (result.error !== null) {
+    throw result.error;
+  } else {
+    return pathParameters;
+  }
+}
+
+export function getInvokeUpdateParams(pathParameters) {
   return {
-    ...records,
-    ...peopleForTheseFaces,
+    InvocationType: INVOCATION_REQUEST_RESPONSE,
+    FunctionName: process.env.IS_OFFLINE ? 'update' : `${process.env.LAMBDA_PREFIX}update`,
+    LogType: 'Tail',
+    Payload: JSON.stringify({
+      pathParameters,
+    }),
   };
 }
 
@@ -173,14 +205,17 @@ export async function addToPerson(event, context, callback) {
   const bucket = process.env.S3_BUCKET;
   const key = PEOPLE_KEY;
   try {
+    // todo handle multiple new image records if feasible scenario
     const existingPeople = await getExistingPeople(s3, bucket, key);
     const facesWithPeople = await getPeopleForFaces(newImageRecords, existingPeople, getFaceMatch);
     const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
     const putPeoplePromise = putPeople(s3, updatedPeople);
-    const updateDynamoDbPromise = updateDynamoDb(newImageRecords, facesWithPeople);
+    const pathParameters = getUpdatePathParameters(newImageRecords, facesWithPeople);
+    const updateParams = getInvokeUpdateParams(pathParameters);
+    const updateDynamoDbPromise = lambda.invoke(updateParams).promise();
     const peopleResponse = await putPeoplePromise;
     const updateResponse = await updateDynamoDbPromise;
-    logger(context, startTime, getRecordFields(newImageRecords));
+    logger(context, startTime, getRecordFields(updateResponse));
     return callback(null, success({ peopleResponse, updateResponse }));
   } catch (err) {
     logger(context, startTime, { err, ...getRecordFields(newImageRecords) });
