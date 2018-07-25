@@ -23,17 +23,16 @@ import logger from './lib/logger';
 // import lambda from './lib/lambda';
 import rekognition from './lib/rekognition';
 
-import { getSchema, putSchema } from './joi/stream';
+import { getSchema, putSchema, peopleSchema } from './joi/stream';
 import { success, failure } from './lib/responses';
 
-let s3;
 const MATCH_THRESHOLD = 80;
 const fotopiaGroup = process.env.FOTOPIA_GROUP;
 
-export function getS3Params() {
+export function getS3Params(Bucket, Key) {
   const data = {
-    Bucket: process.env.S3_BUCKET,
-    Key: PEOPLE_KEY,
+    Bucket,
+    Key,
   };
   const result = Joi.validate(data, getSchema);
   if (result.error !== null) {
@@ -58,14 +57,21 @@ export function getS3PutParams(indexData) {
   }
 }
 
-export function getExistingPeople() {
-  const s3Params = getS3Params();
+export function getExistingPeople(s3, Bucket, Key) {
+  const s3Params = getS3Params(Bucket, Key);
   return s3.getObject(s3Params).promise()
-    .then(s3Object => JSON.parse(s3Object.Body.toString()))
-    .catch(error => ({ error, people: {} }));
+    .then((s3Object) => {
+      const object = JSON.parse(s3Object.Body.toString());
+      const result = Joi.validate(object, peopleSchema);
+      if (result.error !== null) {
+        throw result.error;
+      } else {
+        return result;
+      }
+    });
 }
 
-export function putPeople(people) {
+export function putPeople(s3, people) {
   const s3PutParams = getS3PutParams(people);
   return s3.putObject(s3PutParams).promise();
 }
@@ -95,7 +101,7 @@ export function getSimilarityAggregate(person, faceMatches) {
     .reduce((accum, sim) => accum + sim, 0) / person.faces.length;
 }
 
-export function getPeopleForFace(existingPeople, faceMatches) {
+export function getPeopleForFace(existingPeople = [], faceMatches) {
   return existingPeople.map(person => ({
     Person: person.id,
     Match: getSimilarityAggregate(person, faceMatches),
@@ -163,12 +169,14 @@ export function getRecordFields(records) {
 export async function addToPerson(event, context, callback) {
   const startTime = Date.now();
   const newImageRecords = getNewImageRecords(event.Records);
-  s3 = createS3Client();
+  const s3 = createS3Client();
+  const bucket = process.env.S3_BUCKET;
+  const key = PEOPLE_KEY;
   try {
-    const existingPeople = await getExistingPeople();
+    const existingPeople = await getExistingPeople(s3, bucket, key);
     const facesWithPeople = await getPeopleForFaces(newImageRecords, existingPeople, getFaceMatch);
     const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
-    const putPeoplePromise = putPeople(updatedPeople);
+    const putPeoplePromise = putPeople(s3, updatedPeople);
     const updateDynamoDbPromise = updateDynamoDb(newImageRecords, facesWithPeople);
     const peopleResponse = await putPeoplePromise;
     const updateResponse = await updateDynamoDbPromise;

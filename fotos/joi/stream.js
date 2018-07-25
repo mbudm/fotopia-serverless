@@ -12,3 +12,18 @@ export const putSchema = Joi.object().keys({
   Key: Joi.string().required(),
 });
 
+export const peopleSchema = Joi.array().items(Joi.object().keys({
+  name: Joi.string().allow(''),
+  id: Joi.string().guid().required(),
+  keyFaceId: Joi.string().guid().required(),
+  faces: Joi.array().items(Joi.object().keys({
+    FaceId: Joi.string().guid().required(),
+    ExternalImageId: Joi.string().guid().required(),
+    img_thumb_key: Joi.string().required(),
+    userIdentityId: Joi.string().required(),
+    compare: Joi.array().items(Joi.object().keys({
+      FaceId: Joi.string().guid().required(),
+      Match: Joi.number(),
+    })),
+  })),
+}));

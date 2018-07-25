@@ -1,13 +1,24 @@
 import test from 'tape';
+import uuid from 'uuid';
+
 import * as faces from './faces';
 
+const uuids = {
+  someUserImageOne: uuid.v1(),
+  someUserImageOneFaceOne: uuid.v1(),
+  someUserImageOneFaceTwo: uuid.v1(),
+  oren: uuid.v1(),
+  orenFaceTwo: uuid.v1(),
+  personTwo: uuid.v1(),
+  personTwoFaceOne: uuid.v1(),
+};
 const records = [{
   eventName: 'INSERT',
   dynamodb: {
     ApproximateCreationDateTime: 1529636100,
     Keys: {
       id: {
-        S: 'jkl',
+        S: uuids.someUserImageOne,
       },
       username: {
         S: 'someuser',
@@ -19,8 +30,8 @@ const records = [{
           M: {
             Face: {
               M: {
-                ExternalImageId: { S: 'jkl' },
-                FaceId: { S: 'def' },
+                ExternalImageId: { S: uuids.someUserImageOne },
+                FaceId: { S: uuids.someUserImageOneFaceOne },
               },
             },
           },
@@ -28,8 +39,8 @@ const records = [{
           M: {
             Face: {
               M: {
-                ExternalImageId: { S: 'jkl' },
-                FaceId: { S: 'zab' },
+                ExternalImageId: { S: uuids.someUserImageOne },
+                FaceId: { S: uuids.someUserImageOneFaceTwo },
               },
             },
           },
@@ -58,30 +69,30 @@ const records = [{
 
 const existingPeople = [{
   name: 'Oren',
-  id: 'abc',
-  keyFaceId: 'def',
+  id: uuids.oren,
+  keyFaceId: uuids.someUserImageOneFaceOne,
   faces: [{
-    FaceId: 'def',
-    ExternalImageId: 'xyz',
+    FaceId: uuids.someUserImageOneFaceOne,
+    ExternalImageId: uuid.v1(),
     img_thumb_key: 'otheruser/two-thumbnail.jpg',
     userIdentityId: 'yada',
   }, {
-    FaceId: 'ghi',
-    ExternalImageId: 'uvw',
+    FaceId: uuids.orenFaceTwo,
+    ExternalImageId: uuid.v1(),
     img_thumb_key: 'someuser/one-thumbnail.jpg',
     userIdentityId: 'yadayada',
     compare: [{
-      FaceId: 'def',
+      FaceId: uuids.someUserImageOneFaceOne,
       Match: 99.8944320678711,
     }],
   }],
 }, {
   name: '',
-  id: 'mno',
-  keyFaceId: 'pqr',
+  id: uuids.personTwo,
+  keyFaceId: uuids.personTwoFaceOne,
   faces: [{
-    FaceId: 'pqr',
-    ExternalImageId: 'stu',
+    FaceId: uuids.personTwoFaceOne,
+    ExternalImageId: uuid.v1(),
     img_thumb_key: 'fred/seven-thumbnail.jpg',
     userIdentityId: 'yabbadabba',
   }],
@@ -100,6 +111,25 @@ const mockFaceMatcher = (originalId) => {
     SearchedFaceId: originalId,
   }));
 };
+
+test('getExistingPeople', (t) => {
+  const s3 = {
+    getObject: () => ({
+      promise: () => new Promise(res => res({
+        Body: JSON.stringify(existingPeople),
+      })),
+    }),
+  };
+  try {
+    faces.getExistingPeople(s3, 'bucket', 'key')
+      .then((result) => {
+        t.deepEqual(result, existingPeople, 'passes joi validation for peopleSchema');
+        t.end();
+      });
+  } catch (e) {
+    t.fail(e);
+  }
+});
 
 test('getNewImageRecords', (t) => {
   const result = faces.getNewImageRecords(records);
@@ -208,11 +238,11 @@ test('getPeopleForFaces', (t) => {
     faces.getPeopleForFaces(faces.getNewImageRecords(records), existingPeople, mockFaceMatcher)
       .then((res) => {
         t.equal(res.length, 2);
-        t.equal(res[0].FaceId, 'def');
+        t.equal(res[0].FaceId, uuids.someUserImageOneFaceOne);
         t.equal(res[0].People.length, 2);
-        t.equal(res[0].People[0].Person, 'abc');
+        t.equal(res[0].People[0].Person, uuids.oren);
         t.equal(res[0].People[0].Match, 50, 'match 50 for person 0 (1 of 2 faces match)');
-        t.equal(res[1].FaceId, 'zab');
+        t.equal(res[1].FaceId, uuids.someUserImageOneFaceTwo);
         t.equal(res[1].People[0].Match, 0);
         t.end();
       });
