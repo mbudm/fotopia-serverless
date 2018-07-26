@@ -248,15 +248,15 @@ export default function (auth, api, upload) {
     const apiPath = getEndpointPath(records[1]);
     api.put(apiUrl, apiPath, { body: updatedRecord })
       .then((responseBody) => {
-        t.equal(responseBody.username, updatedRecord.username);
-        t.equal(responseBody.id, updatedRecord.id);
+        t.equal(responseBody.username, records[1].username);
+        t.equal(responseBody.id, records[1].id);
         t.equal(responseBody.meta.newProperty, updatedRecord.meta.newProperty);
       })
       .catch(formatError);
   });
 
   test('get updated item', (t) => {
-    t.plan(2);
+    t.plan(3);
     const apiPath = getEndpointPath(records[1]);
     api.get(apiUrl, apiPath)
       .then((responseBody) => {

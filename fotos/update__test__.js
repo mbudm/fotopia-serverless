@@ -28,7 +28,7 @@ test('getDynamoDbParams', (t) => {
   try {
     const params = update.getDynamoDbParams(requestParams, requestBody);
     t.deepEqual(params.Key.username, requestParams.username);
-    t.equal(params.UpdateExpression, 'SET #people = :people, #meta = :meta updatedAt = :updatedAt');
+    t.equal(params.UpdateExpression, 'SET #people = :people, #meta = :meta, updatedAt = :updatedAt');
     t.end();
   } catch (e) {
     t.fail(e);

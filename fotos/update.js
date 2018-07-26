@@ -33,7 +33,7 @@ export function getDynamoDbParams(keys, body) {
     Key: keys,
     ExpressionAttributeNames,
     ExpressionAttributeValues,
-    UpdateExpression: `SET ${updateKeyValues} updatedAt = :updatedAt`,
+    UpdateExpression: `SET ${updateKeyValues}, updatedAt = :updatedAt`,
     ReturnValues: 'ALL_NEW',
   };
 
@@ -53,12 +53,11 @@ export async function updateItem(event, context, callback) {
     const requestBody = validateBody(data);
     const requestParams = validateRequest(pathParams);
     const ddbParams = getDynamoDbParams(requestParams, requestBody);
-    await dynamodb.update(ddbParams).promise();
+    const ddbResponse = await dynamodb.update(ddbParams).promise();
     logger(context, startTime, {
-      requestBody,
-      requestParams,
+      ddbResponse,
     });
-    return callback(null, success(ddbParams.Item));
+    return callback(null, success(ddbResponse.Attributes));
   } catch (err) {
     logger(context, startTime, { err, ...data, ...pathParams });
     return callback(null, failure(err));
