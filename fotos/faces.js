@@ -227,7 +227,7 @@ export async function addToPerson(event, context, callback) {
     }));
     return callback(null, success({ existingPeople }));
   } catch (err) {
-    logger(context, startTime, { err, newImageRecords });
+    logger(context, startTime, { err, newImageRecords, recs: event.Records });
     return callback(null, failure(err));
   }
 }
