@@ -262,7 +262,7 @@ export default function (auth, api, upload) {
       .then((responseBody) => {
         t.equal(responseBody.id, records[1].id);
         t.equal(responseBody.meta.newProperty, 'squirrel', 'updated data');
-        t.deepEqual(responseBody.tags, records[1].tags, 'existing data unaffected');
+        t.ok(responseBody.tags.includes(records[1].tags[0]), 'existing data unaffected');
       })
       .catch(formatError);
   });
