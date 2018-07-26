@@ -207,11 +207,11 @@ export async function createItem(event, context, callback) {
     await dynamodb.put(ddbParams).promise();
     if (process.env.IS_OFFLINE) {
       const streamParams = getInvokeParams(ddbParams, 'stream');
-      await lambda.invoke(streamParams).promise();
-      // const facesParams = getInvokeParams(ddbParams, 'faces');
-      // const facesLambdaPromise = lambda.invoke(facesParams).promise();
-      // const streamResponse = await streamPromise;
-      // const facesResponse = await facesLambdaPromise;
+      const streamPromise = lambda.invoke(streamParams).promise();
+      const facesParams = getInvokeParams(ddbParams, 'faces');
+      const facesLambdaPromise = lambda.invoke(facesParams).promise();
+      await streamPromise;
+      await facesLambdaPromise;
     }
     logger(context, startTime, { ...ddbParams });
     return callback(null, success(ddbParams.Item));
