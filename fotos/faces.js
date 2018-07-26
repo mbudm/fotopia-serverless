@@ -207,27 +207,30 @@ export function getRecordFields(records) {
 
 export async function addToPerson(event, context, callback) {
   const startTime = Date.now();
-  const newImageRecords = getNewImageRecords(event.Records);
+  const newImages = getNewImageRecords(event.Records);
   const s3 = createS3Client();
   const bucket = process.env.S3_BUCKET;
   const key = PEOPLE_KEY;
   try {
-    // todo handle multiple new image records if feasible scenario
-    const existingPeople = await getExistingPeople(s3, bucket, key, context, startTime);
-    const facesWithPeople = await getPeopleForFaces(newImageRecords, existingPeople, getFaceMatch);
-    const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
-    const putPeoplePromise = putPeople(s3, updatedPeople, bucket, key);
-    const pathParameters = getUpdatePathParameters(newImageRecords);
-    const body = getUpdateBody(facesWithPeople);
-    const updateParams = getInvokeUpdateParams(pathParameters, body);
-    const updateDynamoDbResponse = await lambda.invoke(updateParams).promise();
-    await putPeoplePromise;
-    logger(context, startTime, getRecordFields({
-      updateDynamoDbResponse,
-    }));
-    return callback(null, success({ existingPeople }));
+    let logMeta;
+    if (newImages.length > 0) {
+      // todo handle multiple new image records if feasible scenario
+      const existingPeople = await getExistingPeople(s3, bucket, key, context, startTime);
+      const facesWithPeople = await getPeopleForFaces(newImages, existingPeople, getFaceMatch);
+      const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
+      const putPeoplePromise = putPeople(s3, updatedPeople, bucket, key);
+      const pathParameters = getUpdatePathParameters(newImages);
+      const body = getUpdateBody(facesWithPeople);
+      const updateParams = getInvokeUpdateParams(pathParameters, body);
+      logMeta = await lambda.invoke(updateParams).promise();
+      await putPeoplePromise;
+    } else {
+      logMeta = { msg: 'no new images', rec: event.Records[0].eventName };
+    }
+    logger(context, startTime, logMeta);
+    return callback(null, success({ logMeta }));
   } catch (err) {
-    logger(context, startTime, { err, newImageRecords, recs: event.Records });
+    logger(context, startTime, { err, newImages, recs: event.Records });
     return callback(null, failure(err));
   }
 }
