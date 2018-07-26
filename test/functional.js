@@ -238,6 +238,35 @@ export default function (auth, api, upload) {
       .catch(formatError);
   });
 
+  test('update item two', (t) => {
+    t.plan(3);
+    const updatedRecord = {
+      meta: {
+        newProperty: 'squirrel',
+      },
+    };
+    const apiPath = getEndpointPath(records[1]);
+    api.put(apiUrl, apiPath, { body: updatedRecord })
+      .then((responseBody) => {
+        t.equal(responseBody.username, updatedRecord.username);
+        t.equal(responseBody.id, updatedRecord.id);
+        t.equal(responseBody.meta.newProperty, updatedRecord.meta.newProperty);
+      })
+      .catch(formatError);
+  });
+
+  test('get updated item', (t) => {
+    t.plan(2);
+    const apiPath = getEndpointPath(records[1]);
+    api.get(apiUrl, apiPath)
+      .then((responseBody) => {
+        t.equal(responseBody.id, records[1].id);
+        t.equal(responseBody.meta.newProperty, 'squirrel', 'updated data');
+        t.deepEqual(responseBody.tags, records[1].tags, 'existing data unaffected');
+      })
+      .catch(formatError);
+  });
+
   test('force kill amplify process', (t) => {
     t.end();
     process.exit(0);

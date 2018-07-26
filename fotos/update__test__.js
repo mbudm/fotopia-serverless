@@ -2,20 +2,20 @@ import test from 'tape';
 import uuid from 'uuid';
 import * as update from './update';
 
-const requestBody = {
+const requestParams = {
   username: 'pedro',
   id: uuid.v1(),
-  birthtime: 123,
+};
+const requestBody = {
   people: ['Bob'],
-  tags: [],
   meta: {
     location: 'Peru',
   },
 };
 
-test('validateRequest', (t) => {
+test('validateBody', (t) => {
   try {
-    const result = update.validateRequest(requestBody);
+    const result = update.validateBody(requestBody);
     t.deepEqual(result, requestBody);
     t.end();
   } catch (e) {
@@ -26,8 +26,9 @@ test('validateRequest', (t) => {
 test('getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {
-    const params = update.getDynamoDbParams(requestBody);
-    t.deepEqual(params.Key.username, requestBody.username);
+    const params = update.getDynamoDbParams(requestParams, requestBody);
+    t.deepEqual(params.Key.username, requestParams.username);
+    t.equal(params.UpdateExpression, 'SET #people = :people, #meta = :meta updatedAt = :updatedAt');
     t.end();
   } catch (e) {
     t.fail(e);

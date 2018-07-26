@@ -22,6 +22,7 @@ if (process.env.IS_OFFLINE) {
       const handlerFn = getHandlerFn(handler);
       return {
         promise: () => new Promise((resolve, reject) => {
+          console.log('---- lambda invoke ----', invokeParams.FunctionName);
           handlerFn(
             JSON.parse(invokeParams.Payload), // assumes fn expects request params here
             null,

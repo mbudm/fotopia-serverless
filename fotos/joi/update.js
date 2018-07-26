@@ -1,10 +1,11 @@
 import Joi from 'joi';
 
 export const requestSchema = Joi.object().keys({
-  username: Joi.string().required(),
-  id: Joi.string().guid().required(),
-  birthtime: Joi.date().required(),
+  userIdentityId: Joi.string(),
+  birthtime: Joi.date(),
+  img_key: Joi.string(),
   people: Joi.array().items(Joi.string()).unique(),
+  faces: Joi.array().items(Joi.object()),
   tags: Joi.array().items(Joi.string()).unique(),
   meta: Joi.object(),
 });

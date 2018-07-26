@@ -349,23 +349,17 @@ test('getUpdatedPeople - new person with no matching faces', (t) => {
   t.end();
 });
 
-test('getUpdatePathParameters - no people', (t) => {
+test('getUpdateBody - no people', (t) => {
   const newImageRecords = faces.getNewImageRecords(records);
   faces.getPeopleForFaces(newImageRecords, existingPeople, mockFaceMatcher)
     .then((facesWithPeople) => {
-      const result = faces.getUpdatePathParameters(newImageRecords, facesWithPeople);
+      const result = faces.getUpdateBody(facesWithPeople);
       t.deepEqual(result.people.length, 0, 'passes joi validation but has 0 results, as none over threshold');
       t.end();
     });
 });
 
-test('getUpdatePathParameters - has people', (t) => {
-  const newImageRecords = [{
-    id: uuid.v1(),
-    username: 'bob',
-    birthtime: 34354345,
-    tags: [],
-  }];
+test('getUpdateBody - has people', (t) => {
   const facesWithPeople = [{
     FaceId: 'face1',
     People: [{
@@ -379,7 +373,19 @@ test('getUpdatePathParameters - has people', (t) => {
       Match: 85,
     }],
   }];
-  const result = faces.getUpdatePathParameters(newImageRecords, facesWithPeople);
+  const result = faces.getUpdateBody(facesWithPeople);
   t.deepEqual(result.people, ['ginger'], 'passes joi validation and 1 results, as one face is over threshold');
+  t.end();
+});
+
+test('getUpdatePathParameters', (t) => {
+  const newImageRecords = [{
+    id: uuid.v1(),
+    username: 'bob',
+    birthtime: 34354345,
+    tags: [],
+  }];
+  const result = faces.getUpdatePathParameters(newImageRecords);
+  t.equal(result.username, 'bob');
   t.end();
 });

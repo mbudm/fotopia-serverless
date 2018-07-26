@@ -25,3 +25,12 @@ export function del(hostname, route) {
     .then(response => response.json())
     .catch(handleError);
 }
+
+export function put(hostname, route, params) {
+  return fetch(`${hostname}${route}`, {
+    method: 'PUT',
+    body: JSON.stringify(params.body),
+  })
+    .then(response => response.json())
+    .catch(handleError);
+}

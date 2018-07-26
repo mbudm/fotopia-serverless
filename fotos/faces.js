@@ -23,9 +23,10 @@ import {
   INVOCATION_REQUEST_RESPONSE,
 } from './lib/constants';
 import logger from './lib/logger';
-import lambda from './lib/lambda';
+// import lambda from './lib/lambda';
 import rekognition from './lib/rekognition';
 
+import { validateRequest } from './get';
 import { getSchema, putSchema, peopleSchema } from './joi/stream';
 import { requestSchema } from './joi/update';
 import { success, failure } from './lib/responses';
@@ -46,12 +47,12 @@ export function getS3Params(Bucket, Key) {
   }
 }
 
-export function getS3PutParams(indexData) {
+export function getS3PutParams(indexData, Bucket, Key) {
   const data = {
     Body: JSON.stringify(indexData),
-    Bucket: process.env.S3_BUCKET,
+    Bucket,
     ContentType: 'application/json',
-    Key: PEOPLE_KEY,
+    Key,
   };
   const result = Joi.validate(data, putSchema);
   if (result.error !== null) {
@@ -61,7 +62,7 @@ export function getS3PutParams(indexData) {
   }
 }
 
-export function getExistingPeople(s3, Bucket, Key) {
+export function getExistingPeople(s3, Bucket, Key, context, startTime) {
   const s3Params = getS3Params(Bucket, Key);
   return s3.getObject(s3Params).promise()
     .then((s3Object) => {
@@ -72,11 +73,15 @@ export function getExistingPeople(s3, Bucket, Key) {
       } else {
         return result;
       }
+    })
+    .catch((e) => {
+      logger(context, startTime, { err: e, msg: 'Existing people object get error' });
+      return [];
     });
 }
 
-export function putPeople(s3, people) {
-  const s3PutParams = getS3PutParams(people);
+export function putPeople(s3, people, Bucket, Key) {
+  const s3PutParams = getS3PutParams(people, Bucket, Key);
   return s3.putObject(s3PutParams).promise();
 }
 
@@ -162,34 +167,36 @@ export function getUpdatedPeople(existingPeople, facesWithPeople) {
   })).concat(getNewPeople(facesWithPeople));
 }
 
-export function getUpdatePathParameters(newImages, peopleForTheseFaces) {
-  const pathParameters = {
-    username: newImages[0].username,
-    id: newImages[0].id,
-    birthtime: newImages[0].birthtime,
-    tags: newImages[0].tags,
-    meta: newImages[0].meta,
+export function getUpdateBody(peopleForTheseFaces) {
+  const body = {
     people: peopleForTheseFaces.map(face => face.People
       .filter(person => person.Match >= MATCH_THRESHOLD)
       .map(person => person.Person))
       .filter(people => people.length > 0)
       .reduce((accum, item) => accum.concat(item), []),
   };
-  const result = Joi.validate(pathParameters, requestSchema);
+  const result = Joi.validate(body, requestSchema);
   if (result.error !== null) {
     throw result.error;
   } else {
-    return pathParameters;
+    return body;
   }
 }
+export function getUpdatePathParameters(newImages) {
+  return validateRequest({
+    username: newImages[0].username,
+    id: newImages[0].id,
+  });
+}
 
-export function getInvokeUpdateParams(pathParameters) {
+export function getInvokeUpdateParams(pathParameters, body) {
   return {
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     FunctionName: process.env.IS_OFFLINE ? 'update' : `${process.env.LAMBDA_PREFIX}update`,
     LogType: 'Tail',
     Payload: JSON.stringify({
       pathParameters,
+      body,
     }),
   };
 }
@@ -206,22 +213,52 @@ export async function addToPerson(event, context, callback) {
   const key = PEOPLE_KEY;
   try {
     // todo handle multiple new image records if feasible scenario
-    const existingPeople = await getExistingPeople(s3, bucket, key);
+    const existingPeople = await getExistingPeople(s3, bucket, key, context, startTime);
     const facesWithPeople = await getPeopleForFaces(newImageRecords, existingPeople, getFaceMatch);
     const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
-    const putPeoplePromise = putPeople(s3, updatedPeople);
-    const pathParameters = getUpdatePathParameters(newImageRecords, facesWithPeople);
-    const updateParams = getInvokeUpdateParams(pathParameters);
-    const updateDynamoDbPromise = lambda.invoke(updateParams).promise();
-    const peopleResponse = await putPeoplePromise;
-    const updateResponse = await updateDynamoDbPromise;
-    logger(context, startTime, getRecordFields(updateResponse));
-    return callback(null, success({ peopleResponse, updateResponse }));
+    const putPeoplePromise = await putPeople(s3, updatedPeople, bucket, key);
+
+    const pathParameters = getUpdatePathParameters(newImageRecords);
+    const body = getUpdateBody(facesWithPeople);
+    const updateParams = getInvokeUpdateParams(body, pathParameters);
+    // const updateDynamoDbPromise = await lambda.invoke(updateParams).promise();
+    logger(context, startTime, getRecordFields({
+      updatedPeople,
+      putPeoplePromise,
+      updateParams,
+    }));
+    return callback(null, success({ existingPeople }));
   } catch (err) {
     logger(context, startTime, { err, ...getRecordFields(newImageRecords) });
     return callback(null, failure(err));
   }
 }
+
+// export async function addToPerson(event, context, callback) {
+//   const startTime = Date.now();
+//   const newImageRecords = getNewImageRecords(event.Records);
+//   const s3 = createS3Client();
+//   const bucket = process.env.S3_BUCKET;
+//   const key = PEOPLE_KEY;
+//   try {
+//     // todo handle multiple new image records if feasible scenario
+//     const existingPeople = await getExistingPeople(s3, bucket, key, context, startTime);
+//     const facesWithPeople = await getPeopleForFaces(newImageRecords,
+// existingPeople, getFaceMatch);
+//     const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
+//     const putPeoplePromise = putPeople(s3, updatedPeople, bucket, key);
+//     const pathParameters = getUpdatePathParameters(newImageRecords, facesWithPeople);
+//     const updateParams = getInvokeUpdateParams(pathParameters);
+//     const updateDynamoDbPromise = lambda.invoke(updateParams).promise();
+//     const peopleResponse = await putPeoplePromise;
+//     const updateResponse = await updateDynamoDbPromise;
+//     logger(context, startTime, getRecordFields(updateResponse));
+//     return callback(null, success({ peopleResponse, updateResponse }));
+//   } catch (err) {
+//     logger(context, startTime, { err, ...getRecordFields(newImageRecords) });
+//     return callback(null, failure(err));
+//   }
+// }
 
 
 /*

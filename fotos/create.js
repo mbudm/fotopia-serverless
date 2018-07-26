@@ -144,10 +144,10 @@ export function getRekognitionLabelData(data) {
     [];
 }
 
-export function getInvokeStreamParams(ddbParams) {
+export function getInvokeParams(ddbParams, name) {
   return {
     InvocationType: INVOCATION_REQUEST_RESPONSE,
-    FunctionName: 'stream',
+    FunctionName: name,
     LogType: 'Tail',
     Payload: JSON.stringify({
       Records: [
@@ -167,6 +167,18 @@ export function getInvokeStreamParams(ddbParams) {
               },
               faces: {
                 L: [],
+              },
+              img_thumb_key: {
+                S: 'someuser/three-thumbnail.jpg',
+              },
+              userIdentityId: {
+                S: 'us-east-1:7261e973-d20d-406a-828c-d8cf70fd888e',
+              },
+              birthtime: {
+                N: 454654654,
+              },
+              group: {
+                S: 'mygroup',
               },
             },
           },
@@ -194,8 +206,12 @@ export async function createItem(event, context, callback) {
     const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, faces, labels);
     await dynamodb.put(ddbParams).promise();
     if (process.env.IS_OFFLINE) {
-      const params = getInvokeStreamParams(ddbParams);
-      await lambda.invoke(params).promise();
+      const streamParams = getInvokeParams(ddbParams, 'stream');
+      await lambda.invoke(streamParams).promise();
+      // const facesParams = getInvokeParams(ddbParams, 'faces');
+      // const facesLambdaPromise = lambda.invoke(facesParams).promise();
+      // const streamResponse = await streamPromise;
+      // const facesResponse = await facesLambdaPromise;
     }
     logger(context, startTime, { ...ddbParams });
     return callback(null, success(ddbParams.Item));
