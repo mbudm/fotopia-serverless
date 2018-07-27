@@ -213,7 +213,7 @@ export async function createItem(event, context, callback) {
       await streamPromise;
       await facesLambdaPromise;
     }
-    logger(context, startTime, { ...ddbParams });
+    logger(context, startTime, { ddbParams, faces });
     return callback(null, success(ddbParams.Item));
   } catch (err) {
     logger(context, startTime, { err, ...data });
