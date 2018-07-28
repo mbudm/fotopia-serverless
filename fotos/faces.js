@@ -142,6 +142,7 @@ export function getPeopleForFaces(newImages, existingPeople, faceMatcher) {
           img_thumb_key: newImages[0].img_thumb_key,
           userIdentityId: newImages[0].userIdentityId,
           People: peopleMatches,
+          FaceMatches,
         };
       })));
 }
