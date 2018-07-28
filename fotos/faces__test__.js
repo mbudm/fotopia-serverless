@@ -91,6 +91,7 @@ const existingPeople = [{
       Person: uuids.oren,
       Match: 99.8944320678711,
     }],
+    FaceMatches: [{ someProp: 999 }],
   }],
 }, {
   name: '',

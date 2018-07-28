@@ -25,5 +25,6 @@ export const peopleSchema = Joi.array().items(Joi.object().keys({
       Person: Joi.string().guid().required(),
       Match: Joi.number(),
     })),
+    FaceMatches: Joi.array(),
   })),
 }));
