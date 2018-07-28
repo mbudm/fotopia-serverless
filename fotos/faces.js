@@ -67,6 +67,8 @@ export function getExistingPeople(s3, Bucket, Key, context, startTime) {
   return s3.getObject(s3Params).promise()
     .then((s3Object) => {
       const object = JSON.parse(s3Object.Body.toString());
+      logger(context, startTime, { s3PeopleObject: object });
+      console.log('--- people raw response --- ', object);
       const result = Joi.validate(object, peopleSchema);
       if (result.error !== null) {
         throw result.error;
@@ -76,6 +78,7 @@ export function getExistingPeople(s3, Bucket, Key, context, startTime) {
     })
     .catch((e) => {
       logger(context, startTime, { err: e, msg: 'Existing people object get error' });
+      console.log('--- people raw error --- ', e);
       return [];
     });
 }
