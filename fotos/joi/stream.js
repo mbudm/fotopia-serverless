@@ -21,8 +21,8 @@ export const peopleSchema = Joi.array().items(Joi.object().keys({
     ExternalImageId: Joi.string().guid().required(),
     img_thumb_key: Joi.string().required(),
     userIdentityId: Joi.string().required(),
-    compare: Joi.array().items(Joi.object().keys({
-      FaceId: Joi.string().guid().required(),
+    People: Joi.array().items(Joi.object().keys({
+      Person: Joi.string().guid().required(),
       Match: Joi.number(),
     })),
   })),

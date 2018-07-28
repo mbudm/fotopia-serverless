@@ -87,8 +87,8 @@ const existingPeople = [{
     ExternalImageId: uuid.v1(),
     img_thumb_key: 'someuser/one-thumbnail.jpg',
     userIdentityId: 'yadayada',
-    compare: [{
-      FaceId: uuids.someUserImageOneFaceOne,
+    People: [{
+      Person: uuids.oren,
       Match: 99.8944320678711,
     }],
   }],
