@@ -231,10 +231,11 @@ export async function addToPerson(event, context, callback) {
         facesWithPeople,
         updatedPeople,
         updateResponse: JSON.parse(updateResponse.Payload),
+        newImages,
       };
       await putPeoplePromise;
     } else {
-      logMeta = { msg: 'no new images', rec: event.Records[0].eventName };
+      logMeta = { msg: 'no new images', recEventName: event.Records[0].eventName };
     }
     logger(context, startTime, logMeta);
     return callback(null, success({ logMeta }));
