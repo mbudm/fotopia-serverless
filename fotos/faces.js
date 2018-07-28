@@ -223,7 +223,12 @@ export async function addToPerson(event, context, callback) {
       const body = getUpdateBody(facesWithPeople);
       const updateParams = getInvokeUpdateParams(pathParameters, body);
       const updateResponse = await lambda.invoke(updateParams).promise();
-      logMeta = { facesWithPeople, updatedPeople, updateResponse };
+      logMeta = {
+        existingPeople,
+        facesWithPeople,
+        updatedPeople,
+        updateResponse: JSON.parse(updateResponse.Payload),
+      };
       await putPeoplePromise;
     } else {
       logMeta = { msg: 'no new images', rec: event.Records[0].eventName };
