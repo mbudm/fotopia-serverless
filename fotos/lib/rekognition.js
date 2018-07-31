@@ -184,6 +184,13 @@ const getFaces = (externalImageId, specifiedFaceId) => {
   ];
 };
 
+const getFace = (externalImageId, specifiedFaceId) => {
+  const faces = getFaces(externalImageId, specifiedFaceId);
+  const idx = Math.floor(Math.random() * faces.length);
+  return faces[idx];
+};
+
+
 function offlineClient() {
   return {
     createCollection: () => ({
@@ -191,7 +198,7 @@ function offlineClient() {
     }),
     indexFaces: params => ({
       promise: () => new Promise(res => res({
-        FaceRecords: getFaces(params.ExternalImageId),
+        FaceRecords: [getFace(params.ExternalImageId)],
         FaceModelVersion: '3.0',
       })),
     }),
@@ -216,15 +223,15 @@ function offlineClient() {
     searchFaces: ({ FaceId }) => ({
       promise: () => new Promise((res) => {
         const originalId = FaceId || uuid.v1();
-        const faces = getFaces(null, FaceId);
+        const face = getFace(null, FaceId);
         res({
-          FaceMatches: faces.map(face => ({
+          FaceMatches: [{
             Face: {
               ExternalImageId: face.ExternalImageId,
               FaceId: face.FaceId,
             },
             Similarity: originalId === face.faceId ? 100 : 0,
-          })),
+          }],
           SearchedFaceId: originalId,
         });
       }),
