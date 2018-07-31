@@ -113,9 +113,11 @@ export function getExistingPeople(s3, Bucket, Key, context, startTime) {
       return validatePeople(object);
     })
     .catch((e) => {
-      logger(context, startTime, { err: e, msg: 'Existing people object get error' });
-      console.log('--- people raw error --- ', e);
-      return [];
+      if (e.code === 'NoSuchKey') {
+        console.log('No object found - assuming empty people list');
+        return [];
+      }
+      throw new Error(e);
     });
 }
 
@@ -262,6 +264,9 @@ export async function addToPerson(event, context, callback) {
   const s3 = createS3Client();
   const bucket = process.env.S3_BUCKET;
   const key = PEOPLE_KEY;
+  console.log('------- faces ----- ');
+
+  console.log('newImages', newImages);
   try {
     let logMeta;
     if (newImages.length > 0) {
@@ -273,13 +278,12 @@ export async function addToPerson(event, context, callback) {
       const pathParameters = getUpdatePathParameters(newImages);
       const body = getUpdateBody(facesWithPeople);
       const updateParams = getInvokeUpdateParams(pathParameters, body);
-      const updateResponse = await lambda.invoke(updateParams).promise();
+      await lambda.invoke(updateParams).promise();
       logMeta = {
         existingPeople,
         facesWithPeople,
         updatedPeople,
-        updateResponse: JSON.parse(updateResponse.Payload),
-        newImages,
+        newImages: newImages.length,
       };
       await putPeoplePromise;
     } else {
@@ -288,7 +292,7 @@ export async function addToPerson(event, context, callback) {
     logger(context, startTime, logMeta);
     return callback(null, success({ logMeta }));
   } catch (err) {
-    logger(context, startTime, { err, newImages, recs: event.Records });
+    logger(context, startTime, { err, newImages: newImages.length });
     return callback(null, failure(err));
   }
 }

@@ -1,6 +1,7 @@
 
 import uuid from 'uuid';
 import Joi from 'joi';
+import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
 import dynamodb from './lib/dynamodb';
 import lambda from './lib/lambda';
 import rekognition from './lib/rekognition';
@@ -155,32 +156,13 @@ export function getInvokeParams(ddbParams, name) {
           dynamodb: {
             Keys: {
               id: {
-                S: 'bbf1ae40-75c7-11e8-b1f5-e7a9339da1f0',
+                S: ddbParams.Item.id,
               },
               username: {
-                S: 'tester',
+                S: ddbParams.Item.username,
               },
             },
-            NewImage: {
-              tags: {
-                L: ddbParams.Item.tags.map(item => ({ S: item })),
-              },
-              faces: {
-                L: [],
-              },
-              img_thumb_key: {
-                S: 'someuser/three-thumbnail.jpg',
-              },
-              userIdentityId: {
-                S: 'us-east-1:7261e973-d20d-406a-828c-d8cf70fd888e',
-              },
-              birthtime: {
-                N: 454654654,
-              },
-              group: {
-                S: 'mygroup',
-              },
-            },
+            NewImage: ddbAttVals.wrap(ddbParams.Item),
           },
         },
       ],
@@ -216,7 +198,7 @@ export async function createItem(event, context, callback) {
     logger(context, startTime, { ddbParams, faces });
     return callback(null, success(ddbParams.Item));
   } catch (err) {
-    logger(context, startTime, { err, ...data });
+    logger(context, startTime, { err, createRequestData: data });
     return callback(null, failure(err));
   }
 }

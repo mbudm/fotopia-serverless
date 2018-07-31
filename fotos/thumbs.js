@@ -13,7 +13,6 @@ export const THUMB_HEIGHT = 200;
 
 export function validateRequest(data) {
   const result = Joi.validate(data, requestSchema);
-  console.log('thumb validated req', result);
   if (result.error !== null) {
     throw result.error;
   } else {
