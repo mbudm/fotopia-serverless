@@ -59,7 +59,7 @@ export async function updateItem(event, context, callback) {
     });
     return callback(null, success(ddbResponse.Attributes));
   } catch (err) {
-    logger(context, startTime, { err, data, pathParams });
+    logger(context, startTime, { err, requestBodyType: typeof data, pathParams });
     return callback(null, failure(err));
   }
 }

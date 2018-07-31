@@ -108,8 +108,7 @@ export function getExistingPeople(s3, Bucket, Key, context, startTime) {
   return s3.getObject(s3Params).promise()
     .then((s3Object) => {
       const object = JSON.parse(s3Object.Body.toString());
-      logger(context, startTime, { s3PeopleObject: object });
-      console.log('--- people raw response --- ', object);
+      logger(context, startTime, { s3PeopleObjectLength: object.length });
       return validatePeople(object);
     })
     .catch((e) => {
@@ -196,7 +195,7 @@ export function getNewPeople(facesWithPeople) {
   const newPeople = newFaces.map(newFace => ({
     name: '',
     id: uuid.v1(),
-    thumbnail: 'todo-create-person-thumb.jpg',
+    thumbnail: newFace.img_thumb_key,
     faces: [{
       FaceId: newFace.FaceId,
       ExternalImageId: newFace.ExternalImageId,

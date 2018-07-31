@@ -40,7 +40,10 @@ export async function getItem(event, context, callback) {
     const ddbParams = getDynamoDbParams(request);
     const ddbResponse = await dynamodb.get(ddbParams).promise();
     const responseBody = getResponseBody(ddbResponse, request);
-    logger(context, startTime, { ...event.pathParameters, ...responseBody });
+    logger(context, startTime, {
+      requestParams: event.pathParameters,
+      responseType: typeof ddbResponse.Item,
+    });
     return callback(null, success(responseBody));
   } catch (err) {
     logger(context, startTime, { err, ...event.pathParameters });

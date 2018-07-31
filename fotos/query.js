@@ -95,10 +95,10 @@ export async function queryItems(event, context, callback) {
     const ddbParams = getDynamoDbParams(request);
     const ddbResponse = await dynamodb.query(ddbParams).promise();
     const responseBody = getResponseBody(ddbResponse, request);
-    logger(context, startTime, { ...data });
+    logger(context, startTime, { requestData: data });
     return callback(null, success(responseBody));
   } catch (err) {
-    logger(context, startTime, { err, ...data });
+    logger(context, startTime, { err, requestData: data });
     return callback(null, failure(err));
   }
 }
