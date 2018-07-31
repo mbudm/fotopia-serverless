@@ -15,16 +15,9 @@ export const putSchema = Joi.object().keys({
 export const peopleSchema = Joi.array().items(Joi.object().keys({
   name: Joi.string().allow(''),
   id: Joi.string().guid().required(),
-  keyFaceId: Joi.string().guid().required(),
+  thumbnail: Joi.string().required(),
   faces: Joi.array().items(Joi.object().keys({
-    FaceId: Joi.string().guid().required(),
+    FaceId: Joi.string().guid().required().label('FaceId in a face object in the people schema'),
     ExternalImageId: Joi.string().guid().required(),
-    img_thumb_key: Joi.string().required(),
-    userIdentityId: Joi.string().required(),
-    People: Joi.array().items(Joi.object().keys({
-      Person: Joi.string().guid().required(),
-      Match: Joi.number(),
-    })),
-    FaceMatches: Joi.array(),
-  })),
-}));
+  })).label('facess array'),
+})).label('people array');

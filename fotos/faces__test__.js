@@ -76,32 +76,21 @@ const records = [{
 const existingPeople = [{
   name: 'Oren',
   id: uuids.oren,
-  keyFaceId: uuids.someUserImageOneFaceOne,
+  thumbnail: 'people/somekey.jpg',
   faces: [{
     FaceId: uuids.someUserImageOneFaceOne,
     ExternalImageId: uuid.v1(),
-    img_thumb_key: 'otheruser/two-thumbnail.jpg',
-    userIdentityId: 'yada',
   }, {
     FaceId: uuids.orenFaceTwo,
     ExternalImageId: uuid.v1(),
-    img_thumb_key: 'someuser/one-thumbnail.jpg',
-    userIdentityId: 'yadayada',
-    People: [{
-      Person: uuids.oren,
-      Match: 99.8944320678711,
-    }],
-    FaceMatches: [{ someProp: 999 }],
   }],
 }, {
   name: '',
   id: uuids.personTwo,
-  keyFaceId: uuids.personTwoFaceOne,
+  thumbnail: 'people/someotherkey.jpg',
   faces: [{
     FaceId: uuids.personTwoFaceOne,
     ExternalImageId: uuid.v1(),
-    img_thumb_key: 'fred/seven-thumbnail.jpg',
-    userIdentityId: 'yabbadabba',
   }],
 }];
 
@@ -260,13 +249,15 @@ test('getPeopleForFaces', (t) => {
 
 test('getNewPeople - faces that don\'t match an existing person', (t) => {
   const facesWithMatchedPeople = [{
-    FaceId: 'face1',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [{
       Person: 'fred',
       Match: 23,
     }],
   }, {
-    FaceId: 'face2',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [{
       Person: 'ginger',
       Match: 85,
@@ -274,25 +265,27 @@ test('getNewPeople - faces that don\'t match an existing person', (t) => {
   }];
   const result = faces.getNewPeople(facesWithMatchedPeople);
   t.equal(result.length, 1);
-  t.equal(result[0].keyFaceId, 'face1');
+  t.equal(result[0].faces[0].FaceId, facesWithMatchedPeople[0].FaceId);
   t.end();
 });
 
 
 test('getFacesThatMatchThisPerson', (t) => {
   const person = {
-    id: 'ginger',
+    id: uuid.v1(),
   };
   const facesWithMatchedPeople = [{
-    FaceId: 'face1',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [{
-      Person: 'ginger',
+      Person: person.id,
       Match: 23,
     }],
   }, {
-    FaceId: 'face2',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [{
-      Person: 'ginger',
+      Person: person.id,
       Match: 85,
     }],
   }];
@@ -304,35 +297,41 @@ test('getFacesThatMatchThisPerson', (t) => {
 
 test('getUpdatedPeople', (t) => {
   const people = [{
-    id: 'ginger',
+    id: uuid.v1(),
+    thumbnail: 'some.jpg',
     faces: [{
-      FaceId: 'face0',
+      FaceId: uuid.v1(),
+      ExternalImageId: uuid.v1(),
     }],
   }, {
-    id: 'fred',
+    id: uuid.v1(),
+    thumbnail: 'some.jpg',
     faces: [{
-      FaceId: 'face99',
+      FaceId: uuid.v1(),
+      ExternalImageId: uuid.v1(),
     }],
   }];
   const facesWithMatchedPeople = [{
-    FaceId: 'face1',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [{
-      Person: 'ginger',
+      Person: people[0].id,
       Match: 23,
     }],
   }, {
-    FaceId: 'face2',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [{
-      Person: 'ginger',
+      Person: people[0].id,
       Match: 85,
     }],
   }];
   const result = faces.getUpdatedPeople(people, facesWithMatchedPeople);
-  t.equal(result[0].faces.length, 2, 'add face to ginger');
+  t.equal(result[0].faces.length, 2, 'add face to person 1');
   t.equal(result[0].faces[1].FaceId, facesWithMatchedPeople[1].FaceId, 'should find the id for the inserted record');
   t.equal(result.length, people.length + 1, 'add a new person for the unmatched face');
   t.equal(result[2].name, '', 'new person has an empty name field');
-  t.equal(result[2].keyFaceId, facesWithMatchedPeople[0].FaceId, 'face with low ginger match is key face for new person');
+  t.equal(result[2].faces[0].FaceId, facesWithMatchedPeople[0].FaceId, 'face with low person 1 match is key face for new person');
   t.end();
 });
 
@@ -340,13 +339,14 @@ test('getUpdatedPeople', (t) => {
 test('getUpdatedPeople - new person with no matching faces', (t) => {
   const people = [];
   const facesWithMatchedPeople = [{
-    FaceId: 'face1',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [],
   }];
   const result = faces.getUpdatedPeople(people, facesWithMatchedPeople);
   t.equal(result.length, 1, 'add a new person for the unmatched face');
   t.equal(result[0].name, '', 'new person has an empty name field');
-  t.equal(result[0].keyFaceId, facesWithMatchedPeople[0].FaceId, 'face with no people matches is key face for new person');
+  t.equal(result[0].faces[0].FaceId, facesWithMatchedPeople[0].FaceId, 'face with no people matches is key face for new person');
   t.end();
 });
 
@@ -361,21 +361,26 @@ test('getUpdateBody - no people', (t) => {
 });
 
 test('getUpdateBody - has people', (t) => {
+  const person = {
+    id: uuid.v1(),
+  };
   const facesWithPeople = [{
-    FaceId: 'face1',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [{
-      Person: 'ginger',
+      Person: person.id,
       Match: 23,
     }],
   }, {
-    FaceId: 'face2',
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
     People: [{
-      Person: 'ginger',
+      Person: person.id,
       Match: 85,
     }],
   }];
   const result = faces.getUpdateBody(facesWithPeople);
-  t.deepEqual(result.people, ['ginger'], 'passes joi validation and 1 results, as one face is over threshold');
+  t.deepEqual(result.people, [person.id], 'passes joi validation and 1 results, as one face is over threshold');
   t.end();
 });
 

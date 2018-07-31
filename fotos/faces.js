@@ -12,6 +12,38 @@
 
  if no faces match then create a new person for this face.
 
+gonna need a faces database ?
+- store results of searchFaces
+- how to derive people?
+
+people just end up in indexes?
+store guid in
+
+or
+
+all stored on the image record
+
+indexFaces and searchFaces done on faces event lambda
+this adds faces and facematch data to the record
+
+then need to look up faces that are assigned to a
+person and add that person tag to this image record
+
+so just make existing people slimmer
+and store facematch data on the record
+omit match data below threshold?
+
+just
+{
+  id:
+  thumbnail: - create this immediately from the facedid image?
+  name:
+  faces: [{
+    faceId,
+    ExternalImageId,
+  }]
+}
+
 */
 import Joi from 'joi';
 import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
@@ -62,6 +94,15 @@ export function getS3PutParams(indexData, Bucket, Key) {
   }
 }
 
+export function validatePeople(object) {
+  const result = Joi.validate(object, peopleSchema);
+  if (result.error !== null) {
+    throw new Error(JSON.stringify(result.error));
+  } else {
+    return result;
+  }
+}
+
 export function getExistingPeople(s3, Bucket, Key, context, startTime) {
   const s3Params = getS3Params(Bucket, Key);
   return s3.getObject(s3Params).promise()
@@ -69,12 +110,7 @@ export function getExistingPeople(s3, Bucket, Key, context, startTime) {
       const object = JSON.parse(s3Object.Body.toString());
       logger(context, startTime, { s3PeopleObject: object });
       console.log('--- people raw response --- ', object);
-      const result = Joi.validate(object, peopleSchema);
-      if (result.error !== null) {
-        throw result.error;
-      } else {
-        return result;
-      }
+      return validatePeople(object);
     })
     .catch((e) => {
       logger(context, startTime, { err: e, msg: 'Existing people object get error' });
@@ -155,20 +191,30 @@ export function getFacesThatMatchThisPerson(person, facesWithPeopleMatches) {
 export function getNewPeople(facesWithPeople) {
   const newFaces = facesWithPeople
     .filter(face => !face.People.find(person => person.Match >= MATCH_THRESHOLD));
-  return newFaces.map(newFace => ({
+  const newPeople = newFaces.map(newFace => ({
     name: '',
     id: uuid.v1(),
-    keyFaceId: newFace.FaceId,
-    faces: [newFace],
+    thumbnail: 'todo-create-person-thumb.jpg',
+    faces: [{
+      FaceId: newFace.FaceId,
+      ExternalImageId: newFace.ExternalImageId,
+    }],
   }));
+  return newPeople; // return validatePeople(newPeople);
 }
 
 
 export function getUpdatedPeople(existingPeople, facesWithPeople) {
-  return existingPeople.map(person => ({
+  const updatedPeople = existingPeople.map(person => ({
     ...person,
-    faces: person.faces.concat(getFacesThatMatchThisPerson(person, facesWithPeople)),
+    faces: person.faces.concat(getFacesThatMatchThisPerson(person, facesWithPeople))
+      .map(face => ({
+        FaceId: face.FaceId,
+        ExternalImageId: face.ExternalImageId,
+      })),
   })).concat(getNewPeople(facesWithPeople));
+
+  return updatedPeople; // validatePeople(updatedPeople);
 }
 
 export function getUpdateBody(peopleForTheseFaces) {
