@@ -6,6 +6,7 @@ export const requestSchema = Joi.object().keys({
   img_key: Joi.string(),
   people: Joi.array().items(Joi.string()).unique(),
   faces: Joi.array().items(Joi.object()),
+  faceMatches: Joi.array().items(Joi.object()),
   tags: Joi.array().items(Joi.string()).unique(),
   meta: Joi.object(),
 });

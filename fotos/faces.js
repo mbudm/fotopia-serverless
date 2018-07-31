@@ -224,6 +224,7 @@ export function getUpdateBody(peopleForTheseFaces) {
       .map(person => person.Person))
       .filter(people => people.length > 0)
       .reduce((accum, item) => accum.concat(item), []),
+    faceMatches: peopleForTheseFaces,
   };
   const result = Joi.validate(body, requestSchema);
   if (result.error !== null) {

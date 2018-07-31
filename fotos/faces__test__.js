@@ -355,9 +355,10 @@ test('getUpdateBody - no people', (t) => {
   faces.getPeopleForFaces(newImageRecords, existingPeople, mockFaceMatcher)
     .then((facesWithPeople) => {
       const result = faces.getUpdateBody(facesWithPeople);
-      t.deepEqual(result.people.length, 0, 'passes joi validation but has 0 results, as none over threshold');
+      t.equal(result.people.length, 0, 'passes joi validation but has 0 results, as none over threshold');
       t.end();
-    });
+    })
+    .catch(t.fail);
 });
 
 test('getUpdateBody - has people', (t) => {
@@ -371,12 +372,26 @@ test('getUpdateBody - has people', (t) => {
       Person: person.id,
       Match: 23,
     }],
+    FaceMatches: [{
+      Face: {
+        ExternalImageId: uuid.v1(),
+        FaceId: uuid.v1(),
+      },
+      Similarity: 45,
+    }],
   }, {
     FaceId: uuid.v1(),
     ExternalImageId: uuid.v1(),
     People: [{
       Person: person.id,
       Match: 85,
+    }],
+    FaceMatches: [{
+      Face: {
+        ExternalImageId: uuid.v1(),
+        FaceId: uuid.v1(),
+      },
+      Similarity: 85,
     }],
   }];
   const result = faces.getUpdateBody(facesWithPeople);
