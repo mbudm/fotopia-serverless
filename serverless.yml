@@ -167,7 +167,7 @@ functions:
     memorySize: 128
     events:
       - http:
-          path: foto/config
+          path: config
           method: get
           cors: true
   thumbs:
@@ -175,7 +175,7 @@ functions:
     memorySize: 128
     events:
       - http:
-          path: foto/thumbs
+          path: thumbs
           method: post
           cors: true
           authorizer: aws_iam
@@ -184,7 +184,7 @@ functions:
     memorySize: 128
     events:
       - http:
-          path: foto/indexes
+          path: indexes
           method: get
           cors: true
   getPeople:
@@ -192,7 +192,7 @@ functions:
     memorySize: 128
     events:
       - http:
-          path: foto/people
+          path: people
           method: get
           cors: true
   stream:
