@@ -68,3 +68,29 @@ TEST_USER_NAME=YourTestUserName
 TEST_USER_TEMP_PWD=TempPwd123!
 TEST_USER_PWD=PermPwd456!
 ```
+### Backlog
+
+ - Write up some of this fun stuff as articles
+  - dynamodb design with elusive low cost search option and scaling
+  - cognito and amplify, performance, simpler alternatives
+  - PWAs on iOS and perf improvements (react to preact as sep article?)
+  - observability in serverless stack. identify good guids to track esp across dynamodb streams
+  - a full rekognition implememntation grouping faces into people efficiently
+  - an open source google photos alternative that cost $2 per month to host. 
+
+ - tech backlog
+  - db backup and migrate script for changes that need a stack rebuild
+    - could automate with sls package.. 
+    - if fails then, do backup/remove/deploy/restore
+    - separate s3 stack
+    - separate or backup/restore users
+  - update to aws amplify v1, break up the bundle
+  - migrate to preact & mobx
+  - keep stack warm/performance tweaking. ec2 comparison test.
+
+ - Moar features
+  - admin. user/family group
+  - delete
+  - edite meta
+  - public share
+  - rescan with faces attached to person
