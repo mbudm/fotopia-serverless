@@ -116,13 +116,19 @@ export function getExistingPeople(s3, Bucket, Key, context, startTime) {
         console.log('No object found - assuming empty people list');
         return [];
       }
-      throw new Error(e);
+      console.log('Another error with get people object', e);
+      const logitall = { e, s3Params };
+      throw new Error(JSON.stringify(logitall));
     });
 }
 
 export function putPeople(s3, people, Bucket, Key) {
   const s3PutParams = getS3PutParams(people, Bucket, Key);
-  return s3.putObject(s3PutParams).promise();
+  return s3.putObject(s3PutParams).promise()
+    .catch((e) => {
+      const logitall = { e, people };
+      throw new Error(JSON.stringify(logitall));
+    });
 }
 
 export function getFaceMatch(face) {
