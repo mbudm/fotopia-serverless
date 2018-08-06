@@ -15,7 +15,7 @@ export const putSchema = Joi.object().keys({
 export const peopleSchema = Joi.array().items(Joi.object().keys({
   name: Joi.string().allow(''),
   id: Joi.string().guid().required(),
-  userIdentityId: Joi.string().required(),
+  userIdentityId: Joi.string().allow(''),
   thumbnail: Joi.string().required(),
   faces: Joi.array().items(Joi.object().keys({
     FaceId: Joi.string().guid().required().label('FaceId in a face object in the people schema'),
