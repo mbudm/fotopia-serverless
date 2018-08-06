@@ -76,6 +76,7 @@ TEST_USER_PWD=PermPwd456!
   - PWAs on iOS and perf improvements (react to preact as sep article?)
   - observability in serverless stack. identify good guids to track esp across dynamodb streams
   - a full rekognition implememntation grouping faces into people efficiently
+  - a simple CI and functional testing option for serverless apps
   - an open source google photos alternative that cost $2 per month to host. 
 
  - tech backlog
