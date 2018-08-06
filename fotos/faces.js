@@ -195,6 +195,7 @@ export function getNewPeople(facesWithPeople) {
   const newPeople = newFaces.map(newFace => ({
     name: '',
     id: uuid.v1(),
+    userIdentityId: newFace.userIdentityId,
     thumbnail: newFace.img_thumb_key,
     faces: [{
       FaceId: newFace.FaceId,

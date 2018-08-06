@@ -77,6 +77,7 @@ const existingPeople = [{
   name: 'Oren',
   id: uuids.oren,
   thumbnail: 'people/somekey.jpg',
+  userIdentityId: 'some-str',
   faces: [{
     FaceId: uuids.someUserImageOneFaceOne,
     ExternalImageId: uuid.v1(),
@@ -88,6 +89,7 @@ const existingPeople = [{
   name: '',
   id: uuids.personTwo,
   thumbnail: 'people/someotherkey.jpg',
+  userIdentityId: 'some-str',
   faces: [{
     FaceId: uuids.personTwoFaceOne,
     ExternalImageId: uuid.v1(),
@@ -299,6 +301,7 @@ test('getUpdatedPeople', (t) => {
   const people = [{
     id: uuid.v1(),
     thumbnail: 'some.jpg',
+    userIdentityId: 'some-str',
     faces: [{
       FaceId: uuid.v1(),
       ExternalImageId: uuid.v1(),
@@ -306,6 +309,7 @@ test('getUpdatedPeople', (t) => {
   }, {
     id: uuid.v1(),
     thumbnail: 'some.jpg',
+    userIdentityId: 'some-str',
     faces: [{
       FaceId: uuid.v1(),
       ExternalImageId: uuid.v1(),
