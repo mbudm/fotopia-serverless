@@ -25,7 +25,7 @@ export function getConfig() {
       const customDomain = process.env.STAGE === 'prod' ?
         process.env.CUSTOM_DOMAIN_PROD :
         process.env.CUSTOM_DOMAIN_DEV;
-      const configEndpoint = `https://${customDomain}/foto/config`;
+      const configEndpoint = `https://${customDomain}/config`;
       fetch(configEndpoint)
         .then(response => res(response.json()))
         .catch(rej);
