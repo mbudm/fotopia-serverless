@@ -13,12 +13,12 @@ export const putSchema = Joi.object().keys({
 });
 
 export const peopleSchema = Joi.array().items(Joi.object().keys({
-  name: Joi.string().allow(''),
-  id: Joi.string().guid().required(),
-  userIdentityId: Joi.string().allow(''),
-  thumbnail: Joi.string().required(),
+  name: Joi.string().allow('').label('name'),
+  id: Joi.string().guid().required().label('id'),
+  userIdentityId: Joi.string().allow('').label('userIdentityId'),
+  thumbnail: Joi.string().required().label('thumbnail'),
   faces: Joi.array().items(Joi.object().keys({
     FaceId: Joi.string().guid().required().label('FaceId in a face object in the people schema'),
-    ExternalImageId: Joi.string().guid().required(),
+    ExternalImageId: Joi.string().guid().required().label('ExternalImageId'),
   })).label('facess array'),
 })).label('people array');

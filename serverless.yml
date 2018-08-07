@@ -195,6 +195,17 @@ functions:
           path: people
           method: get
           cors: true
+
+  updatePerson:
+    handler: fotos/people.updatePerson
+    memorySize: 128
+    events:
+      - http:
+          path: people/{id}
+          method: put
+          cors: true
+          authorizer: aws_iam
+
   stream:
     handler: fotos/stream.indexRecords
     memorySize: 128

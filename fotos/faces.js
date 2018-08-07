@@ -97,9 +97,9 @@ export function getS3PutParams(indexData, Bucket, Key) {
 export function validatePeople(object) {
   const result = Joi.validate(object, peopleSchema);
   if (result.error !== null) {
-    throw new Error(JSON.stringify(result.error));
+    throw new Error(JSON.stringify(result));
   } else {
-    return result;
+    return object;
   }
 }
 
@@ -117,8 +117,7 @@ export function getExistingPeople(s3, Bucket, Key, context, startTime) {
         return [];
       }
       console.log('Another error with get people object', e);
-      const logitall = { e, s3Params };
-      throw new Error(JSON.stringify(logitall));
+      return { error: e, s3Params };
     });
 }
 

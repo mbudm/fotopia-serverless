@@ -267,6 +267,43 @@ export default function (auth, api, upload) {
       .catch(formatError);
   });
 
+  let people;
+
+  test('getPeople', (t) => {
+    api.get(apiUrl, '/people')
+      .then((responseBody) => {
+        people = responseBody;
+        t.ok(Array.isArray(responseBody), 'people array');
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  const updatedPerson = {
+    name: 'Jacinta Dias',
+  };
+
+  test('updatePerson', (t) => {
+    api.put(apiUrl, `/people/${people[0].id}`, { body: updatedPerson })
+      .then((responseBody) => {
+        t.ok(responseBody, 'update person ok');
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  test('getPeople - check updated name', (t) => {
+    api.get(apiUrl, '/people')
+      .then((responseBody) => {
+        people = responseBody;
+        const personInResponse = responseBody.find(person => person.id === people[0].id);
+        t.equal(personInResponse.name, updatedPerson.name, 'updated name');
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+
   test('force kill amplify process', (t) => {
     t.end();
     process.exit(0);
