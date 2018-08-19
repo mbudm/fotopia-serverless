@@ -201,7 +201,7 @@ functions:
     memorySize: 128
     events:
       - http:
-          path: people/{id}
+          path: person/{id}
           method: put
           cors: true
           authorizer: aws_iam
