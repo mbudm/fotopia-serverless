@@ -284,7 +284,7 @@ export default function (auth, api, upload) {
   };
 
   test('updatePerson', (t) => {
-    api.put(apiUrl, `/people/${people[0].id}`, { body: updatedPerson })
+    api.put(apiUrl, `/person/${people[0].id}`, { body: updatedPerson })
       .then((responseBody) => {
         t.ok(responseBody, 'update person ok');
         t.end();
