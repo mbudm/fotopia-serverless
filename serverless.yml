@@ -187,7 +187,7 @@ functions:
           path: indexes
           method: get
           cors: true
-  getPeople:
+  people:
     handler: fotos/people.getItem
     memorySize: 128
     events:
@@ -196,7 +196,7 @@ functions:
           method: get
           cors: true
 
-  updatePerson:
+  person:
     handler: fotos/people.updatePerson
     memorySize: 128
     events:
