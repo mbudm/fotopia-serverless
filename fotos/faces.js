@@ -112,8 +112,8 @@ export function getExistingPeople(s3, Bucket, Key, context, startTime) {
       return validatePeople(object);
     })
     .catch((e) => {
-      if (e.code === 'NoSuchKey') {
-        console.log('No object found - assuming empty people list');
+      if (e.code === 'NoSuchKey' || e.code === 'AccessDenied') {
+        console.log('No object found / AccessDenied - assuming empty people list');
         return [];
       }
       console.log('Another error with get people object', e);
