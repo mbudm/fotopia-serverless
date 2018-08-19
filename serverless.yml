@@ -187,6 +187,7 @@ functions:
           path: indexes
           method: get
           cors: true
+          authorizer: aws_iam
   people:
     handler: fotos/people.getItem
     memorySize: 128
@@ -195,6 +196,7 @@ functions:
           path: people
           method: get
           cors: true
+          authorizer: aws_iam
 
   person:
     handler: fotos/people.updatePerson
