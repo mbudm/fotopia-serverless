@@ -11,6 +11,7 @@ before_install:
   - chmod +x .ci/remove.sh
   - chmod +x .ci/deploy.sh
   - chmod +x .ci/logging.sh
+  - npm install -g serverless
 jobs:
   include:
     - stage: remove

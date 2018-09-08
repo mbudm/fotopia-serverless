@@ -1,5 +1,4 @@
 yarn lint
-npm install -g serverless
 sls dynamodb install
 sls offline start --exec "yarn functional-local"
 sls deploy -s dev
