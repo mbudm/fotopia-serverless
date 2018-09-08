@@ -20,4 +20,4 @@ jobs:
       script: ".ci/deploy.sh"
     - stage: logging
       script: ".ci/logging.sh"
-      if: commit_message =~ /(redeploy)/
+      if: commit_message =~ /(recreatelogging)/
