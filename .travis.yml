@@ -14,3 +14,6 @@ jobs:
       if: commit_message =~ /(redeploy)/
     - stage: deploy
       script: ".ci/deploy.sh"
+    - stage: logging
+      script: ".ci/logging.sh"
+      if: commit_message =~ /(redeploy)/
