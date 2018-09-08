@@ -7,6 +7,10 @@ cache:
     - node_modules
 before_script:
   - sh serverless.env.sh
+before_install:
+  - chmod +x .ci/remove.sh
+  - chmod +x .ci/deploy.sh
+  - chmod +x .ci/logging.sh
 jobs:
   include:
     - stage: remove
