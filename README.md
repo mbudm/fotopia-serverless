@@ -96,7 +96,7 @@ TEST_USER_PWD=PermPwd456!
 - tech backlog
 
   - db backup and migrate script for changes that need a stack rebuild
-    - POC done with logging stack added post deploy
+    - POC done (kinda - a bit hand holdy) with logging stack added post deploy
     - could automate with sls package..
     - if fails then, do backup/remove/deploy/restore
     - separate s3 stack
