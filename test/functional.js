@@ -279,7 +279,7 @@ export default function (auth, api, upload) {
       .catch(formatError);
   });
   if (people.length > 0) {
-    // fixing oocasional race condition - https://travis-ci.org/mbudm/fotopia-serverless/jobs/426215588
+    // fixing occasional race condition - eg: https://travis-ci.org/mbudm/fotopia-serverless/jobs/426215588
     // sometimes the faces lambda - that creates the people object in s3 is not complete
     // before the functional tests get to this point. Until I think of a more robust option,
     // cordoning off these two tests
