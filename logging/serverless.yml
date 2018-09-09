@@ -21,6 +21,8 @@ provider:
     LogGroupName6: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-faces
     LogGroupName7: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-update
     LogGroupName8: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-config
+    LogGroupName9: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-person
+    LogGroupName10: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-people
     FilterPattern: ''
 resources:
   Resources:
@@ -147,6 +149,26 @@ resources:
             - CloudwatchLambdaHandler
             - Arn
         LogGroupName: ${self:provider.environment.LogGroupName8}
+        FilterPattern: ${self:provider.environment.FilterPattern}
+      DependsOn: ExecutePermission
+    CloudwatchSubscriptionFilter9:
+      Type: "AWS::Logs::SubscriptionFilter"
+      Properties:
+        DestinationArn:
+          "Fn::GetAtt":
+            - CloudwatchLambdaHandler
+            - Arn
+        LogGroupName: ${self:provider.environment.LogGroupName9}
+        FilterPattern: ${self:provider.environment.FilterPattern}
+      DependsOn: ExecutePermission
+    CloudwatchSubscriptionFilter10:
+      Type: "AWS::Logs::SubscriptionFilter"
+      Properties:
+        DestinationArn:
+          "Fn::GetAtt":
+            - CloudwatchLambdaHandler
+            - Arn
+        LogGroupName: ${self:provider.environment.LogGroupName10}
         FilterPattern: ${self:provider.environment.FilterPattern}
       DependsOn: ExecutePermission
     LambdaIAMRole:
