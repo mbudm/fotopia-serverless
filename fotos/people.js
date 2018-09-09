@@ -21,12 +21,12 @@ export function getS3Params() {
 export async function getItem(event, context, callback) {
   const startTime = Date.now();
   const s3 = createS3Client();
-  const s3Params = getS3Params();
+  const bucket = process.env.S3_BUCKET;
+  const key = PEOPLE_KEY;
   try {
-    const s3Object = await s3.getObject(s3Params).promise();
-    const parsedBuffer = JSON.parse(s3Object.Body.toString());
-    logger(context, startTime, { response: parsedBuffer });
-    return callback(null, success(parsedBuffer));
+    const existingPeople = await getExistingPeople(s3, bucket, key, context, startTime);
+    logger(context, startTime, { response: existingPeople });
+    return callback(null, success(existingPeople));
   } catch (err) {
     logger(context, startTime, { err });
     return callback(null, failure(err));
