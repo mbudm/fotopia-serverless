@@ -170,6 +170,10 @@ export function getInvokeParams(ddbParams, name) {
   };
 }
 
+function safeLength(arr) {
+  return Array.isArray(arr) ? arr.length : 0;
+}
+
 export function getLogFields({ Item }, faces, labels, request) {
   return {
     imageId: Item.id,
@@ -182,11 +186,11 @@ export function getLogFields({ Item }, faces, labels, request) {
     imageBirthtime: Item.birthtime,
     imageCreatedAt: Item.createdAt,
     imageUpdatedAt: Item.updatedAt,
-    createIdentifiedFacesCount: faces.length,
-    createIdentifiedLabelsCount: labels.length,
-    createPayloadTagCount: request.tags.length,
-    imageFacesCount: Item.faces.length,
-    imageTagCount: Item.tags.length,
+    createIdentifiedFacesCount: safeLength(faces),
+    createIdentifiedLabelsCount: safeLength(labels),
+    createPayloadTagCount: safeLength(request.tags),
+    imageFacesCount: safeLength(Item.faces),
+    imageTagCount: safeLength(Item.tags),
   };
 }
 
