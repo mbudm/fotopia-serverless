@@ -11,6 +11,12 @@ export function getS3Params() {
   };
 }
 
+export function getLogParams(params) {
+  const prefix = 'config';
+  return Object.keys(params)
+    .reduce((result, key) => ({ ...result, [prefix + key]: params[key] }), {});
+}
+
 export async function getItem(event, context, callback) {
   const startTime = Date.now();
   const s3 = createS3Client();
@@ -18,7 +24,7 @@ export async function getItem(event, context, callback) {
   try {
     const s3Object = await s3.getObject(s3Params).promise();
     const parsedBuffer = JSON.parse(s3Object.Body.toString());
-    logger(context, startTime, { ...s3Params });
+    logger(context, startTime, getLogParams(parsedBuffer));
     return callback(null, success(parsedBuffer));
   } catch (err) {
     logger(context, startTime, { err });
