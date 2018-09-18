@@ -170,6 +170,26 @@ export function getInvokeParams(ddbParams, name) {
   };
 }
 
+export function getLogFields({ Item }, faces, labels, request) {
+  return {
+    imageId: Item.id,
+    imageUsername: Item.username,
+    imageFamilyGroup: Item.group,
+    imageKey: Item.img_key,
+    imageWidth: Item.meta && Item.meta.imageWidth,
+    imageHeight: Item.meta && Item.meta.imageHeight,
+    imageUserIdentityId: Item.userIdentityId,
+    imageBirthtime: Item.birthtime,
+    imageCreatedAt: Item.createdAt,
+    imageUpdatedAt: Item.updatedAt,
+    createIdentifiedFacesCount: faces.length,
+    createIdentifiedLabelsCount: labels.length,
+    createPayloadTagCount: request.tags.length,
+    imageFacesCount: Item.faces.length,
+    imageTagCount: Item.tags.length,
+  };
+}
+
 export async function createItem(event, context, callback) {
   const startTime = Date.now();
   const id = uuid.v1();
@@ -195,7 +215,7 @@ export async function createItem(event, context, callback) {
       await streamPromise;
       await facesLambdaPromise;
     }
-    logger(context, startTime, { ddbParams, faces });
+    logger(context, startTime, getLogFields(ddbParams, faces, labels, request));
     return callback(null, success(ddbParams.Item));
   } catch (err) {
     logger(context, startTime, { err, createRequestData: data });
