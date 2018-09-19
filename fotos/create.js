@@ -187,7 +187,7 @@ export function getLogFields({ Item }, faces, labels, request) {
     imageCreatedAt: Item.createdAt,
     imageUpdatedAt: Item.updatedAt,
     createIdentifiedFacesCount: safeLength(faces),
-    createIdentifiedLabelsCount: safeLength(labels),
+    createIdentifiedLabelsCount: safeLength(getTagsFromRekognitionLabels(labels)),
     createPayloadTagCount: safeLength(request.tags),
     imageFacesCount: safeLength(Item.faces),
     imageTagCount: safeLength(Item.tags),
