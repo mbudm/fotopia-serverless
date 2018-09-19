@@ -170,7 +170,7 @@ export function getInvokeParams(ddbParams, name) {
   };
 }
 
-function safeLength(arr) {
+export function safeLength(arr) {
   return Array.isArray(arr) ? arr.length : 0;
 }
 
