@@ -62,6 +62,7 @@ import { validateRequest } from './get';
 import { getSchema, putSchema, peopleSchema } from './joi/stream';
 import { requestSchema } from './joi/update';
 import { success, failure } from './lib/responses';
+import { safeLength } from './create';
 
 const MATCH_THRESHOLD = 80;
 const fotopiaGroup = process.env.FOTOPIA_GROUP;
@@ -224,6 +225,7 @@ export function getUpdatedPeople(existingPeople, facesWithPeople) {
   return updatedPeople; // validatePeople(updatedPeople);
 }
 
+// why doesnt the first image with a face get the person id added to their record?
 export function getUpdateBody(peopleForTheseFaces) {
   const body = {
     people: peopleForTheseFaces.map(face => face.People
@@ -259,8 +261,27 @@ export function getInvokeUpdateParams(pathParameters, body) {
   };
 }
 
-export function getRecordFields(records) {
-  return records;
+export function getLogFields({
+  newImages,
+  eventRecords,
+  body,
+  existingPeople,
+  facesWithPeople,
+  updatedPeople,
+}) {
+  return {
+    imageId: newImages[0].id,
+    imageUsername: newImages[0].username,
+    imageFamilyGroup: newImages[0].id,
+    ddbEventInsertRecordsCount: newImages.length,
+    peopleCount: safeLength(existingPeople),
+    imageFacesWithPeopleCount: safeLength(facesWithPeople),
+    updatedPeopleCount: safeLength(updatedPeople),
+    imagePeopleCount: body.people,
+    imageFaceMatchCount: body.faceMatches,
+    imageFacesCount: newImages[0].faces,
+    ddbEventRecordsCount: safeLength(eventRecords),
+  };
 }
 
 export async function addToPerson(event, context, callback) {
@@ -269,9 +290,10 @@ export async function addToPerson(event, context, callback) {
   const s3 = createS3Client();
   const bucket = process.env.S3_BUCKET;
   const key = PEOPLE_KEY;
-  console.log('------- faces ----- ');
-
-  console.log('newImages', newImages);
+  let logMetaParams = {
+    newImages,
+    eventRecords: event.Records,
+  };
   try {
     let logMeta;
     if (newImages.length > 0) {
@@ -284,17 +306,16 @@ export async function addToPerson(event, context, callback) {
       const body = getUpdateBody(facesWithPeople);
       const updateParams = getInvokeUpdateParams(pathParameters, body);
       await lambda.invoke(updateParams).promise();
-      logMeta = {
+      logMetaParams = {
+        ...logMetaParams,
+        body,
         existingPeople,
         facesWithPeople,
         updatedPeople,
-        newImages: newImages.length,
       };
       await putPeoplePromise;
-    } else {
-      logMeta = { msg: 'no new images', recEventName: event.Records[0].eventName };
     }
-    logger(context, startTime, logMeta);
+    logger(context, startTime, getLogFields(logMetaParams));
     return callback(null, success({ logMeta }));
   } catch (err) {
     logger(context, startTime, { err, newImages: newImages.length });
