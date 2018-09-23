@@ -5,6 +5,7 @@ import createS3Client from './lib/s3';
 import { success, failure } from './lib/responses';
 import logger from './lib/logger';
 import { requestSchema, putSchema } from './joi/thumbs';
+import { safeLength } from './create';
 
 let s3;
 
@@ -38,7 +39,6 @@ export function validatePut({
 }
 
 export function getObject(Key) {
-  console.log('getObject', Key, process.env.S3_BUCKET);
   return s3.getObject({
     Bucket: process.env.S3_BUCKET,
     Key,
@@ -67,6 +67,26 @@ export function resizeAndUpload({
     }));
 }
 
+
+export function getLogFields(data) {
+  return {
+    imageId: data.id,
+    imageUsername: data.username,
+    imageFamilyGroup: data.group,
+    imagePeopleCount: safeLength(data.people),
+    imageFaceMatchCount: safeLength(data.faceMatches),
+    imageFacesCount: safeLength(data.faces),
+    imageTagCount: safeLength(data.tags),
+    imageKey: data.img_key,
+    imageWidth: data.meta && data.meta.width,
+    imageHeight: data.meta && data.meta.height,
+    imageUserIdentityId: data.userIdentityId,
+    imageBirthtime: data.birthtime,
+    imageCreatedAt: data.createdAt,
+    imageUpdatedAt: data.updatedAt,
+  };
+}
+
 export async function createThumb(event, context, callback) {
   const startTime = Date.now();
   const data = JSON.parse(event.body);
@@ -75,10 +95,10 @@ export async function createThumb(event, context, callback) {
     const request = validateRequest(data);
     const objData = await getObject(request.key);
     const result = await resizeAndUpload({ data: objData, key: request.thumbKey });
-    logger(context, startTime, { ...data });
+    logger(context, startTime, getLogFields(data));
     return callback(null, success(result));
   } catch (err) {
-    logger(context, startTime, { err, ...data });
+    logger(context, startTime, { err, ...getLogFields(data) });
     return callback(null, failure(err));
   }
 }

@@ -8,7 +8,7 @@ import { getSchema, putSchema } from './joi/stream';
 import { success, failure } from './lib/responses';
 
 import { safeLength } from './create';
-import { getZeroCount } from './faces';
+import { getZeroCount } from './indexes';
 
 let s3;
 
