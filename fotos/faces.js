@@ -272,8 +272,8 @@ export function getLogFields({
   return {
     imageId: newImages[0].id,
     imageUsername: newImages[0].username,
-    imageFamilyGroup: newImages[0].id,
-    imageUserIdentityId: newImages[0].imageUserIdentityId,
+    imageFamilyGroup: newImages[0].group,
+    imageUserIdentityId: newImages[0].userIdentityId,
     ddbEventInsertRecordsCount: newImages.length,
     peopleCount: safeLength(existingPeople),
     imageFacesWithPeopleCount: safeLength(facesWithPeople),

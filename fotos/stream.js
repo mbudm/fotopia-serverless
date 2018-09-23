@@ -7,6 +7,9 @@ import logger from './lib/logger';
 import { getSchema, putSchema } from './joi/stream';
 import { success, failure } from './lib/responses';
 
+import { safeLength } from './create';
+import { getZeroCount } from './faces';
+
 let s3;
 
 export function getS3Params() {
@@ -117,15 +120,33 @@ export function putIndex(index) {
   return s3.putObject(s3PutParams).promise();
 }
 
-export function getRecordFields(records) {
-  return Array.isArray(records) && records.length > 0 ? {
-    eventName: records[0].eventName,
-    eventID: records[0].eventID,
-    ApproximateCreationDateTime: records[0].dynamodb.ApproximateCreationDateTime,
-    id: records[0].dynamodb.Keys.id.S,
-    username: records[0].dynamodb.Keys.username.S,
-    newFaces: records[0].dynamodb.NewImage && records[0].dynamodb.NewImage.faces.L.length,
-  } : {};
+export function getLogFields(records, existingIndex, updatedIndexes) {
+  const firstRecord = ddbAttVals.unwrap(records[0].dynamodb.NewImage);
+  return {
+    imageId: firstRecord.id,
+    imageUsername: firstRecord.username,
+    imageFamilyGroup: firstRecord.group,
+    imageUserIdentityId: firstRecord.userIdentityId,
+    imagePeopleCount: safeLength(firstRecord.people),
+    imageFaceMatchCount: safeLength(firstRecord.faceMatches),
+    imageFacesCount: safeLength(firstRecord.faces),
+    imageTagCount: safeLength(firstRecord.tags),
+    imageKey: firstRecord.img_key,
+    imageWidth: firstRecord.meta && firstRecord.meta.width,
+    imageHeight: firstRecord.meta && firstRecord.meta.height,
+    imageBirthtime: firstRecord.birthtime,
+    imageCreatedAt: firstRecord.createdAt,
+    imageUpdatedAt: firstRecord.updatedAt,
+    indexesTagCount: existingIndex && Object.keys(existingIndex.tags).length,
+    indexesPeopleCount: existingIndex && Object.keys(existingIndex.people).length,
+    indexesZeroTagCount: existingIndex && getZeroCount(existingIndex.tags),
+    indexesZeroPeopleCount: existingIndex && getZeroCount(existingIndex.people),
+    indexesUpdatedTagCount: updatedIndexes && Object.keys(updatedIndexes.tags).length,
+    indexesUpdatedPeopleCount: updatedIndexes && Object.keys(updatedIndexes.people).length,
+    indexesUpdatedZeroTagCount: updatedIndexes && getZeroCount(updatedIndexes.tags),
+    indexesUpdatedZeroPeopleCount: updatedIndexes && getZeroCount(updatedIndexes.people),
+    ddbEventRecordsCount: safeLength(records),
+  };
 }
 
 export async function indexRecords(event, context, callback) {
@@ -135,10 +156,10 @@ export async function indexRecords(event, context, callback) {
     const existingIndex = await getExistingIndex();
     const updatedIndexes = getUpdatedIndexes(existingIndex, event.Records);
     const response = await putIndex(updatedIndexes);
-    logger(context, startTime, getRecordFields(event.Records));
+    logger(context, startTime, getLogFields(event.Records, existingIndex, updatedIndexes));
     return callback(null, success(response));
   } catch (err) {
-    logger(context, startTime, { err, ...getRecordFields(event.Records) });
+    logger(context, startTime, { err, ...getLogFields(event.Records) });
     return callback(null, failure(err));
   }
 }

@@ -3,6 +3,7 @@ import dynamodb from './lib/dynamodb';
 import { success, failure } from './lib/responses';
 import logger from './lib/logger';
 import { requestSchema, ddbParamsSchema } from './joi/query';
+import { safeLength } from './create';
 
 export function validateRequest(data) {
   const result = Joi.validate(data, requestSchema);
@@ -87,6 +88,16 @@ export function getResponseBody(ddbResponse, data) {
   return filteredItems.length > 0 ? filteredItems : 'No items found that match your criteria';
 }
 
+export function getLogFields(data, ddbResponse, responseBody) {
+  return {
+    queryFromDate: data.from,
+    queryToDate: data.to,
+    queryRawCount: safeLength(ddbResponse.Items),
+    queryFilteredCount: safeLength(responseBody),
+    queryFiltersTagsCount: data.criteria && safeLength(data.criteria.tags),
+    queryFiltersPeopleCount: data.criteria && safeLength(data.criteria.people),
+  };
+}
 export async function queryItems(event, context, callback) {
   const startTime = Date.now();
   const data = JSON.parse(event.body);
@@ -95,10 +106,10 @@ export async function queryItems(event, context, callback) {
     const ddbParams = getDynamoDbParams(request);
     const ddbResponse = await dynamodb.query(ddbParams).promise();
     const responseBody = getResponseBody(ddbResponse, request);
-    logger(context, startTime, { requestData: data });
+    logger(context, startTime, getLogFields(data, ddbResponse, responseBody));
     return callback(null, success(responseBody));
   } catch (err) {
-    logger(context, startTime, { err, requestData: data });
+    logger(context, startTime, { err, ...getLogFields(data) });
     return callback(null, failure(err));
   }
 }
