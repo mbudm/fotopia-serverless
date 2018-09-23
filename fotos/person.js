@@ -24,7 +24,7 @@ export function getPersonFaces(people, personId) {
   return person && person.faces;
 }
 
-export function getLogFields(existingPeople, updatedPeople, pathParams) {
+export function getLogFields(existingPeople = [], updatedPeople = [], pathParams) {
   return {
     peopleCount: safeLength(existingPeople),
     updatedPeopleCount: safeLength(updatedPeople),
@@ -47,7 +47,7 @@ export async function updatePerson(event, context, callback) {
     logger(context, startTime, getLogFields(existingPeople, updatedPeople, pathParams));
     return callback(null, success({ putPeopleResponse, updatedPeople }));
   } catch (err) {
-    logger(context, startTime, { err, data, pathParams });
+    logger(context, startTime, { err, ...getLogFields(null, null, pathParams) });
     return callback(null, failure(err));
   }
 }

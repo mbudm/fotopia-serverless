@@ -8,8 +8,8 @@ import { getDynamoDbParams, validateRequest } from './get';
 import { safeLength } from './create';
 
 export function getBodyFromDbGetResponse(dbGetResponse) {
-  const payload = JSON.parse(dbGetResponse.Payload);
-  return JSON.parse(payload.body);
+  const payload = dbGetResponse && JSON.parse(dbGetResponse.Payload);
+  return payload ? JSON.parse(payload.body) : {};
 }
 export function getS3Params(dbGetResponse) {
   const body = getBodyFromDbGetResponse(dbGetResponse);
@@ -67,7 +67,7 @@ export async function deleteItem(event, context, callback) {
     logger(context, startTime, getLogFields(request, dbGetResponse));
     return callback(null, success(ddbParams.Key));
   } catch (err) {
-    logger(context, startTime, { err, ...event.pathParameters });
+    logger(context, startTime, { err, ...getLogFields(event.pathParameters) });
     return callback(null, failure(err));
   }
 }

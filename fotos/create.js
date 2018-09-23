@@ -174,23 +174,23 @@ export function safeLength(arr) {
   return Array.isArray(arr) ? arr.length : 0;
 }
 
-export function getLogFields({ Item }, faces, labels, request) {
+export function getLogFields(request, dbItem, faces, labels) {
   return {
-    imageId: Item.id,
-    imageUsername: Item.username,
-    imageFamilyGroup: Item.group,
-    imageKey: Item.img_key,
-    imageWidth: Item.meta && Item.meta.width,
-    imageHeight: Item.meta && Item.meta.height,
-    imageUserIdentityId: Item.userIdentityId,
-    imageBirthtime: Item.birthtime,
-    imageCreatedAt: Item.createdAt,
-    imageUpdatedAt: Item.updatedAt,
+    imageId: dbItem.id,
+    imageUsername: request.username,
+    imageFamilyGroup: fotopiaGroup,
+    imageKey: request.img_key,
+    imageWidth: request.meta && request.meta.width,
+    imageHeight: request.meta && request.meta.height,
+    imageUserIdentityId: request.userIdentityId,
+    imageBirthtime: request.birthtime,
+    imageCreatedAt: dbItem.createdAt,
+    imageUpdatedAt: dbItem.updatedAt,
     createIdentifiedFacesCount: safeLength(faces),
     createIdentifiedLabelsCount: safeLength(getTagsFromRekognitionLabels(labels)),
     createPayloadTagCount: safeLength(request.tags),
-    imageFacesCount: safeLength(Item.faces),
-    imageTagCount: safeLength(Item.tags),
+    imageFacesCount: safeLength(dbItem.faces),
+    imageTagCount: safeLength(dbItem.tags),
   };
 }
 
@@ -219,10 +219,10 @@ export async function createItem(event, context, callback) {
       await streamPromise;
       await facesLambdaPromise;
     }
-    logger(context, startTime, getLogFields(ddbParams, faces, labels, request));
+    logger(context, startTime, getLogFields(request, ddbParams.Item, faces, labels));
     return callback(null, success(ddbParams.Item));
   } catch (err) {
-    logger(context, startTime, { err, createRequestData: data });
+    logger(context, startTime, { err, ...getLogFields(data, { id }) });
     return callback(null, failure(err));
   }
 }

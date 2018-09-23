@@ -34,7 +34,6 @@ export function getResponseBody(ddbResponse, request) {
   return ddbResponse.Item || `No item found for ${request.username} & ${request.id}`;
 }
 
-
 export function getLogFields(pathParams, responseBody) {
   return {
     paramUsername: pathParams && pathParams.username,
@@ -47,8 +46,8 @@ export function getLogFields(pathParams, responseBody) {
     imageFacesCount: responseBody && safeLength(responseBody.faces),
     imageTagCount: responseBody && safeLength(responseBody.tags),
     imageKey: responseBody && responseBody.img_key,
-    imageWidth: responseBody && responseBody.meta.width,
-    imageHeight: responseBody && responseBody.meta.height,
+    imageWidth: responseBody && responseBody.meta && responseBody.meta.width,
+    imageHeight: responseBody && responseBody.meta && responseBody.meta.height,
     imageUserIdentityId: responseBody && responseBody.userIdentityId,
     imageBirthtime: responseBody && responseBody.birthtime,
     imageCreatedAt: responseBody && responseBody.createdAt,

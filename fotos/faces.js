@@ -278,8 +278,8 @@ export function getLogFields({
     peopleCount: safeLength(existingPeople),
     imageFacesWithPeopleCount: safeLength(facesWithPeople),
     updatedPeopleCount: safeLength(updatedPeople),
-    imagePeopleCount: safeLength(body.people),
-    imageFaceMatchCount: safeLength(body.faceMatches),
+    imagePeopleCount: body && safeLength(body.people),
+    imageFaceMatchCount: body && safeLength(body.faceMatches),
     imageFacesCount: safeLength(newImages[0].faces),
     imageTagCount: safeLength(newImages[0].tags),
     imageKey: newImages[0].img_key,
@@ -326,7 +326,7 @@ export async function addToPerson(event, context, callback) {
     logger(context, startTime, getLogFields(logMetaParams));
     return callback(null, success({ logMeta }));
   } catch (err) {
-    logger(context, startTime, { err, newImages: newImages.length });
+    logger(context, startTime, { err, ...getLogFields(logMetaParams) });
     return callback(null, failure(err));
   }
 }
