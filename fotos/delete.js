@@ -33,9 +33,11 @@ export function getInvokeGetParams(request) {
 }
 
 
-export function getLogFields(dbGetResponse) {
+export function getLogFields(pathParams, dbGetResponse) {
   const body = getBodyFromDbGetResponse(dbGetResponse);
   return {
+    paramUsername: pathParams.username,
+    paramId: pathParams.id,
     imageId: body.id,
     imageUsername: body.username,
     imageFamilyGroup: body.group,
@@ -62,7 +64,7 @@ export async function deleteItem(event, context, callback) {
     await s3.deleteObject(s3Params).promise();
     const ddbParams = getDynamoDbParams(request);
     await dynamodb.delete(ddbParams).promise();
-    logger(context, startTime, getLogFields(dbGetResponse));
+    logger(context, startTime, getLogFields(request, dbGetResponse));
     return callback(null, success(ddbParams.Key));
   } catch (err) {
     logger(context, startTime, { err, ...event.pathParameters });

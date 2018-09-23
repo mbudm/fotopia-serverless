@@ -199,7 +199,7 @@ functions:
           authorizer: aws_iam
 
   person:
-    handler: fotos/people.updatePerson
+    handler: fotos/person.updatePerson
     memorySize: 128
     events:
       - http:
