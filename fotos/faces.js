@@ -104,12 +104,11 @@ export function validatePeople(object) {
   }
 }
 
-export function getExistingPeople(s3, Bucket, Key, context, startTime) {
+export function getExistingPeople(s3, Bucket, Key) {
   const s3Params = getS3Params(Bucket, Key);
   return s3.getObject(s3Params).promise()
     .then((s3Object) => {
       const object = JSON.parse(s3Object.Body.toString());
-      logger(context, startTime, { s3PeopleObjectLength: object.length });
       return validatePeople(object);
     })
     .catch((e) => {
