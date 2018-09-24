@@ -102,7 +102,8 @@ export function logRekognitionError(e, data, id) {
       // eslint-disable-next-line
       .then(() => getRekognitionFaceData(data, id));
   }
-  throw e;
+  logger({ err: e }, 'logRekognitionError');
+  return null;
 }
 
 export function getRekognitionFaceData(data, id) {
