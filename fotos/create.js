@@ -13,6 +13,42 @@ import logger from './lib/logger';
 const fotopiaGroup = process.env.FOTOPIA_GROUP;
 export const THUMB_SUFFIX = '-thumbnail';
 
+export function replicateAuthKey(data) {
+  return process.env.IS_OFFLINE ?
+    data.img_key :
+    `protected/${data.userIdentityId}/${data.img_key}`;
+}
+
+export function safeLength(arr) {
+  return Array.isArray(arr) ? arr.length : 0;
+}
+
+export function getTagsFromRekognitionLabels(labels) {
+  return labels && labels.Labels && Array.isArray(labels.Labels) ?
+    labels.Labels.map(label => label.Name) :
+    [];
+}
+
+export function getLogFields(request = {}, dbItem = {}, faces = [], labels = []) {
+  return {
+    imageId: dbItem.id,
+    imageUsername: request.username,
+    imageFamilyGroup: fotopiaGroup,
+    imageKey: request.img_key,
+    imageWidth: request.meta && request.meta.width,
+    imageHeight: request.meta && request.meta.height,
+    imageUserIdentityId: request.userIdentityId,
+    imageBirthtime: request.birthtime,
+    imageCreatedAt: dbItem.createdAt,
+    imageUpdatedAt: dbItem.updatedAt,
+    createIdentifiedFacesCount: safeLength(faces),
+    createIdentifiedLabelsCount: safeLength(getTagsFromRekognitionLabels(labels)),
+    createPayloadTagCount: safeLength(request.tags),
+    imageFacesCount: safeLength(dbItem.faces),
+    imageTagCount: safeLength(dbItem.tags),
+  };
+}
+
 export function validateRequest(data) {
   const result = Joi.validate(data, requestSchema);
   if (result.error !== null) {
@@ -26,12 +62,6 @@ export function createThumbKey(key) {
   const keySplit = key.split('.');
   const ext = keySplit[keySplit.length - 1];
   return `${key.substr(0, key.lastIndexOf(ext) - 1)}${THUMB_SUFFIX}.${ext}`;
-}
-
-export function replicateAuthKey(data) {
-  return process.env.IS_OFFLINE ?
-    data.img_key :
-    `protected/${data.userIdentityId}/${data.img_key}`;
 }
 
 export function getInvokeThumbnailsParams(data) {
@@ -51,12 +81,6 @@ export function getInvokeThumbnailsParams(data) {
 export function getPeopleFromRekognitionFaces(faces) {
   return faces && faces.FaceRecords && Array.isArray(faces.FaceRecords) ?
     faces.FaceRecords.map(faceRecord => faceRecord.Face.FaceId) :
-    [];
-}
-
-export function getTagsFromRekognitionLabels(labels) {
-  return labels && labels.Labels && Array.isArray(labels.Labels) ?
-    labels.Labels.map(label => label.Name) :
     [];
 }
 
@@ -103,7 +127,7 @@ export function logRekognitionError(e, data, id, indexFacesParams, context, star
       .then(() => getRekognitionFaceData(data, id));
   }
   if (e.code && e.code === 'InvalidS3ObjectException') {
-    logger(context, startTime, { err: e, imageKey: indexFacesParams.Image.S3Object.Name });
+    logger(context, startTime, { err: e, ...getLogFields(data, { id }) });
   } else {
     logger(context, startTime, { err: e }, 'logRekognitionError');
   }
@@ -174,30 +198,6 @@ export function getInvokeParams(ddbParams, name) {
         },
       ],
     }),
-  };
-}
-
-export function safeLength(arr) {
-  return Array.isArray(arr) ? arr.length : 0;
-}
-
-export function getLogFields(request, dbItem, faces, labels) {
-  return {
-    imageId: dbItem.id,
-    imageUsername: request.username,
-    imageFamilyGroup: fotopiaGroup,
-    imageKey: request.img_key,
-    imageWidth: request.meta && request.meta.width,
-    imageHeight: request.meta && request.meta.height,
-    imageUserIdentityId: request.userIdentityId,
-    imageBirthtime: request.birthtime,
-    imageCreatedAt: dbItem.createdAt,
-    imageUpdatedAt: dbItem.updatedAt,
-    createIdentifiedFacesCount: safeLength(faces),
-    createIdentifiedLabelsCount: safeLength(getTagsFromRekognitionLabels(labels)),
-    createPayloadTagCount: safeLength(request.tags),
-    imageFacesCount: safeLength(dbItem.faces),
-    imageTagCount: safeLength(dbItem.tags),
   };
 }
 
