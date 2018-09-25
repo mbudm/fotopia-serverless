@@ -54,6 +54,9 @@ export default function (auth, api, upload) {
         }, {
           path: path.resolve(__dirname, './mock/two.jpeg'),
           key: `${username}/two.jpg`,
+        }, {
+          path: path.resolve(__dirname, './mock/four_people.jpg'),
+          key: `${username}/four_people.jpg`,
         }];
         records = [{
           username,
@@ -65,12 +68,30 @@ export default function (auth, api, upload) {
           userIdentityId: signedIn.userIdentityId,
           birthtime: '2014-06-28T00:55:11.000Z',
           tags: ['blue', 'yellow'],
+        }, {
+          username,
+          userIdentityId: signedIn.userIdentityId,
+          birthtime: '2014-11-14T08:22:03.000Z',
+          tags: ['xlabs', 'Melbourne University'],
         }];
         t.end();
       })
       .catch(formatError);
   });
 
+  test('upload image with four ppl', (t) => {
+    t.plan(1);
+    const object = fs.createReadStream(images[2].path);
+    upload(images[2].key, object, {
+      contentType: 'image/jpeg',
+    })
+      .then((responseBody) => {
+        console.log('image one reponse', responseBody);
+        t.equal(responseBody.key, images[2].key);
+        records[2].img_key = responseBody.key;
+      })
+      .catch(formatError);
+  });
 
   test('upload image one', (t) => {
     t.plan(1);
@@ -95,6 +116,20 @@ export default function (auth, api, upload) {
       .then((responseBody) => {
         t.equal(responseBody.key, images[1].key);
         records[1].img_key = responseBody.key;
+      })
+      .catch(formatError);
+  });
+
+  test('create image with four people meta data', (t) => {
+    t.plan(1);
+    api.post(apiUrl, '/create', {
+      body: records[2],
+    })
+      .then((responseBody) => {
+        t.equal(responseBody.key, records[2].key);
+        records[2].id = responseBody.id;
+        records[2].birthtime = responseBody.birthtime;
+        records[2].people = responseBody.people;
       })
       .catch(formatError);
   });
