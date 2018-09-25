@@ -92,7 +92,7 @@ export function getDynamoDbParams(data, id, group, faces, labels) {
   }
 }
 
-export function logRekognitionError(e, data, id) {
+export function logRekognitionError(e, data, id, indexFacesParams, context, startTime) {
   if (e.code && e.code === 'ResourceNotFoundException') {
     const params = {
       CollectionId: fotopiaGroup,
@@ -102,11 +102,15 @@ export function logRekognitionError(e, data, id) {
       // eslint-disable-next-line
       .then(() => getRekognitionFaceData(data, id));
   }
-  logger({ err: e }, 'logRekognitionError');
+  if (e.code && e.code === 'InvalidS3ObjectException') {
+    logger(context, startTime, { err: e, imageKey: indexFacesParams.Image.S3Object.Name });
+  } else {
+    logger(context, startTime, { err: e }, 'logRekognitionError');
+  }
   return null;
 }
 
-export function getRekognitionFaceData(data, id) {
+export function getRekognitionFaceData(data, id, context, startTime) {
   const params = {
     CollectionId: fotopiaGroup,
     DetectionAttributes: [
@@ -123,8 +127,11 @@ export function getRekognitionFaceData(data, id) {
     rekognition.indexFaces(params)
       .promise()
       .then(response => response.FaceRecords)
-      .catch(e => logRekognitionError(e, data, id)) :
+      .catch(e => logRekognitionError(e, data, id, params, context, startTime)) :
     [];
+  // sometimes getting a object not found error - img
+  // should be avail as create happens after upload is complete
+  // perhaps everything should be evented?
 }
 
 export function getRekognitionLabelData(data) {
@@ -202,7 +209,7 @@ export async function createItem(event, context, callback) {
     const request = validateRequest(data);
     const invokeParams = getInvokeThumbnailsParams(request);
     const thumbPromise = lambda.invoke(invokeParams).promise();
-    const facesPromise = getRekognitionFaceData(request, id);
+    const facesPromise = getRekognitionFaceData(request, id, context, startTime);
     const labelsPromise = getRekognitionLabelData(request);
 
     await thumbPromise;
