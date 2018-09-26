@@ -56,8 +56,8 @@ export function getLogFields(pathParams, data, ddbResponse) {
     updateImageFaceMatchCount: data && safeLength(data.faceMatches),
     updateImageTagCount: data && safeLength(data.tags),
     updateImageBirthtime: data.birthtime,
-    imageId: ddbResponse && ddbResponse.id,
-    imageUsername: ddbResponse && ddbResponse.username,
+    imageId: (ddbResponse && ddbResponse.id) || (pathParams && pathParams.id),
+    imageUsername: (ddbResponse && ddbResponse.username) || (pathParams && pathParams.username),
     imageFamilyGroup: ddbResponse && ddbResponse.group,
     imagePeopleCount: ddbResponse && safeLength(ddbResponse.people),
     imageFaceMatchCount: ddbResponse && safeLength(ddbResponse.faceMatches),
@@ -70,6 +70,8 @@ export function getLogFields(pathParams, data, ddbResponse) {
     imageBirthtime: ddbResponse && ddbResponse.birthtime,
     imageCreatedAt: ddbResponse && ddbResponse.createdAt,
     imageUpdatedAt: ddbResponse && ddbResponse.updatedAt,
+    ddbResponseRaw: ddbResponse,
+    dataRaw: data,
   };
 }
 
