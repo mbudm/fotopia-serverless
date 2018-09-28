@@ -287,6 +287,7 @@ export function getLogFields({
     imageBirthtime: newImages[0].birthtime,
     imageCreatedAt: newImages[0].createdAt,
     imageUpdatedAt: newImages[0].updatedAt,
+    ddbEventRecordsRaw: eventRecords,
     ddbEventRecordsCount: safeLength(eventRecords),
   };
 }

@@ -145,6 +145,7 @@ export function getLogFields(records, existingIndex, updatedIndexes) {
     indexesUpdatedPeopleCount: updatedIndexes && Object.keys(updatedIndexes.people).length,
     indexesUpdatedZeroTagCount: updatedIndexes && getZeroCount(updatedIndexes.tags),
     indexesUpdatedZeroPeopleCount: updatedIndexes && getZeroCount(updatedIndexes.people),
+    ddbEventRecordsRaw: records,
     ddbEventRecordsCount: safeLength(records),
   };
 }
