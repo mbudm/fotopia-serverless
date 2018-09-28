@@ -98,10 +98,13 @@ TEST_USER_PWD=PermPwd456!
   - db backup and migrate script for changes that need a stack rebuild
     - POC done (kinda - a bit hand holdy) with logging stack added post deploy
     - could automate with sls package..
-    - if fails then, do backup/remove/deploy/restore
+      - if fails then, do backup/remove/deploy/restore
     - separate s3 stack
     - separate or backup/restore users
   - update to aws amplify v1, break up the bundle
+    - tried with functional tests and its even less node friendly
+    - for func tests and bulk uploader maybe fork and use the best bits?
+  - finish bul uploader
   - migrate to preact & mobx
   - keep stack warm/performance tweaking. ec2 comparison test.
   - try out AWS SAM
