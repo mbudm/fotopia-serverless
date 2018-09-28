@@ -47,7 +47,7 @@ export function getDynamoDbParams(pathParams, body) {
 }
 
 
-export function getLogFields(pathParams, data, ddbResponse) {
+export function getLogFields(pathParams, data, { Attributes = {} }) {
   return {
     paramUsername: pathParams && pathParams.username,
     paramId: pathParams && pathParams.id,
@@ -56,21 +56,22 @@ export function getLogFields(pathParams, data, ddbResponse) {
     updateImageFaceMatchCount: data && safeLength(data.faceMatches),
     updateImageTagCount: data && safeLength(data.tags),
     updateImageBirthtime: data.birthtime,
-    imageId: (ddbResponse && ddbResponse.id) || (pathParams && pathParams.id),
-    imageUsername: (ddbResponse && ddbResponse.username) || (pathParams && pathParams.username),
-    imageFamilyGroup: ddbResponse && ddbResponse.group,
-    imagePeopleCount: ddbResponse && safeLength(ddbResponse.people),
-    imageFaceMatchCount: ddbResponse && safeLength(ddbResponse.faceMatches),
-    imageFacesCount: ddbResponse && safeLength(ddbResponse.faces),
-    imageTagCount: ddbResponse && safeLength(ddbResponse.tags),
-    imageKey: ddbResponse && ddbResponse.img_key,
-    imageWidth: ddbResponse && ddbResponse.meta && ddbResponse.meta.width,
-    imageHeight: ddbResponse && ddbResponse.meta && ddbResponse.meta.height,
-    imageUserIdentityId: ddbResponse && ddbResponse.userIdentityId,
-    imageBirthtime: ddbResponse && ddbResponse.birthtime,
-    imageCreatedAt: ddbResponse && ddbResponse.createdAt,
-    imageUpdatedAt: ddbResponse && ddbResponse.updatedAt,
-    ddbResponseRaw: ddbResponse,
+    imageId: (Attributes && Attributes.id) || (pathParams && pathParams.id),
+    imageUsername:
+      (Attributes && Attributes.Attributes.username) ||
+      (pathParams && pathParams.username),
+    imageFamilyGroup: Attributes && Attributes.group,
+    imagePeopleCount: Attributes && safeLength(Attributes.people),
+    imageFaceMatchCount: Attributes && safeLength(Attributes.faceMatches),
+    imageFacesCount: Attributes && safeLength(Attributes.faces),
+    imageTagCount: Attributes && safeLength(Attributes.tags),
+    imageKey: Attributes && Attributes.img_key,
+    imageWidth: Attributes && Attributes.meta && Attributes.meta.width,
+    imageHeight: Attributes && Attributes.meta && Attributes.meta.height,
+    imageUserIdentityId: Attributes && Attributes.userIdentityId,
+    imageBirthtime: Attributes && Attributes.birthtime,
+    imageCreatedAt: Attributes && Attributes.createdAt,
+    imageUpdatedAt: Attributes && Attributes.updatedAt,
     dataRaw: data,
   };
 }
