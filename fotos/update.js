@@ -47,7 +47,8 @@ export function getDynamoDbParams(pathParams, body) {
 }
 
 
-export function getLogFields(pathParams, data, { Attributes = {} }) {
+export function getLogFields(pathParams, data, ddbResponse = {}) {
+  const { Attributes } = ddbResponse;
   return {
     paramUsername: pathParams && pathParams.username,
     paramId: pathParams && pathParams.id,
@@ -58,7 +59,7 @@ export function getLogFields(pathParams, data, { Attributes = {} }) {
     updateImageBirthtime: data.birthtime,
     imageId: (Attributes && Attributes.id) || (pathParams && pathParams.id),
     imageUsername:
-      (Attributes && Attributes.Attributes.username) ||
+      (Attributes && Attributes.username) ||
       (pathParams && pathParams.username),
     imageFamilyGroup: Attributes && Attributes.group,
     imagePeopleCount: Attributes && safeLength(Attributes.people),
