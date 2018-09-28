@@ -288,8 +288,10 @@ export function getLogFields({
     imageCreatedAt: firstNewImage.createdAt,
     imageUpdatedAt: firstNewImage.updatedAt,
     ddbEventInsertRecordsCount: newImages.length,
-    ddbEventRecordsRaw: eventRecords,
     ddbEventRecordsCount: safeLength(eventRecords),
+    ddbEventRecordsRaw: eventRecords,
+    existingPeopleRaw: existingPeople,
+    facesWithPeopleRaw: facesWithPeople,
   };
 }
 
