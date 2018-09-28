@@ -365,7 +365,18 @@ test('getUpdateBody - no people', (t) => {
     .catch(t.fail);
 });
 
-test('getUpdateBody - has people', (t) => {
+test('getUpdateBody - no people', (t) => {
+  const newImageRecords = faces.getNewImageRecords(records);
+  faces.getPeopleForFaces(newImageRecords, existingPeople, mockFaceMatcher)
+    .then((facesWithPeople) => {
+      const result = faces.getUpdateBody(facesWithPeople);
+      t.equal(result.people.length, 0, 'passes joi validation but has 0 results, as none over threshold');
+      t.end();
+    })
+    .catch(t.fail);
+});
+
+test('getUpdateBody - has matches with existing people', (t) => {
   const person = {
     id: uuid.v1(),
   };
@@ -400,6 +411,34 @@ test('getUpdateBody - has people', (t) => {
   }];
   const result = faces.getUpdateBody(facesWithPeople);
   t.deepEqual(result.people, [person.id], 'passes joi validation and 1 results, as one face is over threshold');
+  t.end();
+});
+
+
+test('getUpdateBody - has matches with a new person but none with existing people', (t) => {
+  const person = {
+    id: uuid.v1(),
+  };
+  const facesWithPeople = [{
+    FaceId: uuid.v1(),
+    ExternalImageId: uuid.v1(),
+    People: [{
+      Person: person.id,
+      Match: 23,
+    }],
+    FaceMatches: [{
+      Face: {
+        ExternalImageId: uuid.v1(),
+        FaceId: uuid.v1(),
+      },
+      Similarity: 45,
+    }],
+  }];
+  const newPeople = [{
+    id: uuid.v1(),
+  }];
+  const result = faces.getUpdateBody(facesWithPeople, newPeople);
+  t.deepEqual(result.people, [newPeople[0].id], 'passes joi validation and 1 results, as one face is new');
   t.end();
 });
 

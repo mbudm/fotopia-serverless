@@ -224,16 +224,18 @@ export function getUpdatedPeople(existingPeople, facesWithPeople) {
   return updatedPeople; // validatePeople(updatedPeople);
 }
 
-// why doesnt the first image with a face get the person id added to their record?
-export function getUpdateBody(peopleForTheseFaces) {
+export function getUpdateBody(peopleForTheseFaces, updatedPeople = []) {
+  const existingPeople = peopleForTheseFaces.map(face => face.People
+    .filter(person => person.Match >= MATCH_THRESHOLD)
+    .map(person => person.Person))
+    .filter(peopleForFace => peopleForFace.length > 0)
+    .reduce((allPeopleForFaces, peopleForFace) => allPeopleForFaces.concat(peopleForFace), []);
+
   const body = {
-    people: peopleForTheseFaces.map(face => face.People
-      .filter(person => person.Match >= MATCH_THRESHOLD)
-      .map(person => person.Person))
-      .filter(people => people.length > 0)
-      .reduce((accum, item) => accum.concat(item), []),
+    people: existingPeople.concat(updatedPeople.map(newPerson => newPerson.id)),
     faceMatches: peopleForTheseFaces,
   };
+
   const result = Joi.validate(body, requestSchema);
   if (result.error !== null) {
     throw result.error;
@@ -314,7 +316,7 @@ export async function addToPerson(event, context, callback) {
       const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
       const putPeoplePromise = putPeople(s3, updatedPeople, bucket, key);
       const pathParameters = getUpdatePathParameters(newImages);
-      const body = getUpdateBody(facesWithPeople);
+      const body = getUpdateBody(facesWithPeople, updatedPeople);
       const updateParams = getInvokeUpdateParams(pathParameters, body);
       await lambda.invoke(updateParams).promise();
       logMetaParams = {
