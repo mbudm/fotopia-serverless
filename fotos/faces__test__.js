@@ -392,15 +392,20 @@ test('getUpdateBody - no people', (t) => {
     .catch(t.fail);
 });
 
-test('getUpdateBody - no people', (t) => {
-  const newImageRecords = faces.getNewImageRecords(records);
-  faces.getPeopleForFaces(newImageRecords, existingPeople, mockFaceMatcher)
-    .then((facesWithPeople) => {
-      const result = faces.getUpdateBody(facesWithPeople);
-      t.equal(result.people.length, 0, 'passes joi validation but has 0 results, as none over threshold');
-      t.end();
-    })
-    .catch(t.fail);
+test('getUpdateBody - unique people', (t) => {
+  const person = {
+    id: uuid.v1(),
+  };
+  const facesWithPeople = [];
+  const newPeople = [{
+    id: person.id,
+  }, {
+    id: person.id,
+  }];
+  const result = faces.getUpdateBody(facesWithPeople, newPeople);
+  t.equal(result.people.length, 1);
+  t.deepEqual(result.people, [person.id], 'dedupes person ids');
+  t.end();
 });
 
 test('getUpdateBody - has matches with existing people', (t) => {

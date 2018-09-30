@@ -231,8 +231,10 @@ export function getUpdateBody(peopleForTheseFaces, updatedPeople = []) {
     .filter(peopleForFace => peopleForFace.length > 0)
     .reduce((allPeopleForFaces, peopleForFace) => allPeopleForFaces.concat(peopleForFace), []);
 
+  const combinedPeople = existingPeople.concat(updatedPeople.map(newPerson => newPerson.id));
+  const uniquePeople = [...new Set(combinedPeople)];
   const body = {
-    people: existingPeople.concat(updatedPeople.map(newPerson => newPerson.id)),
+    people: uniquePeople,
     faceMatches: peopleForTheseFaces,
   };
 
