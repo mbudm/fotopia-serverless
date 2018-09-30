@@ -269,6 +269,7 @@ export function getLogFields({
   existingPeople,
   facesWithPeople,
   updatedPeople,
+  newPeopleInThisImage,
 }) {
   const firstNewImage = newImages[0] || {};
   return {
@@ -278,6 +279,7 @@ export function getLogFields({
     imageUserIdentityId: firstNewImage.userIdentityId,
     peopleCount: safeLength(existingPeople),
     imageFacesWithPeopleCount: safeLength(facesWithPeople),
+    newPeopleCount: safeLength(newPeopleInThisImage),
     updatedPeopleCount: safeLength(updatedPeople),
     imagePeopleCount: body && safeLength(body.people),
     imageFaceMatchCount: body && safeLength(body.faceMatches),
@@ -326,6 +328,7 @@ export async function addToPerson(event, context, callback) {
         existingPeople,
         facesWithPeople,
         updatedPeople,
+        newPeopleInThisImage,
       };
       await putPeoplePromise;
     }
