@@ -43,6 +43,14 @@ test('createThumbKey - filename extra dots', (t) => {
   t.end();
 });
 
+test('createThumbKey - filename with space', (t) => {
+  const key = 'test/mock/large_group copy.jpg';
+  const thumbKey = `test/mock/large_group copy${create.THUMB_SUFFIX}.jpg`;
+  const result = create.createThumbKey(key);
+  t.equal(thumbKey, result);
+  t.end();
+});
+
 test('getDynamoDbParams', (t) => {
   process.env.DYNAMODB_TABLE = 'TABLE';
   try {
