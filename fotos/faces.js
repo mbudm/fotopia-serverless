@@ -211,7 +211,7 @@ export function getNewPeople(facesWithPeople) {
 }
 
 
-export function getUpdatedPeople(existingPeople, facesWithPeople) {
+export function getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThisImage = []) {
   const updatedPeople = existingPeople.map(person => ({
     ...person,
     faces: person.faces.concat(getFacesThatMatchThisPerson(person, facesWithPeople))
@@ -219,7 +219,7 @@ export function getUpdatedPeople(existingPeople, facesWithPeople) {
         FaceId: face.FaceId,
         ExternalImageId: face.ExternalImageId,
       })),
-  })).concat(getNewPeople(facesWithPeople));
+  })).concat(newPeopleInThisImage);
 
   return updatedPeople; // validatePeople(updatedPeople);
 }
@@ -313,10 +313,11 @@ export async function addToPerson(event, context, callback) {
       // todo handle multiple new image records if feasible scenario
       const existingPeople = await getExistingPeople(s3, bucket, key, context, startTime);
       const facesWithPeople = await getPeopleForFaces(newImages, existingPeople, getFaceMatch);
-      const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople);
+      const newPeopleInThisImage = getNewPeople(facesWithPeople);
+      const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThisImage);
       const putPeoplePromise = putPeople(s3, updatedPeople, bucket, key);
       const pathParameters = getUpdatePathParameters(newImages);
-      const body = getUpdateBody(facesWithPeople, updatedPeople);
+      const body = getUpdateBody(facesWithPeople, newPeopleInThisImage);
       const updateParams = getInvokeUpdateParams(pathParameters, body);
       await lambda.invoke(updateParams).promise();
       logMetaParams = {

@@ -330,7 +330,8 @@ test('getUpdatedPeople', (t) => {
       Match: 85,
     }],
   }];
-  const result = faces.getUpdatedPeople(people, facesWithMatchedPeople);
+  const newPeople = faces.getNewPeople(facesWithMatchedPeople);
+  const result = faces.getUpdatedPeople(people, facesWithMatchedPeople, newPeople);
   t.equal(result[0].faces.length, 2, 'add face to person 1');
   t.equal(result[0].faces[1].FaceId, facesWithMatchedPeople[1].FaceId, 'should find the id for the inserted record');
   t.equal(result.length, people.length + 1, 'add a new person for the unmatched face');
@@ -347,10 +348,36 @@ test('getUpdatedPeople - new person with no matching faces', (t) => {
     ExternalImageId: uuid.v1(),
     People: [],
   }];
-  const result = faces.getUpdatedPeople(people, facesWithMatchedPeople);
+  const newPeople = faces.getNewPeople(facesWithMatchedPeople);
+  const result = faces.getUpdatedPeople(people, facesWithMatchedPeople, newPeople);
   t.equal(result.length, 1, 'add a new person for the unmatched face');
   t.equal(result[0].name, '', 'new person has an empty name field');
   t.equal(result[0].faces[0].FaceId, facesWithMatchedPeople[0].FaceId, 'face with no people matches is key face for new person');
+  t.end();
+});
+
+test('getUpdatedPeople - no faces detected in image', (t) => {
+  const people = [{
+    id: uuid.v1(),
+    thumbnail: 'some.jpg',
+    userIdentityId: 'some-str',
+    faces: [{
+      FaceId: uuid.v1(),
+      ExternalImageId: uuid.v1(),
+    }],
+  }, {
+    id: uuid.v1(),
+    thumbnail: 'some.jpg',
+    userIdentityId: 'some-str',
+    faces: [{
+      FaceId: uuid.v1(),
+      ExternalImageId: uuid.v1(),
+    }],
+  }];
+  const facesWithMatchedPeople = [];
+  const result = faces.getUpdatedPeople(people, facesWithMatchedPeople, []);
+  t.equal(result.length, 2, 'no peeps added');
+  t.equal(result[0].faces.length, 1, 'no faces added');
   t.end();
 });
 
