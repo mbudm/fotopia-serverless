@@ -98,6 +98,7 @@ TEST_USER_PWD=PermPwd456!
   - db backup and migrate script for changes that need a stack rebuild
     - POC done (kinda - a bit hand holdy) with logging stack added post deploy
       - need to also automate somewhere: `aws rekognition delete-collection --profile rekognitionuser --collection-id "collection-id"`
+      - ugh really need a node.js api to replicate what amplify does in the client
     - could automate with sls package..
       - if fails then, do backup/remove/deploy/restore
     - separate s3 stack
