@@ -253,6 +253,7 @@ test('getNewPeople - faces that don\'t match an existing person', (t) => {
   const facesWithMatchedPeople = [{
     FaceId: uuid.v1(),
     ExternalImageId: uuid.v1(),
+    img_key: 'some.jpg',
     People: [{
       Person: 'fred',
       Match: 23,
@@ -260,6 +261,7 @@ test('getNewPeople - faces that don\'t match an existing person', (t) => {
   }, {
     FaceId: uuid.v1(),
     ExternalImageId: uuid.v1(),
+    img_key: 'some.jpg',
     People: [{
       Person: 'ginger',
       Match: 85,
@@ -353,6 +355,7 @@ test('getUpdatedPeople', (t) => {
   const facesWithMatchedPeople = [{
     FaceId: uuid.v1(),
     ExternalImageId: uuid.v1(),
+    img_key: 'one.jpg',
     People: [{
       Person: people[0].id,
       Match: 23,
@@ -360,6 +363,7 @@ test('getUpdatedPeople', (t) => {
   }, {
     FaceId: uuid.v1(),
     ExternalImageId: uuid.v1(),
+    img_key: 'one.jpg',
     People: [{
       Person: people[0].id,
       Match: 85,
@@ -381,6 +385,7 @@ test('getUpdatedPeople - new person with no matching faces', (t) => {
   const facesWithMatchedPeople = [{
     FaceId: uuid.v1(),
     ExternalImageId: uuid.v1(),
+    img_key: 'one.jpg',
     People: [],
   }];
   const newPeople = faces.getNewPeople(facesWithMatchedPeople);

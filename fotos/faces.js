@@ -184,7 +184,7 @@ export function getPeopleForFaces(newImages, existingPeople, faceMatcher) {
           img_key: newImages[0].img_key,
           userIdentityId: newImages[0].userIdentityId,
           People: peopleMatches,
-          FaceMatches,
+          FaceMatches, // I dont think this is needed, just bloating the record
           BoundingBox: face.Face.BoundingBox,
         };
       })));
@@ -209,7 +209,7 @@ export function getNewPeople(facesWithPeople) {
       ExternalImageId: newFace.ExternalImageId,
     }],
   }));
-  return newPeople; // return validatePeople(newPeople);
+  return validatePeople(newPeople);
 }
 
 
@@ -223,7 +223,7 @@ export function getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThi
       })),
   })).concat(newPeopleInThisImage);
 
-  return updatedPeople; // validatePeople(updatedPeople);
+  return validatePeople(updatedPeople);
 }
 
 export function getUpdateBody(peopleForTheseFaces, updatedPeople = []) {

@@ -17,6 +17,12 @@ export const peopleSchema = Joi.array().items(Joi.object().keys({
   id: Joi.string().guid().required().label('id'),
   userIdentityId: Joi.string().allow('').label('userIdentityId'),
   thumbnail: Joi.string().required().label('thumbnail'),
+  boundingBox: Joi.object().keys({
+    Height: Joi.number(),
+    Left: Joi.number(),
+    Top: Joi.number(),
+    Width: Joi.number(),
+  }),
   faces: Joi.array().items(Joi.object().keys({
     FaceId: Joi.string().guid().required().label('FaceId in a face object in the people schema'),
     ExternalImageId: Joi.string().guid().required().label('ExternalImageId'),
