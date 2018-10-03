@@ -181,10 +181,11 @@ export function getPeopleForFaces(newImages, existingPeople, faceMatcher) {
         return {
           FaceId: SearchedFaceId,
           ExternalImageId: face.Face.ExternalImageId,
-          img_thumb_key: newImages[0].img_thumb_key,
+          img_key: newImages[0].img_key,
           userIdentityId: newImages[0].userIdentityId,
           People: peopleMatches,
           FaceMatches,
+          BoundingBox: face.Face.BoundingBox,
         };
       })));
 }
@@ -201,7 +202,8 @@ export function getNewPeople(facesWithPeople) {
     name: '',
     id: uuid.v1(),
     userIdentityId: newFace.userIdentityId || '',
-    thumbnail: newFace.img_thumb_key,
+    thumbnail: newFace.img_key,
+    boundingBox: newFace.BoundingBox,
     faces: [{
       FaceId: newFace.FaceId,
       ExternalImageId: newFace.ExternalImageId,

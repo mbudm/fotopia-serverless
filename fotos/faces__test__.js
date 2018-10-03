@@ -46,8 +46,8 @@ const records = [{
           },
         }],
       },
-      img_thumb_key: {
-        S: 'someuser/three-thumbnail.jpg',
+      img_key: {
+        S: 'someuser/three.jpg',
       },
       userIdentityId: {
         S: 'us-east-1:7261e973-d20d-406a-828c-d8cf70fd888e',
@@ -132,7 +132,7 @@ test('getExistingPeople', (t) => {
 test('getNewImageRecords', (t) => {
   const result = faces.getNewImageRecords(records);
   t.equal(result.length, 1, 'getPeopleForFace length should be 1');
-  t.equal(result[0].img_thumb_key, records[0].dynamodb.NewImage.img_thumb_key.S, 'matches the thumb key of the inserted record');
+  t.equal(result[0].img_key, records[0].dynamodb.NewImage.img_key.S, 'matches the img key of the inserted record');
   t.end();
 });
 
@@ -268,6 +268,41 @@ test('getNewPeople - faces that don\'t match an existing person', (t) => {
   const result = faces.getNewPeople(facesWithMatchedPeople);
   t.equal(result.length, 1);
   t.equal(result[0].faces[0].FaceId, facesWithMatchedPeople[0].FaceId);
+  t.end();
+});
+
+test('getNewPeople - thumbnailBoundingBox', (t) => {
+  const facesWithMatchedPeople = [{
+    ExternalImageId: '50925d60-c474-11e8-9af4-75858744cb8b',
+    FaceId: 'aafb9f96-14bb-47ac-92c4-427d0a73b039',
+    FaceMatches: [{
+      Face: {
+        BoundingBox: {
+          Height: 0.1976570039987564,
+          Left: 0.4599609971046448,
+          Top: 0.14494900405406952,
+          Width: 0.13085900247097015,
+        },
+        Confidence: 99.99979400634766,
+        ExternalImageId: 'a8dd4440-c46e-11e8-a3d9-4b2671790ad7',
+        FaceId: '2423c8f4-04f5-44de-88a2-f0cbd4726883',
+        ImageId: '050a0025-64b9-56e7-92a8-82ab869aeb10',
+      },
+      Similarity: 100,
+    }],
+    People: [],
+    img_key: 'tester/test/mock/large_colour_face_parsing_error.jpg',
+    userIdentityId: 'us-east-1:744efc36-bb66-4514-b30c-b7f1085de233',
+    BoundingBox: {
+      Height: 0.1976570039987564,
+      Left: 0.4599609971046448,
+      Top: 0.14494900405406952,
+      Width: 0.13085900247097015,
+    },
+  }];
+  const result = faces.getNewPeople(facesWithMatchedPeople);
+  t.equal(result.length, 1);
+  t.deepEqual(result[0].boundingBox, facesWithMatchedPeople[0].BoundingBox);
   t.end();
 });
 
