@@ -186,6 +186,10 @@ export function getPeopleForFaces(newImages, existingPeople, faceMatcher) {
           People: peopleMatches,
           FaceMatches, // I dont think this is needed, just bloating the record
           BoundingBox: face.Face.BoundingBox,
+          ImageDimensions: {
+            width: newImages[0].meta && newImages[0].meta.width,
+            height: newImages[0].meta && newImages[0].meta.height,
+          },
         };
       })));
 }
@@ -204,6 +208,7 @@ export function getNewPeople(facesWithPeople) {
     userIdentityId: newFace.userIdentityId || '',
     thumbnail: newFace.img_key,
     boundingBox: newFace.BoundingBox,
+    imageDimensions: newFace.ImageDimensions,
     faces: [{
       FaceId: newFace.FaceId,
       ExternalImageId: newFace.ExternalImageId,

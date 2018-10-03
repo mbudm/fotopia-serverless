@@ -23,6 +23,10 @@ export const peopleSchema = Joi.array().items(Joi.object().keys({
     Top: Joi.number(),
     Width: Joi.number(),
   }),
+  imageDimensions: Joi.object().keys({
+    height: Joi.number(),
+    width: Joi.number(),
+  }),
   faces: Joi.array().items(Joi.object().keys({
     FaceId: Joi.string().guid().required().label('FaceId in a face object in the people schema'),
     ExternalImageId: Joi.string().guid().required().label('ExternalImageId'),
