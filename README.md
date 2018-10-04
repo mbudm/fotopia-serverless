@@ -84,6 +84,7 @@ TEST_USER_PWD=PermPwd456!
 
 - Write up some of this fun stuff as articles
 
+  - dev workflow with sls offline (eg peopleThumbs change)
   - dynamodb design with elusive low cost search option and scaling
   - cognito and amplify, performance, simpler alternatives
   - PWAs on iOS and perf improvements (react to preact as sep article?)

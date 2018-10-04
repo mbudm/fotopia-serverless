@@ -1,50 +1,3 @@
-/*
- for new images
-
- load persons json file
-
- run SearchFaces for each faceId in the image (max 3..? to limit costs)
-
- loop through each face match
-  - log the persons that each face match is assigned to
-  - add this face to the person with the most face matches
-  - if number of faces in persons is equal assign to the higher match confidence
-
- if no faces match then create a new person for this face.
-
-gonna need a faces database ?
-- store results of searchFaces
-- how to derive people?
-
-people just end up in indexes?
-store guid in
-
-or
-
-all stored on the image record
-
-indexFaces and searchFaces done on faces event lambda
-this adds faces and facematch data to the record
-
-then need to look up faces that are assigned to a
-person and add that person tag to this image record
-
-so just make existing people slimmer
-and store facematch data on the record
-omit match data below threshold?
-
-just
-{
-  id:
-  thumbnail: - create this immediately from the facedid image?
-  name:
-  faces: [{
-    faceId,
-    ExternalImageId,
-  }]
-}
-
-*/
 import Joi from 'joi';
 import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
 import uuid from 'uuid';
@@ -65,6 +18,7 @@ import { success, failure } from './lib/responses';
 import { safeLength } from './create';
 
 const MATCH_THRESHOLD = 80;
+const PERSON_THUMB_SUFFIX = '-face-';
 const fotopiaGroup = process.env.FOTOPIA_GROUP;
 
 export function getS3Params(Bucket, Key) {
@@ -199,6 +153,12 @@ export function getFacesThatMatchThisPerson(person, facesWithPeopleMatches) {
     .find(p => p.Person === person.id && p.Match >= MATCH_THRESHOLD));
 }
 
+export function createPersonThumbKey(newFace) {
+  const keySplit = newFace.img_key.split('.');
+  const ext = keySplit[keySplit.length - 1];
+  return `${newFace.img_key.substr(0, newFace.img_key.lastIndexOf(ext) - 1)}${PERSON_THUMB_SUFFIX}-${newFace.FaceId}.${ext}`;
+}
+
 export function getNewPeople(facesWithPeople) {
   const newFaces = facesWithPeople
     .filter(face => !face.People.find(person => person.Match >= MATCH_THRESHOLD));
@@ -206,7 +166,8 @@ export function getNewPeople(facesWithPeople) {
     name: '',
     id: uuid.v1(),
     userIdentityId: newFace.userIdentityId || '',
-    thumbnail: newFace.img_key,
+    img_key: newFace.img_key,
+    thumbnail: createPersonThumbKey(newFace),
     boundingBox: newFace.BoundingBox,
     imageDimensions: newFace.ImageDimensions,
     faces: [{
@@ -215,6 +176,17 @@ export function getNewPeople(facesWithPeople) {
     }],
   }));
   return validatePeople(newPeople);
+}
+
+export function getInvokePeopleThumbParams(newPeopleInThisImage) {
+  return {
+    InvocationType: INVOCATION_REQUEST_RESPONSE,
+    FunctionName: process.env.IS_OFFLINE ? 'peopleThumbs' : `${process.env.LAMBDA_PREFIX}peopleThumbs`,
+    LogType: 'Tail',
+    Payload: JSON.stringify({
+      body: JSON.stringify(newPeopleInThisImage),
+    }),
+  };
 }
 
 
@@ -325,6 +297,10 @@ export async function addToPerson(event, context, callback) {
       const existingPeople = await getExistingPeople(s3, bucket, key, context, startTime);
       const facesWithPeople = await getPeopleForFaces(newImages, existingPeople, getFaceMatch);
       const newPeopleInThisImage = getNewPeople(facesWithPeople);
+      if (newPeopleInThisImage.length > 0) {
+        const newPeopleThumbParams = getInvokePeopleThumbParams(newPeopleInThisImage);
+        await lambda.invoke(newPeopleThumbParams).promise();
+      }
       const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThisImage);
       const putPeoplePromise = putPeople(s3, updatedPeople, bucket, key);
       const pathParameters = getUpdatePathParameters(newImages);

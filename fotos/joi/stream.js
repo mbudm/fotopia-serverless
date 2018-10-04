@@ -16,6 +16,7 @@ export const peopleSchema = Joi.array().items(Joi.object().keys({
   name: Joi.string().allow('').label('name'),
   id: Joi.string().guid().required().label('id'),
   userIdentityId: Joi.string().allow('').label('userIdentityId'),
+  img_key: Joi.string().required().label('the image that thumbnail is created from'),
   thumbnail: Joi.string().required().label('thumbnail'),
   boundingBox: Joi.object().keys({
     Height: Joi.number(),

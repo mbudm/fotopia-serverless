@@ -76,7 +76,8 @@ const records = [{
 const existingPeople = [{
   name: 'Oren',
   id: uuids.oren,
-  thumbnail: 'people/somekey.jpg',
+  img_key: 'people/somekey.jpg',
+  thumbnail: 'people/somekey-suffix.jpg',
   userIdentityId: 'some-str',
   faces: [{
     FaceId: uuids.someUserImageOneFaceOne,
@@ -88,7 +89,8 @@ const existingPeople = [{
 }, {
   name: '',
   id: uuids.personTwo,
-  thumbnail: 'people/someotherkey.jpg',
+  img_key: 'people/someotherkey.jpg',
+  thumbnail: 'people/someotherkey-suffix.jpg',
   userIdentityId: 'some-str',
   faces: [{
     FaceId: uuids.personTwoFaceOne,
@@ -337,7 +339,8 @@ test('getFacesThatMatchThisPerson', (t) => {
 test('getUpdatedPeople', (t) => {
   const people = [{
     id: uuid.v1(),
-    thumbnail: 'some.jpg',
+    img_key: 'some.jpg',
+    thumbnail: 'some-suffix.jpg',
     userIdentityId: 'some-str',
     faces: [{
       FaceId: uuid.v1(),
@@ -345,7 +348,8 @@ test('getUpdatedPeople', (t) => {
     }],
   }, {
     id: uuid.v1(),
-    thumbnail: 'some.jpg',
+    img_key: 'some.jpg',
+    thumbnail: 'some-suffix.jpg',
     userIdentityId: 'some-str',
     faces: [{
       FaceId: uuid.v1(),
@@ -399,7 +403,8 @@ test('getUpdatedPeople - new person with no matching faces', (t) => {
 test('getUpdatedPeople - no faces detected in image', (t) => {
   const people = [{
     id: uuid.v1(),
-    thumbnail: 'some.jpg',
+    img_key: 'some.jpg',
+    thumbnail: 'some-suffix.jpg',
     userIdentityId: 'some-str',
     faces: [{
       FaceId: uuid.v1(),
@@ -407,7 +412,8 @@ test('getUpdatedPeople - no faces detected in image', (t) => {
     }],
   }, {
     id: uuid.v1(),
-    thumbnail: 'some.jpg',
+    img_key: 'some.jpg',
+    thumbnail: 'some-suffix.jpg',
     userIdentityId: 'some-str',
     faces: [{
       FaceId: uuid.v1(),

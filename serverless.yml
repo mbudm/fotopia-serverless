@@ -199,6 +199,16 @@ functions:
           cors: true
           authorizer: aws_iam
 
+  peopleThumb:
+      handler: fotos/peopleThumbs.createThumbs
+      memorySize: 128
+      events:
+        - http:
+            path: people/thumbs
+            method: post
+            cors: true
+            authorizer: aws_iam
+
   person:
     handler: fotos/person.updatePerson
     memorySize: 128
@@ -494,4 +504,5 @@ package:
     - '!node_modules/uuid/**'
     - '!node_modules/babel-runtime/**'
     - '!node_modules/sharp/**'
+    - '!node_modules/jimp/**'
     - '!node_modules/dynamodb-data-types/**'

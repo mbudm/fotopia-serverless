@@ -27,6 +27,7 @@
     "bunyan": "^1.8.12",
     "dotenv": "^5.0.1",
     "dynamodb-data-types": "^3.0.1",
+    "jimp": "^0.5.3",
     "joi": "^13.0.2",
     "leaked-handles": "^5.2.0",
     "serverless-domain-manager": "^2.3.6",
