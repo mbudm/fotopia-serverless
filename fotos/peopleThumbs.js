@@ -62,9 +62,9 @@ export function crop(person, s3Object) {
   console.log(`resizing ${person.thumbnail} from ${person.imageDimensions.width}/${person.imageDimensions.height}
    to ${width}/${height}. not using top/left of ${top}/${left}.`);
   return Sharp(s3Object.Body)
-    .resize(width, height)
-    .crop(Sharp.strategy.entropy)
-    .toFormat('png')
+    .extract({
+      left, top, width, height,
+    })
     .toBuffer();
 }
 

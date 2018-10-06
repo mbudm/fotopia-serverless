@@ -202,6 +202,7 @@ functions:
   peopleThumbs:
       handler: fotos/peopleThumbs.createThumbs
       memorySize: 128
+      timeout: 20
       events:
         - http:
             path: people/thumbs
@@ -232,6 +233,7 @@ functions:
   faces:
     handler: fotos/faces.addToPerson
     memorySize: 128
+    timeout: 20
     events:
       - stream:
           type: dynamodb
