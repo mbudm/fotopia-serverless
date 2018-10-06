@@ -42,11 +42,15 @@ export function putObject(params) {
     });
 }
 
-export function crop(s3Object, person) {
-  const w = person.boundingBox.Width * person.imageDimensions.width;
-  const h = person.boundingBox.Height * person.imageDimensions.height;
-  const top = person.boundingBox.Top * person.imageDimensions.height;
-  const left = person.boundingBox.Left * person.imageDimensions.width;
+function hasDimensions(person) {
+  return person.boundingBox && person.imageDimensions;
+}
+
+export function crop(person, s3Object) {
+  const w = hasDimensions(person) ? person.boundingBox.Width * person.imageDimensions.width : 200;
+  const h = hasDimensions(person) ? person.boundingBox.Height * person.imageDimensions.height : 200;
+  const top = hasDimensions(person) ? person.boundingBox.Top * person.imageDimensions.height : 100;
+  const left = hasDimensions(person) ? person.boundingBox.Left * person.imageDimensions.width : 100;
   return Jimp.read(s3Object.Body)
     .then(image => image
       .crop(top, left, w, h)
