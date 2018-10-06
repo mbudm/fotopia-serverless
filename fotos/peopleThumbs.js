@@ -7,6 +7,7 @@ import logger from './lib/logger';
 import { validatePut } from './thumbs';
 import { peopleSchema } from './joi/stream';
 import { safeLength } from './create';
+import { GetObjectError, PutObjectError } from './errors/s3';
 
 let s3;
 
@@ -19,43 +20,48 @@ export function validateRequest(data) {
   }
 }
 
-export function getObjectsForRequestedPeople(request) {
-  return Promise.all(request.map(person => s3.getObject({
+export function getObject(request) {
+  const key = request[0].img_key;
+  return s3.getObject({
     Bucket: process.env.S3_BUCKET,
-    Key: person.img_key,
+    Key: key,
   }).promise()
-    .then(objData => ({
-      objData,
-      person,
-    }))));
+    .catch((e) => {
+      throw new GetObjectError(e, key, process.env.S3_BUCKET);
+    });
 }
 
 export function putObject(params) {
   const data = validatePut(params);
-  return s3.putObject(data).promise();
+  return s3.putObject(data).promise()
+    .catch((e) => {
+      throw new PutObjectError(e, params.Key, params.Body);
+    });
 }
 
-export function crop({ objData, person }) {
+export function crop(s3Object, person) {
   const w = person.boundingBox.Width * person.imageDimensions.width;
   const h = person.boundingBox.Height * person.imageDimensions.height;
   const top = person.boundingBox.Top * person.imageDimensions.height;
   const left = person.boundingBox.Left * person.imageDimensions.width;
-  return Jimp.read(objData.Body)
+  return Jimp.read(s3Object.Body)
     .then(image => image
       .crop(top, left, w, h)
       .getBufferAsync(Jimp.MIME_PNG));
 }
 
-export function cropAndUpload(peopleWithObjects) {
-  return Promise.all(peopleWithObjects.map(personObject => crop(personObject)
+export function cropAndUpload(request, s3Object) {
+  return Promise.all(request.map(person => crop(person, s3Object)
     .then(buffer => putObject({
-      buffer, key: personObject.person.thumbnail,
+      buffer, key: person.thumbnail,
     }))));
 }
 
 export function getLogFields(data) {
   return {
     peopleCount: safeLength(data),
+    imageKey: data && data[0].img_key,
+    personThumbnail: data && data[0].thumbnail,
   };
 }
 
@@ -65,8 +71,8 @@ export async function createThumbs(event, context, callback) {
   s3 = createS3Client();
   try {
     const request = validateRequest(data);
-    const peopleWithObjects = await getObjectsForRequestedPeople(request);
-    const result = await cropAndUpload(peopleWithObjects);
+    const s3Object = await getObject(request);
+    const result = await cropAndUpload(request, s3Object);
     logger(context, startTime, getLogFields(data));
     return callback(null, success(result));
   } catch (err) {
