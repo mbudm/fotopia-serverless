@@ -59,10 +59,12 @@ export function crop(person, s3Object) {
   const left = hasDimensions(person) ?
     Math.round(person.boundingBox.Left * person.imageDimensions.width) :
     100;
+  console.log(`resizing ${person.thumbnail} from ${person.imageDimensions.width}/${person.imageDimensions.height}
+   to ${width}/${height}. not using top/left of ${top}/${left}.`);
   return Sharp(s3Object.Body)
-    .extract({
-      left, top, width, height,
-    })
+    .resize(width, height)
+    .crop(Sharp.strategy.entropy)
+    .toFormat('png')
     .toBuffer();
 }
 
@@ -88,9 +90,9 @@ export async function createThumbs(event, context, callback) {
   try {
     const request = validateRequest(data);
     const s3Object = await getObject(request);
-    // const result = await cropAndUpload(request, s3Object);
-    logger(context, startTime, getLogFields(data, s3Object));
-    return callback(null, success(true));
+    const result = await cropAndUpload(request, s3Object);
+    logger(context, startTime, getLogFields(data));
+    return callback(null, success(result));
   } catch (err) {
     logger(context, startTime, { err, ...getLogFields(data) });
     return callback(null, failure(err));
