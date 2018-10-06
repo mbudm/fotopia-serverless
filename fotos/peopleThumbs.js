@@ -6,7 +6,7 @@ import { success, failure } from './lib/responses';
 import logger from './lib/logger';
 import { validatePut } from './thumbs';
 import { peopleSchema } from './joi/stream';
-import { safeLength } from './create';
+import { safeLength, replicateAuthKey } from './create';
 import { GetObjectError, PutObjectError } from './errors/s3';
 
 let s3;
@@ -21,7 +21,10 @@ export function validateRequest(data) {
 }
 
 export function getObject(request) {
-  const key = request[0].img_key;
+  // person objects just happen to have the right shape to suit this helper,
+  // but types would really help here, could then cast person object
+  // to the type that replicateAuthKey needs
+  const key = replicateAuthKey(request[0]);
   return s3.getObject({
     Bucket: process.env.S3_BUCKET,
     Key: key,
