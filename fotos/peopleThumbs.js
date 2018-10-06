@@ -48,11 +48,17 @@ function hasDimensions(person) {
 
 export function crop(person, s3Object) {
   const width = hasDimensions(person) ?
-    person.boundingBox.Width * person.imageDimensions.width : 200;
+    Math.round(person.boundingBox.Width * person.imageDimensions.width) :
+    200;
   const height = hasDimensions(person) ?
-    person.boundingBox.Height * person.imageDimensions.height : 200;
-  const top = hasDimensions(person) ? person.boundingBox.Top * person.imageDimensions.height : 100;
-  const left = hasDimensions(person) ? person.boundingBox.Left * person.imageDimensions.width : 100;
+    Math.round(person.boundingBox.Height * person.imageDimensions.height) :
+    200;
+  const top = hasDimensions(person) ?
+    Math.round(person.boundingBox.Top * person.imageDimensions.height) :
+    100;
+  const left = hasDimensions(person) ?
+    Math.round(person.boundingBox.Left * person.imageDimensions.width) :
+    100;
   return Sharp(s3Object.Body)
     .extract({
       left, top, width, height,
