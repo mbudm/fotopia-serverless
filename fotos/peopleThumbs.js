@@ -1,5 +1,5 @@
 
-import Jimp from 'jimp';
+import Sharp from 'sharp';
 import Joi from 'joi';
 import createS3Client from './lib/s3';
 import { success, failure } from './lib/responses';
@@ -47,14 +47,17 @@ function hasDimensions(person) {
 }
 
 export function crop(person, s3Object) {
-  const w = hasDimensions(person) ? person.boundingBox.Width * person.imageDimensions.width : 200;
-  const h = hasDimensions(person) ? person.boundingBox.Height * person.imageDimensions.height : 200;
+  const width = hasDimensions(person) ?
+    person.boundingBox.Width * person.imageDimensions.width : 200;
+  const height = hasDimensions(person) ?
+    person.boundingBox.Height * person.imageDimensions.height : 200;
   const top = hasDimensions(person) ? person.boundingBox.Top * person.imageDimensions.height : 100;
   const left = hasDimensions(person) ? person.boundingBox.Left * person.imageDimensions.width : 100;
-  return Jimp.read(s3Object.Body)
-    .then(image => image
-      .crop(top, left, w, h)
-      .getBufferAsync(Jimp.MIME_PNG));
+  return Sharp(s3Object.Body)
+    .extract({
+      left, top, width, height,
+    })
+    .toBuffer();
 }
 
 export function cropAndUpload(request, s3Object) {

@@ -504,5 +504,4 @@ package:
     - '!node_modules/uuid/**'
     - '!node_modules/babel-runtime/**'
     - '!node_modules/sharp/**'
-    - '!node_modules/jimp/**'
     - '!node_modules/dynamodb-data-types/**'
