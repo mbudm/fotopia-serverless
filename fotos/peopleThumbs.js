@@ -88,9 +88,9 @@ export async function createThumbs(event, context, callback) {
   try {
     const request = validateRequest(data);
     const s3Object = await getObject(request);
-    const result = await cropAndUpload(request, s3Object);
-    logger(context, startTime, getLogFields(data));
-    return callback(null, success(result));
+    // const result = await cropAndUpload(request, s3Object);
+    logger(context, startTime, getLogFields(data, s3Object));
+    return callback(null, success(true));
   } catch (err) {
     logger(context, startTime, { err, ...getLogFields(data) });
     return callback(null, failure(err));
