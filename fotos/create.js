@@ -143,7 +143,7 @@ export function getRekognitionFaceData(data, id, context, startTime) {
     Image: {
       S3Object: {
         Bucket: process.env.S3_BUCKET,
-        Name: replicateAuthKey(data),
+        Name: replicateAuthKey(data.img_key, data.userIdentityId),
       },
     },
   };
@@ -163,7 +163,7 @@ export function getRekognitionLabelData(data) {
     Image: {
       S3Object: {
         Bucket: process.env.S3_BUCKET,
-        Name: replicateAuthKey(data),
+        Name: replicateAuthKey(data.img_key, data.userIdentityId),
       },
     },
     MaxLabels: 30,
