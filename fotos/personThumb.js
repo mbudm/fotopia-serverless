@@ -5,14 +5,14 @@ import createS3Client from './lib/s3';
 import { success, failure } from './lib/responses';
 import logger from './lib/logger';
 import { validatePut } from './thumbs';
-import { peopleSchema } from './joi/stream';
+import { personSchema } from './joi/stream';
 import { safeLength, replicateAuthKey } from './create';
 import { GetObjectError, PutObjectError } from './errors/s3';
 
 let s3;
 
 export function validateRequest(data) {
-  const result = Joi.validate(data, peopleSchema);
+  const result = Joi.validate(data, personSchema);
   if (result.error !== null) {
     throw result.error;
   } else {

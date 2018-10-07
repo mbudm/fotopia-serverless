@@ -12,7 +12,7 @@ export const putSchema = Joi.object().keys({
   Key: Joi.string().required(),
 });
 
-export const peopleSchema = Joi.array().items(Joi.object().keys({
+export const personSchema = Joi.object().keys({
   name: Joi.string().allow('').label('name'),
   id: Joi.string().guid().required().label('id'),
   userIdentityId: Joi.string().allow('').label('userIdentityId'),
@@ -32,4 +32,7 @@ export const peopleSchema = Joi.array().items(Joi.object().keys({
     FaceId: Joi.string().guid().required().label('FaceId in a face object in the people schema'),
     ExternalImageId: Joi.string().guid().required().label('ExternalImageId'),
   })).label('facess array'),
-})).label('people array');
+});
+
+export const peopleSchema = Joi.array().items(personSchema).label('people array');
+
