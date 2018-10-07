@@ -184,7 +184,7 @@ export function getInvokePersonThumbParams(personInThisImage) {
   return {
     InvocationType: INVOCATION_EVENT,
     FunctionName: process.env.IS_OFFLINE ? 'personThumb' : `${process.env.LAMBDA_PREFIX}personThumb`,
-    LogType: 'Tail',
+    LogType: 'None',
     Payload: JSON.stringify({
       body: JSON.stringify(personInThisImage),
     }),
