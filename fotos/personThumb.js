@@ -21,10 +21,7 @@ export function validateRequest(data) {
 }
 
 export function getObject(request) {
-  // person objects just happen to have the right shape to suit this helper,
-  // but types would really help here, could then cast person object
-  // to the type that replicateAuthKey needs
-  const key = replicateAuthKey(request[0]);
+  const key = replicateAuthKey(request.img_key, request.userIdentityId);
   return s3.getObject({
     Bucket: process.env.S3_BUCKET,
     Key: key,
@@ -69,21 +66,28 @@ export function crop(person, s3Object) {
 }
 
 export function cropAndUpload(request, s3Object) {
-  return Promise.all(request.map(person => crop(person, s3Object)
+  return crop(request, s3Object)
     .then(buffer => putObject({
-      buffer, key: person.thumbnail,
-    }))));
+      buffer, key: replicateAuthKey(request.thumbnail, request.userIdentityId),
+    }));
 }
 
 export function getLogFields(data) {
   return {
-    peopleCount: safeLength(data),
-    imageKey: data && data[0].img_key,
-    personThumbnail: data && data[0].thumbnail,
+    imageKey: data && data.img_key,
+    imageUserIdentityId: data && data.userIdentityId,
+    personThumbnail: data && data.thumbnail,
+    personId: data && data.id,
+    personName: data && data.name,
+    personThumbLeft: data && data.BoundingBox && data.BoundingBox.Left,
+    personThumbTop: data && data.BoundingBox && data.BoundingBox.Left,
+    personThumbWidth: data && data.BoundingBox && data.BoundingBox.Width,
+    personThumbHeight: data && data.BoundingBox && data.BoundingBox.Height,
+    personFacesCount: data && safeLength(data.faces),
   };
 }
 
-export async function createThumbs(event, context, callback) {
+export async function createThumb(event, context, callback) {
   const startTime = Date.now();
   const data = JSON.parse(event.body);
   s3 = createS3Client();

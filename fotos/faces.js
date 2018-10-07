@@ -6,6 +6,7 @@ import createS3Client from './lib/s3';
 import {
   PEOPLE_KEY,
   INVOCATION_REQUEST_RESPONSE,
+  INVOCATION_EVENT,
 } from './lib/constants';
 import logger from './lib/logger';
 import lambda from './lib/lambda';
@@ -15,6 +16,7 @@ import { validateRequest } from './get';
 import { getSchema, putSchema, peopleSchema } from './joi/stream';
 import { requestSchema } from './joi/update';
 import { success, failure } from './lib/responses';
+
 import { safeLength } from './create';
 
 const MATCH_THRESHOLD = 80;
@@ -178,17 +180,23 @@ export function getNewPeople(facesWithPeople) {
   return validatePeople(newPeople);
 }
 
-export function getInvokePeopleThumbParams(newPeopleInThisImage) {
+export function getInvokePersonThumbParams(personInThisImage) {
   return {
-    InvocationType: INVOCATION_REQUEST_RESPONSE,
-    FunctionName: process.env.IS_OFFLINE ? 'peopleThumbs' : `${process.env.LAMBDA_PREFIX}peopleThumbs`,
+    InvocationType: INVOCATION_EVENT,
+    FunctionName: process.env.IS_OFFLINE ? 'personThumb' : `${process.env.LAMBDA_PREFIX}personThumb`,
     LogType: 'Tail',
     Payload: JSON.stringify({
-      body: JSON.stringify(newPeopleInThisImage),
+      body: JSON.stringify(personInThisImage),
     }),
   };
 }
 
+export function invokePeopleThumbEvents(newPeopleInThisImage) {
+  newPeopleInThisImage.forEach((person) => {
+    const newPersonThumbParams = getInvokePersonThumbParams(person);
+    lambda.invoke(newPersonThumbParams).promise();
+  });
+}
 
 export function getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThisImage = []) {
   const updatedPeople = existingPeople.map(person => ({
@@ -298,8 +306,7 @@ export async function addToPerson(event, context, callback) {
       const facesWithPeople = await getPeopleForFaces(newImages, existingPeople, getFaceMatch);
       const newPeopleInThisImage = getNewPeople(facesWithPeople);
       if (newPeopleInThisImage.length > 0) {
-        const newPeopleThumbParams = getInvokePeopleThumbParams(newPeopleInThisImage);
-        await lambda.invoke(newPeopleThumbParams).promise();
+        invokePeopleThumbEvents(newPeopleInThisImage);
       }
       const updatedPeople = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThisImage);
       const putPeoplePromise = putPeople(s3, updatedPeople, bucket, key);

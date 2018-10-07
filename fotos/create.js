@@ -13,10 +13,10 @@ import logger from './lib/logger';
 const fotopiaGroup = process.env.FOTOPIA_GROUP;
 export const THUMB_SUFFIX = '-thumbnail';
 
-export function replicateAuthKey(data) {
+export function replicateAuthKey(imgKey, userIdentityId) {
   return process.env.IS_OFFLINE ?
-    data.img_key :
-    `protected/${data.userIdentityId}/${data.img_key}`;
+    imgKey :
+    `protected/${userIdentityId}/${imgKey}`;
 }
 
 export function safeLength(arr) {
@@ -65,7 +65,7 @@ export function createThumbKey(key) {
 }
 
 export function getInvokeThumbnailsParams(data) {
-  const authKey = replicateAuthKey(data);
+  const authKey = replicateAuthKey(data.img_key, data.userIdentityId);
   return {
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     FunctionName: process.env.IS_OFFLINE ? 'thumbs' : `${process.env.LAMBDA_PREFIX}thumbs`,

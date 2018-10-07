@@ -199,8 +199,8 @@ functions:
           cors: true
           authorizer: aws_iam
 
-  peopleThumbs:
-      handler: fotos/peopleThumbs.createThumbs
+  personThumb:
+      handler: fotos/personThumb.createThumb
       memorySize: 128
       timeout: 20
       events:
