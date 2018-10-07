@@ -79,8 +79,6 @@ export function getLogFields(data) {
     personThumbnail: data && data.thumbnail,
     personId: data && data.id,
     personName: data && data.name,
-    personThumbLeft: data && data.boundingBox && data.boundingBox.Left,
-    personThumbTop: data && data.boundingBox && data.boundingBox.Left,
     personThumbWidth: data && data.boundingBox && data.boundingBox.Width,
     personThumbHeight: data && data.boundingBox && data.boundingBox.Height,
     personFacesCount: data && safeLength(data.faces),
