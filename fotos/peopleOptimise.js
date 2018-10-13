@@ -3,30 +3,107 @@ import test from 'tape';
 
 import * as peopleMerge from './peopleMerge';
 
+const existingPeople = [
+  {
+    name: 'Oren',
+    id: '160fd8c2-ca28-11e8-b55f-4b74b2479ec2',
+    userIdentityId: 'us-east-1:9071e2cb-1ed2-4bb5-b930-326aa04bf268',
+    img_key: 'tester/2017-07-07 18.38.14-1.jpg',
+    thumbnail:
+      'tester/2017-07-07 18.38.14-1-face--ffcabb7a-a43d-4ad9-94b3-3191024af0d8.jpg',
+    boundingBox: {
+      Left: 0.5679687261581421,
+      Top: 0.5625,
+      Height: 0.2291666716337204,
+      Width: 0.171875,
+    },
+    imageDimensions: { width: 1280, height: 960 },
+    faces: [
+      {
+        FaceId: 'ffcabb7a-a43d-4ad9-94b3-3191024af0d8',
+        ExternalImageId: '145f1b80-ca28-11e8-8ef2-33b26c8261ea',
+      },
+      {
+        FaceId: 'aa4d3faf-2b9b-41d4-a0a6-2025d7997a29',
+        ExternalImageId: 'ea7d5ed0-cae0-11e8-97a7-9f15cb04b4ad',
+      },
+      {
+        FaceId: 'd5bd96a0-ca26-11e8-b55f-4b74b2479ec2',
+        ExternalImageId: '5434c05f-8533-5a94-bec2-2a273bf81e5c',
+      },
+    ],
+  },
+  {
+    name: 'Oren2',
+    id: '2e8fe4a0-cadf-11e8-9c32-d70d53e17c3c',
+    userIdentityId: 'us-east-1:9071e2cb-1ed2-4bb5-b930-326aa04bf268',
+    img_key: 'tester/2017-09-28 16.46.28.jpg',
+    thumbnail:
+      'tester/2017-09-28 16.46.28-face--b894dbba-0f0b-4eee-a309-33acea0d2898.jpg',
+    boundingBox: {
+      Left: 0.24124999344348907,
+      Top: 0.3541666567325592,
+      Height: 0.1783333271741867,
+      Width: 0.13375000655651093,
+    },
+    imageDimensions: { width: 3264, height: 2448 },
+    faces: [
+      {
+        FaceId: 'b894dbba-0f0b-4eee-a309-33acea0d2898',
+        ExternalImageId: '2afd6f10-cadf-11e8-a3a8-2be82cd29644',
+      },
+      {
+        FaceId: '7ea4a68d-d811-492f-9555-66f48d498a53',
+        ExternalImageId: '160fd8c2-ca28-11e8-b55f-4b74b2479ec2',
+      },
+    ],
+  },
+];
 
 test('mergePeopleObjects', (t) => {
-  const data = {};
-  const result = peopleMerge.mergePeopleObjects(data);
-  t.equal(result, {});
+  const data = [existingPeople[0].id, existingPeople[1].id];
+  const result = peopleMerge.mergePeopleObjects(data, existingPeople);
+  t.equal(result.id, existingPeople[0].id, 'id');
+  t.equal(result.name, existingPeople[0].name, 'name');
+  t.equal(result.faces.length, 5, 'faces length');
+  t.equal(existingPeople[0].faces.length, 3, 'existing 0 unchanged');
+  t.equal(existingPeople[1].faces.length, 2, 'existing 1 unchanged');
   t.end();
 });
 
-
-test('mergePeopleObjects', (t) => {
-  const data = {};
-  const mergedPerson = {};
-  const result = peopleMerge.getDeletePeople(data, mergedPerson);
-  t.equal(result, {});
+test('mergePeopleObjects - argument order doesnt matter, merged person is most faces', (t) => {
+  const data = [existingPeople[1].id, existingPeople[0].id];
+  const result = peopleMerge.mergePeopleObjects(data, existingPeople);
+  t.equal(result.id, existingPeople[0].id, 'id');
+  t.equal(result.name, existingPeople[0].name, 'name');
+  t.equal(result.faces.length, 5, 'faces length');
   t.end();
 });
 
+test('getDeletePeople', (t) => {
+  const data = [existingPeople[1].id, existingPeople[0].id];
+  const mergedPerson = {
+    id: existingPeople[0].id,
+  };
+  const result = peopleMerge.getDeletePeople(data, mergedPerson, existingPeople);
+  t.equal(result.length, 1);
+  t.equal(result[0].id, existingPeople[1].id);
+  t.end();
+});
 
-test('mergePeopleObjects', (t) => {
-  const existingPeople = [];
-  const mergedPerson = {};
-  const deletePeople = [];
-  const result = peopleMerge.updatePeople(existingPeople, mergedPerson, deletePeople);
-  t.equal(result, {});
+test('getUpdatedPeople', (t) => {
+  const data = [existingPeople[1].id, existingPeople[0].id];
+  const mergedPerson = peopleMerge.mergePeopleObjects(data, existingPeople);
+  const deletePeople = peopleMerge.getDeletePeople(data, mergedPerson, existingPeople);
+  const result = peopleMerge.getUpdatedPeople(
+    existingPeople,
+    mergedPerson,
+    deletePeople,
+  );
+  t.equal(result.length, 1, 'length');
+  t.equal(result[0].id, mergedPerson.id, 'mergedPerson');
+  t.equal(result[0].faces.length, mergedPerson.faces.length, 'mergedPerson faces length');
+  t.deepEqual(result[0].faces, mergedPerson.faces, 'mergedPerson faces deep equal');
   t.end();
 });
 
