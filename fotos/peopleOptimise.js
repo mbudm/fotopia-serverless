@@ -107,6 +107,78 @@ test('getUpdatedPeople', (t) => {
   t.end();
 });
 
+test('getAllInvokeUpdateParams', (t) => {
+  const data = [existingPeople[1].id, existingPeople[0].id];
+  const mergedPerson = peopleMerge.mergePeopleObjects(data, existingPeople);
+  const deletePeople = peopleMerge.getDeletePeople(data, mergedPerson, existingPeople);
+  const imagesWithAffectedPeople = [{
+    people: [mergedPerson.id],
+  }, {
+    people: ['some-unaffected-person-id', deletePeople[0].id],
+  }];
+  const result = peopleMerge.getAllInvokeUpdateParams(
+    imagesWithAffectedPeople,
+    mergedPerson,
+    deletePeople,
+  );
+  t.equal(result.length, 2, 'length');
+  try {
+    const firstBodyParam = JSON.parse(JSON.parse(result[0].Payload).body);
+    t.equal(firstBodyParam.people[0], mergedPerson.id, 'first retains the mergedPerson');
+  } catch (e) {
+    t.fail();
+  }
+  try {
+    const secondBodyParam = JSON.parse(JSON.parse(result[1].Payload).body);
+    t.equal(secondBodyParam.people[0], imagesWithAffectedPeople[1].people[0], 'unaffected person id is unchanged');
+    t.equal(secondBodyParam.people[1], mergedPerson.id, 'second person of image 2 has affected person id changed to merged person');
+  } catch (e) {
+    t.fail();
+  }
+  t.end();
+});
+
+test('getAllInvokeUpdateParams - simpler mocks', (t) => {
+  const data = ['person1id', 'person2id', 'person3-mostfaces-id'];
+  const simpleExisting = [{
+    id: data[0],
+    faces: [{ FaceId: 'face1' }],
+  }, {
+    id: data[1],
+    faces: [{ FaceId: 'face2' }],
+  }, {
+    id: data[2],
+    faces: [{ FaceId: 'face1' }, { FaceId: 'face2' }],
+  }];
+  const mergedPerson = peopleMerge.mergePeopleObjects(data, simpleExisting);
+  const deletePeople = peopleMerge.getDeletePeople(data, mergedPerson, simpleExisting);
+  const imagesWithAffectedPeople = [{
+    people: [mergedPerson.id],
+  }, {
+    people: ['some-unaffected-person-id', deletePeople[0].id],
+  }];
+  const result = peopleMerge.getAllInvokeUpdateParams(
+    imagesWithAffectedPeople,
+    mergedPerson,
+    deletePeople,
+  );
+  t.equal(result.length, 2, 'length');
+  try {
+    const firstBodyParam = JSON.parse(JSON.parse(result[0].Payload).body);
+    t.equal(firstBodyParam.people[0], mergedPerson.id, 'first retains the mergedPerson');
+  } catch (e) {
+    t.fail();
+  }
+  try {
+    const secondBodyParam = JSON.parse(JSON.parse(result[1].Payload).body);
+    t.equal(secondBodyParam.people[0], imagesWithAffectedPeople[1].people[0], 'unaffected person id is unchanged');
+    t.equal(secondBodyParam.people[1], mergedPerson.id, 'second person of image 2 has affected person id changed to merged person');
+  } catch (e) {
+    t.fail();
+  }
+  t.end();
+});
+
 /*
 const eventRecord = {
   awsRegion: 'us-east-1',
