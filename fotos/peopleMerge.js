@@ -50,6 +50,7 @@ export function getInvokeQueryParams(deletedPeople, mergedPerson) {
 // RDBMS may be more efficient here where we could remove selected people
 // or use aliases for people in all searches
 // first see how this goes
+// doing the updates as events so it might be fine
 export async function queryImagesByPeople(deletePeople, mergedPerson) {
   const params = getInvokeQueryParams(deletePeople, mergedPerson);
   return lambda.invoke(params).promise();
