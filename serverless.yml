@@ -199,6 +199,16 @@ functions:
           cors: true
           authorizer: aws_iam
 
+  peopleMerge:
+    handler: fotos/peopleMerge.mergePeople
+    memorySize: 128
+    events:
+      - http:
+          path: people/merge
+          method: post
+          cors: true
+          authorizer: aws_iam
+
   personThumb:
       handler: fotos/personThumb.createThumb
       memorySize: 128

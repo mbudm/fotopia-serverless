@@ -3,6 +3,9 @@ import AWS from 'aws-sdk';
 let lambda = {};
 // connect to local lamda if running offline
 if (process.env.IS_OFFLINE) {
+  const handlerFuncsMap = {
+    query: 'queryItems',
+  };
   /*
     If the app is offline then lamda.invoke requires the handler
     function and maps the invoke parameters to the lambda signature
@@ -11,15 +14,17 @@ if (process.env.IS_OFFLINE) {
     Perhaps the serverless yml config could be used to provide this info, or some config
     specific to this helper could be provided
   */
-  const getHandlerFn = (handlerObj) => {
+  const getHandlerFn = (handlerObj, handlerFunctionName) => {
     const fnKeys = Object.keys(handlerObj).filter(key => typeof handlerObj[key] === 'function');
-    return handlerObj[fnKeys[0]]; // assumes the first fn is the handler
+    // assumes the first fn is the handler if not spec'd in the map
+    const fnKey = handlerFuncsMap[handlerFunctionName] || fnKeys[0];
+    return handlerObj[fnKey];
   };
 
   lambda = {
     invoke: (invokeParams) => {
       const handler = require(`../${invokeParams.FunctionName}`);
-      const handlerFn = getHandlerFn(handler);
+      const handlerFn = getHandlerFn(handler, invokeParams.FunctionName);
       return {
         promise: () => new Promise((resolve, reject) => {
           console.log('---- lambda invoke ----', invokeParams.FunctionName);

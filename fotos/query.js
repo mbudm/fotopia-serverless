@@ -92,12 +92,13 @@ export function getLogFields(data, ddbResponse, responseBody) {
   return {
     queryFromDate: data.from,
     queryToDate: data.to,
-    queryRawCount: safeLength(ddbResponse.Items),
+    queryRawCount: ddbResponse && safeLength(ddbResponse.Items),
     queryFilteredCount: safeLength(responseBody),
     queryFiltersTagsCount: data.criteria && safeLength(data.criteria.tags),
     queryFiltersPeopleCount: data.criteria && safeLength(data.criteria.people),
   };
 }
+
 export async function queryItems(event, context, callback) {
   const startTime = Date.now();
   const data = JSON.parse(event.body);

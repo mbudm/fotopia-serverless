@@ -32,7 +32,7 @@ export function getDeletePeople(data, mergedPerson, existingPeople) {
 export function getInvokeQueryParams(deletedPeople, mergedPerson) {
   const body = {
     criteria: {
-      people: deletedPeople.map(person => person.id).push(mergedPerson.id),
+      people: deletedPeople.map(person => person.id).concat(mergedPerson.id),
     },
     from: 0,
     to: Date.now(),
@@ -84,7 +84,9 @@ export function getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson,
 }
 
 export async function updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople) {
-  const allParams = getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson, deletePeople);
+  const allParams = Array.isArray(imagesWithAffectedPeople) ?
+    getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson, deletePeople) :
+    [];
   return Promise.all(allParams.map(params => lambda.invoke(params).promise()));
 }
 
@@ -95,9 +97,22 @@ export function getUpdatedPeople(existingPeople, mergedPerson, deletePeople) {
       person));
 }
 
-export function getLogFields({ existingPeople }) {
+export function getLogFields({
+  data,
+  existingPeople,
+  mergedPerson,
+  deletePeople,
+  imagesWithAffectedPeople,
+  updatedPeople,
+}) {
   return {
-    peopleCount: safeLength(existingPeople),
+    peopleCount: existingPeople && safeLength(existingPeople),
+    updatedPeopleCount: safeLength(updatedPeople),
+    mergeDeletePeopleCount: safeLength(deletePeople),
+    mergePersonId: mergedPerson && mergedPerson.id,
+    mergePersonFacesCount: mergedPerson && safeLength(mergedPerson.faces),
+    mergeImagesWithAffectedPeopleCount: safeLength(imagesWithAffectedPeople),
+    mergeRequestPeopleCount: safeLength(data),
   };
 }
 
@@ -109,7 +124,7 @@ export async function mergePeople(event, context, callback) {
   const data = event.body ? JSON.parse(event.body) : null;
   try {
     const existingPeople = await getExistingPeople(s3, bucket, key, context, startTime);
-    const mergedPerson = mergePeopleObjects(data);
+    const mergedPerson = mergePeopleObjects(data, existingPeople);
     const deletePeople = getDeletePeople(data, mergedPerson, existingPeople);
     const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson);
     const updatedImagesResponse =
@@ -117,17 +132,18 @@ export async function mergePeople(event, context, callback) {
     const updatedPeople = getUpdatedPeople(existingPeople, mergedPerson, deletePeople);
     const putPeoplePromise = putPeople(s3, updatedPeople, bucket, key);
     logger(context, startTime, getLogFields({
+      data,
       existingPeople,
       mergedPerson,
       deletePeople,
       imagesWithAffectedPeople,
-      updatedImagesResponse,
       updatedPeople,
+      updatedImagesResponse,
       putPeoplePromise,
     }));
     return callback(null, success(existingPeople));
   } catch (err) {
-    logger(context, startTime, { err });
+    logger(context, startTime, { err, ...getLogFields({ data }) });
     return callback(null, failure(err));
   }
 }

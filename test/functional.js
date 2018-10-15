@@ -351,6 +351,36 @@ export default function (auth, api, upload) {
     }
   });
 
+  test('peopleMerge', (t) => {
+    if (people.length > 0) {
+      const body = people
+        .reduce((accum, person) => (accum.length < 2 ? accum.concat(person.id) : accum), []);
+      api.post(apiUrl, '/people/merge', {
+        body,
+      })
+        .then((responseBody) => {
+          t.ok(responseBody, 'peopleMerge person ok');
+          t.end();
+        })
+        .catch(formatError);
+    } else {
+      t.end();
+    }
+  });
+
+  test('getPeople - check peopleMerge', (t) => {
+    if (people.length > 0) {
+      api.get(apiUrl, '/people')
+        .then((responseBody) => {
+          t.equal(responseBody.length, people.length - 1, 'one less person');
+          t.end();
+        })
+        .catch(formatError);
+    } else {
+      t.end();
+    }
+  });
+
   test('force kill amplify process', (t) => {
     t.end();
     process.exit(0);
