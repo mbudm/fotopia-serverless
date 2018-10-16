@@ -53,7 +53,12 @@ export function getInvokeQueryParams(deletedPeople, mergedPerson) {
 // doing the updates as events so it might be fine
 export async function queryImagesByPeople(deletePeople, mergedPerson) {
   const params = getInvokeQueryParams(deletePeople, mergedPerson);
-  return lambda.invoke(params).promise();
+  return lambda.invoke(params).promise()
+    .then((response) => {
+      const payload = JSON.parse(response.Payload);
+      const body = JSON.parse(payload.body);
+      return Array.isArray(body) ? body : [];
+    });
 }
 
 
@@ -112,6 +117,7 @@ export function getLogFields({
     mergePersonId: mergedPerson && mergedPerson.id,
     mergePersonFacesCount: mergedPerson && safeLength(mergedPerson.faces),
     mergeImagesWithAffectedPeopleCount: safeLength(imagesWithAffectedPeople),
+    mergeImagesWithAffectedPeopleRaw: imagesWithAffectedPeople,
     mergeRequestPeopleCount: safeLength(data),
   };
 }
