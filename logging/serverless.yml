@@ -25,7 +25,7 @@ provider:
     LogGroupName10: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-people
     LogGroupName11: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-delete
     LogGroupName12: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-personThumb
-    LogGroupName13: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-popleMerge
+    LogGroupName13: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-peopleMerge
     FilterPattern: ''
 resources:
   Resources:
