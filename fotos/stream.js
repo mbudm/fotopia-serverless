@@ -96,6 +96,13 @@ export function parseIndexes(records) {
     return updatedIndexes;
   }, { tags: {}, people: {} });
 }
+/*
+todo remove people from indexes, just handle tags here as
+the info on people is all in people.json inc number of images (faces)
+so then indexes just becomes tags - makes it scalable, add another index file
+for another taxoniomy if we adds one
+could also make tags have an array of images to make for more accuarte counts (and easier auditing)
+*/
 
 export function updateCounts(existing, newUpdates) {
   const updated = {};
