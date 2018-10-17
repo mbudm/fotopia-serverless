@@ -97,7 +97,8 @@ export function parseIndexes(records) {
   }, { tags: {}, people: {} });
 }
 /*
-todo remove people from indexes, just handle tags here as
+todo
+remove people from indexes, just handle tags here as
 the info on people is all in people.json inc number of images (faces)
 so then indexes just becomes tags - makes it scalable, add another index file
 for another taxoniomy if we adds one
