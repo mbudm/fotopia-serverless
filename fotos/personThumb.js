@@ -76,11 +76,15 @@ export function getLogFields(data) {
   return {
     imageKey: data && data.img_key,
     imageUserIdentityId: data && data.userIdentityId,
+    imageHeight: data && data.imageDimensions && data.imageDimensions.height,
+    imageWidth: data && data.imageDimensions && data.imageDimensions.width,
     personThumbnail: data && data.thumbnail,
     personId: data && data.id,
     personName: data && data.name,
     personThumbWidth: data && data.boundingBox && data.boundingBox.Width,
     personThumbHeight: data && data.boundingBox && data.boundingBox.Height,
+    personThumbTop: data && data.boundingBox && data.boundingBox.Top,
+    personThumbLeft: data && data.boundingBox && data.boundingBox.Left,
     personFacesCount: data && safeLength(data.faces),
   };
 }
