@@ -10,3 +10,4 @@ yarn-error.log
 serverless.env.yml
 .vscode
 .env
+.build
