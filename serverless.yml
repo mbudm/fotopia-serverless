@@ -5,6 +5,7 @@ frameworkVersion: ">=1.1.0 <2.0.0"
 plugins:
   - serverless-stack-output
   - serverless-domain-manager
+  - serverless-plugin-typescript
   - serverless-webpack
   - serverless-dynamodb-local
   - serverless-s3-sync

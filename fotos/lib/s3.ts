@@ -1,4 +1,4 @@
-import { config, Endpoint, S3 } from 'aws-sdk';
+import { config, Endpoint, S3 } from "aws-sdk";
 
 export default function createS3Client() {
   let options = {};
@@ -9,7 +9,7 @@ export default function createS3Client() {
       config.logger = console;
     }
     options = {
-      endpoint: new Endpoint('http://localhost:5000'),
+      endpoint: new Endpoint("http://localhost:5000"),
       s3ForcePathStyle: true,
     };
   }
