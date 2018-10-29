@@ -5,7 +5,6 @@ frameworkVersion: ">=1.1.0 <2.0.0"
 plugins:
   - serverless-stack-output
   - serverless-domain-manager
-  - serverless-plugin-typescript
   - serverless-webpack
   - serverless-dynamodb-local
   - serverless-s3-sync
@@ -15,7 +14,8 @@ plugins:
   - serverless-s3-remover
 
 custom:
-  webpackIncludeModules: true
+  webpack:
+    includeModules: true
   dynamodb:
     start:
       port: 8000

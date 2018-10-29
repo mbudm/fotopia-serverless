@@ -11,3 +11,4 @@ serverless.env.yml
 .vscode
 .env
 .build
+.dynamodb

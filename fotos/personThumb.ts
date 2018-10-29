@@ -1,5 +1,5 @@
 
-import Sharp from "sharp";
+import * as Sharp from "sharp";
 
 import { replicateAuthKey, safeLength } from "./create";
 import { GetObjectError } from "./errors/getObject";

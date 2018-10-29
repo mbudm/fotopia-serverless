@@ -1,5 +1,5 @@
 
-import Sharp from "sharp";
+import * as Sharp from "sharp";
 import { safeLength } from "./create";
 import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";

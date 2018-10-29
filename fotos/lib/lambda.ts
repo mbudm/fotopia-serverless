@@ -11,7 +11,12 @@ let lambda = {
 // connect to local lamda if running offline
 if (process.env.IS_OFFLINE) {
   const handlerFuncsMap = {
+    faces: "addToPerson",
+    get: "getItem",
     query: "queryItems",
+    stream: "indexRecords",
+    thumbs: "createThumb",
+    update: "updateItem",
   };
   /*
     If the app is offline then lamda.invoke requires the handler
