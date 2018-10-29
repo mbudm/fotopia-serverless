@@ -1,5 +1,5 @@
 import { DynamoDBRecord } from "aws-lambda";
-import { BoundingBox, FaceMatchList, FaceRecord } from "aws-sdk/clients/rekognition";
+import { BoundingBox, FaceMatch, FaceMatchList, FaceRecord } from "aws-sdk/clients/rekognition";
 
 export interface IPathParameters {
   username: string;
@@ -58,7 +58,7 @@ export interface IPerson {
 }
 
 export interface IFaceMatcherCallbackResponse {
-  FaceMatches: FaceMatchList;
+  FaceMatches: FaceMatch[];
   SearchedFaceId: string;
 }
 

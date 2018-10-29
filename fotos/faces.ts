@@ -1,6 +1,6 @@
 import { Callback, Context, DynamoDBRecord, DynamoDBStreamEvent, StreamRecord} from "aws-lambda";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
-import { FaceMatchList } from "aws-sdk/clients/rekognition";
+import { FaceMatch, FaceMatchList } from "aws-sdk/clients/rekognition";
 import { PutObjectOutput, PutObjectRequest } from "aws-sdk/clients/s3";
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
@@ -37,7 +37,7 @@ const MATCH_THRESHOLD = 80;
 const PERSON_THUMB_SUFFIX = "-face-";
 const fotopiaGroup = process.env.FOTOPIA_GROUP || "";
 
-export function getS3Params(Bucket, Key) {
+export function getS3Params(Bucket: string | undefined, Key: string | undefined) {
   return {
     Bucket,
     Key,
@@ -88,11 +88,18 @@ export function getFaceMatch(face: string): Promise<IFaceMatcherCallbackResponse
   };
   return rekognition ?
     rekognition.searchFaces(params)
-      .promise() :
-    {
-      FaceMatches: [],
+      .promise()
+      .then((response) => (
+        {
+          FaceMatches: new Array<FaceMatch>(),
+          SearchedFaceId: face,
+          ...response,
+        }
+      )) :
+    new Promise(() => ({
+      FaceMatches: new Array<FaceMatch>(),
       SearchedFaceId: face,
-    };
+    }));
 }
 
 export function getSimilarityAggregate(person: IPerson, faceMatches: FaceMatchList): number {
