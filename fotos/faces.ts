@@ -89,14 +89,16 @@ export function getFaceMatch(face: string): Promise<IFaceMatcherCallbackResponse
   return rekognition ?
     rekognition.searchFaces(params)
       .promise()
-      .then((response) => (
-        {
+      .then((response) => ({
           FaceMatches: new Array<FaceMatch>(),
           SearchedFaceId: face,
           ...response,
-        }
-      )) :
-    new Promise(() => ({
+        }),
+      )
+      .catch((e) => {
+        throw new Error(`Face Match Error: ${JSON.stringify(e)}`);
+      }) :
+    new Promise((res) => res({
       FaceMatches: new Array<FaceMatch>(),
       SearchedFaceId: face,
     }));

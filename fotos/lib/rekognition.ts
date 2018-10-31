@@ -233,10 +233,10 @@ function offlineClient() {
         res({
           FaceMatches: [{
             Face: {
-              ExternalImageId: face.Face![0].ExternalImageId,
-              FaceId: face.Face![0].FaceId,
+              ExternalImageId: face.Face!.ExternalImageId,
+              FaceId: face.Face!.FaceId,
             },
-            Similarity: originalId === face.Face![0].FaceId ? 100 : 0,
+            Similarity: originalId === face.Face!.FaceId ? 100 : 0,
           }],
           SearchedFaceId: originalId,
         });

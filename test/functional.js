@@ -126,7 +126,7 @@ export default function (auth, api, upload) {
       body: records[2],
     })
       .then((responseBody) => {
-        t.equal(responseBody.key, records[2].key);
+        t.equal(responseBody.img_key, records[2].img_key);
         records[2].id = responseBody.id;
         records[2].birthtime = responseBody.birthtime;
         records[2].people = responseBody.people;
@@ -140,7 +140,7 @@ export default function (auth, api, upload) {
       body: records[0],
     })
       .then((responseBody) => {
-        t.equal(responseBody.key, records[0].key);
+        t.equal(responseBody.img_key, records[0].img_key, `image one key is ${responseBody.img_key} id is ${responseBody.id}`);
         records[0].id = responseBody.id;
         records[0].birthtime = responseBody.birthtime;
         records[0].people = responseBody.people;
@@ -154,7 +154,7 @@ export default function (auth, api, upload) {
       body: records[1],
     })
       .then((responseBody) => {
-        t.equal(responseBody.key, records[1].key);
+        t.equal(responseBody.img_key, records[1].img_key);
         records[1].id = responseBody.id;
         records[1].birthtime = responseBody.birthtime;
         records[1].people = responseBody.people;
