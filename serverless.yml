@@ -15,7 +15,10 @@ plugins:
 
 custom:
   webpack:
-    includeModules: true
+    includeModules:
+      forceExclude:
+        - aws-sdk
+        - tape
   dynamodb:
     start:
       port: 8000
