@@ -1,3 +1,4 @@
+import { GetObjectError } from "./errors/getObject";
 import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
@@ -15,7 +16,11 @@ export function getConfigObject(s3) {
   const s3Params = getS3Params();
   return s3.getObject(s3Params).promise()
     .then((s3Object) => {
-      return JSON.parse(s3Object.Body.toString());
+      try {
+        return JSON.parse(s3Object.Body.toString());
+      } catch (e) {
+        throw new GetObjectError(e, s3Params.Key, s3Params.Bucket);
+      }
     });
 }
 
@@ -29,10 +34,9 @@ export async function getItem(event, context, callback) {
   const startTime = Date.now();
   const s3 = createS3Client();
   try {
-    const s3Object = await getConfigObject(s3);
-    const parsedBuffer = JSON.parse(s3Object.Body.toString());
-    logger(context, startTime, getLogParams(parsedBuffer));
-    return callback(null, success(parsedBuffer));
+    const s3Body = await getConfigObject(s3);
+    logger(context, startTime, getLogParams(s3Body));
+    return callback(null, success(s3Body));
   } catch (err) {
     logger(context, startTime, { err });
     return callback(null, failure(err));
