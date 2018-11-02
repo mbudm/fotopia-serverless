@@ -1,6 +1,7 @@
 
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
+import { IndexFacesError } from "./errors/indexFaces";
 import { INVOCATION_REQUEST_RESPONSE } from "./lib/constants";
 import dynamodb from "./lib/dynamodb";
 import lambda from "./lib/lambda";
@@ -112,11 +113,8 @@ export function logRekognitionError(e, data, id, indexFacesParams, context, star
       // eslint-disable-next-line
       .then(() => getRekognitionFaceData(data, id, context, startTime));
   }
-  if (e.code && e.code === "InvalidS3ObjectException") {
-    logger(context, startTime, { err: e, ...getLogFields(data, { id }, [], []) });
-  } else {
-    logger(context, startTime, { err: {e, code: "logRekognitionError"} });
-  }
+  const err =  new IndexFacesError(e, indexFacesParams);
+  logger(context, startTime, { err, ...getLogFields(data, { id }, [], []) });
   return null;
 }
 

@@ -79,16 +79,14 @@ export default function (auth, api, upload) {
       .catch(formatError);
   });
 
-  test('upload image with four ppl', (t) => {
+  test('upload image two - don\'t create as this just forces storage to get creds... idk why', (t) => {
     t.plan(1);
-    const object = fs.createReadStream(images[2].path);
-    upload(images[2].key, object, {
+    const object = fs.createReadStream(images[1].path);
+    upload(images[1].key, object, {
       contentType: 'image/jpeg',
     })
       .then((responseBody) => {
-        console.log('image one reponse', responseBody);
-        t.equal(responseBody.key, images[2].key);
-        records[2].img_key = responseBody.key;
+        t.equal(responseBody.key, images[1].key);
       })
       .catch(formatError);
   });
@@ -107,14 +105,15 @@ export default function (auth, api, upload) {
       .catch(formatError);
   });
 
-  test('upload image two', (t) => {
+  test('upload image with four ppl', (t) => {
     t.plan(1);
-    const object = fs.createReadStream(images[1].path);
-    upload(images[1].key, object, {
+    const object = fs.createReadStream(images[2].path);
+    upload(images[2].key, object, {
       contentType: 'image/jpeg',
     })
       .then((responseBody) => {
-        t.equal(responseBody.key, images[1].key);
+        console.log('image 4 ppl reponse', responseBody);
+        t.equal(responseBody.key, images[2].key);
         records[1].img_key = responseBody.key;
       })
       .catch(formatError);
@@ -123,13 +122,13 @@ export default function (auth, api, upload) {
   test('create image with four people meta data', (t) => {
     t.plan(1);
     api.post(apiUrl, '/create', {
-      body: records[2],
+      body: records[1],
     })
       .then((responseBody) => {
-        t.equal(responseBody.img_key, records[2].img_key);
-        records[2].id = responseBody.id;
-        records[2].birthtime = responseBody.birthtime;
-        records[2].people = responseBody.people;
+        t.equal(responseBody.img_key, records[1].img_key);
+        records[1].id = responseBody.id;
+        records[1].birthtime = responseBody.birthtime;
+        records[1].people = responseBody.people;
       })
       .catch(formatError);
   });
@@ -144,20 +143,6 @@ export default function (auth, api, upload) {
         records[0].id = responseBody.id;
         records[0].birthtime = responseBody.birthtime;
         records[0].people = responseBody.people;
-      })
-      .catch(formatError);
-  });
-
-  test('create image two meta data', (t) => {
-    t.plan(1);
-    api.post(apiUrl, '/create', {
-      body: records[1],
-    })
-      .then((responseBody) => {
-        t.equal(responseBody.img_key, records[1].img_key);
-        records[1].id = responseBody.id;
-        records[1].birthtime = responseBody.birthtime;
-        records[1].people = responseBody.people;
       })
       .catch(formatError);
   });
