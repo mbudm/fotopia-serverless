@@ -33,6 +33,7 @@ export default function logger(context, startTime, fields = {}) {
     errorRaw: new Error(),
     functionName: "",
     functionVersion: "",
+    isOffline: false,
     latencyMs: Date.now() - startTime,
     requestId: "",
   };
@@ -53,6 +54,7 @@ export default function logger(context, startTime, fields = {}) {
     logObj = {
       ...context,
       ...logObj,
+      isOffline: true,
     };
   } else {
     logObj = {
@@ -60,6 +62,7 @@ export default function logger(context, startTime, fields = {}) {
       functionVersion: context.functionVersion,
       requestId: context.awsRequestId,
       ...logObj,
+      isOffline: false,
     };
   }
 
