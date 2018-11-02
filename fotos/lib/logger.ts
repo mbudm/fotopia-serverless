@@ -62,7 +62,7 @@ export default function logger(context, startTime, fields = {}) {
       functionVersion: context.functionVersion,
       requestId: context.awsRequestId,
       ...logObj,
-      isOffline: false,
+      ...context,
     };
   }
 
