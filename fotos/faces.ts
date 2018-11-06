@@ -307,7 +307,7 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
     id: uuid.v1(),
     name: "addToPerson",
     parentId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.parentId,
-    traceId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.parentId,
+    traceId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.traceId,
   };
   try {
     const existingPeople: IPerson[] = await getExistingPeople(s3, bucket, key);
