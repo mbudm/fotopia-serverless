@@ -133,10 +133,10 @@ export async function mergePeople(event, context, callback) {
   const key = PEOPLE_KEY;
   const data = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
+    Timestamp: startTime,
+    id: uuid.v1(),
     name: "mergePeople",
     parentId: null,
-    spanId: uuid.v1(),
-    timestamp: startTime,
     traceId: uuid.v1(),
   };
   try {

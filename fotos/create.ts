@@ -35,7 +35,7 @@ export function getTagsFromRekognitionLabels(labels) {
 }
 export function getTraceMeta(loggerBaseParams: ILoggerBaseParams): ITraceMeta {
   return {
-    parentId: loggerBaseParams.spanId,
+    parentId: loggerBaseParams.id,
     traceId: loggerBaseParams.traceId,
   };
 }
@@ -118,7 +118,7 @@ export function getDynamoDbParams(data, id, group, faces, labels) {
   };
 }
 
-export function logRekognitionError(e, data, id, indexFacesParams, context, startTime) {
+export function logRekognitionError(e, data, id, indexFacesParams, context, loggerBaseParams) {
   if (e.code && e.code === "ResourceNotFoundException") {
     const params = {
       CollectionId: fotopiaGroup,
@@ -126,14 +126,14 @@ export function logRekognitionError(e, data, id, indexFacesParams, context, star
     return rekognition.createCollection(params)
       .promise()
       // eslint-disable-next-line
-      .then(() => getRekognitionFaceData(data, id, context, startTime));
+      .then(() => getRekognitionFaceData(data, id, context, loggerBaseParams));
   }
   const err =  new IndexFacesError(e, indexFacesParams);
-  logger(context, startTime, { err, ...getLogFields(data, { id }, [], []) });
+  logger(context, {...loggerBaseParams, name: "logRekognitionError" }, { err, ...getLogFields(data, { id }, [], []) });
   return null;
 }
 
-export function getRekognitionFaceData(data, id, context, startTime) {
+export function getRekognitionFaceData(data, id, context, loggerBaseParams: ILoggerBaseParams) {
   const params = {
     CollectionId: fotopiaGroup,
     DetectionAttributes: [
@@ -150,7 +150,7 @@ export function getRekognitionFaceData(data, id, context, startTime) {
     rekognition.indexFaces(params)
       .promise()
       .then((response) => response.FaceRecords)
-      .catch((e) => logRekognitionError(e, data, id, params, context, startTime)) :
+      .catch((e) => logRekognitionError(e, data, id, params, context, loggerBaseParams)) :
     [];
   // sometimes getting a object not found error - img
   // should be avail as create happens after upload is complete
@@ -218,10 +218,10 @@ export async function createItem(event, context, callback) {
   const id = uuid.v1();
   const data: ICreateBody = JSON.parse(event.body);
   const loggerBaseParams: ILoggerBaseParams = {
+    Timestamp: startTime,
+    id: uuid.v1(),
     name: "createItem",
     parentId: null,
-    spanId: uuid.v1(),
-    timestamp: startTime,
     traceId: uuid.v1(),
   };
   try {

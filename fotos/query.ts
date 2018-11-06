@@ -93,10 +93,10 @@ export async function queryItems(event, context, callback) {
   const data: IQueryBody = JSON.parse(event.body);
   const traceMeta = data!.traceMeta;
   const loggerBaseParams: ILoggerBaseParams = {
+    Timestamp: startTime,
+    id: uuid.v1(),
     name: "queryItems",
     parentId: traceMeta && traceMeta!.parentId || null,
-    spanId: uuid.v1(),
-    timestamp: startTime,
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {

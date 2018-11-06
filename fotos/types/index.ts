@@ -74,8 +74,8 @@ export interface IUpdateBody {
 }
 
 export interface ILoggerBaseParams {
-  timestamp: number;	// How much time the span took, in milliseconds
-  spanId: string; // A unique ID for each span
+  Timestamp: number;	// How much time the span took, in milliseconds
+  id: string; // A unique ID for each span
   name: string; // The specific call location (like a function or method name)
   parentId: string | null;	// The ID of this span’s parent span, the call location the current span was called from
   traceId: string; // The ID of the trace this span belongs to

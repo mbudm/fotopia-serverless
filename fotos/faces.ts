@@ -303,10 +303,10 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
   const bucket: string | undefined = process.env.S3_BUCKET;
   const key: string | undefined = PEOPLE_KEY;
   const logBaseParams: ILoggerBaseParams = {
+    Timestamp: startTime,
+    id: uuid.v1(),
     name: "addToPerson",
     parentId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.parentId,
-    spanId: uuid.v1(),
-    timestamp: startTime,
     traceId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.parentId,
   };
   try {

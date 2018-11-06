@@ -54,10 +54,10 @@ export async function getItem(event, context, callback) {
   const startTime = Date.now();
   const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
+    Timestamp: startTime,
+    id: uuid.v1(),
     name: "getItem",
     parentId: traceMeta && traceMeta!.parentId,
-    spanId: uuid.v1(),
-    timestamp: startTime,
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {

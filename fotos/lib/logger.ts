@@ -32,7 +32,7 @@ export function parseError(err) {
 
 export default function logger(context, base: ILoggerBaseParams, fields) {
   let logObj = {
-    durationMs: Date.now() - base.timestamp,
+    durationMs: Date.now() - base.Timestamp,
     errorCode: "",
     errorMessage: "",
     errorRaw: new Error(),
