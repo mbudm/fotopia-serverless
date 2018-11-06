@@ -1,5 +1,5 @@
 
-// import * as Sharp from "sharp";
+import * as Sharp from "sharp";
 import * as uuid from "uuid";
 
 import { safeLength } from "./create";
@@ -42,22 +42,22 @@ export function putObject(params) {
   return s3.putObject(data).promise();
 }
 
-// export function resize({ data }) {
-//   return Sharp(data.Body)
-//     .resize(THUMB_WIDTH, THUMB_HEIGHT)
-//     .crop(Sharp.strategy.entropy)
-//     .toFormat("png")
-//     .toBuffer();
-// }
+export function resize({ data }) {
+  return Sharp(data.Body)
+    .resize(THUMB_WIDTH, THUMB_HEIGHT)
+    .crop(Sharp.strategy.entropy)
+    .toFormat("png")
+    .toBuffer();
+}
 
-// export function resizeAndUpload({
-//   data, key,
-// }) {
-//   return resize({ data })
-//     .then((buffer) => putObject({
-//       buffer, key,
-//     }));
-// }
+export function resizeAndUpload({
+  data, key,
+}) {
+  return resize({ data })
+    .then((buffer) => putObject({
+      buffer, key,
+    }));
+}
 
 export function getLogFields(data) {
   return {
@@ -93,9 +93,9 @@ export async function createThumb(event, context, callback) {
   };
   try {
     const objData = await getObject(thumb.key);
-    // const result = await resizeAndUpload({ data: objData, key: thumb.thumbKey });
+    const result = await resizeAndUpload({ data: objData, key: thumb.thumbKey });
     logger(context, loggerBaseParams, getLogFields(thumb));
-    return callback(null, success(objData));
+    return callback(null, success(result));
   } catch (err) {
     logger(context, loggerBaseParams, { err, ...getLogFields(thumb) });
     return callback(null, failure(err));
