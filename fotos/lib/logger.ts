@@ -42,6 +42,7 @@ export default function logger(context, base: ILoggerBaseParams, fields) {
     requestId: "",
     serviceName: context && context.functionName,
     ...base,
+    Timestamp: new Date(base.Timestamp).toString(),
   };
   if (fields && Object.keys(fields)) {
     Object.keys(fields).forEach((field) => {
