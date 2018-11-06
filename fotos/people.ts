@@ -20,10 +20,10 @@ export async function getItem(event, context, callback) {
   const bucket = process.env.S3_BUCKET;
   const key = PEOPLE_KEY;
   const loggerBaseParams: ILoggerBaseParams = {
-    Timestamp: startTime,
     id: uuid.v1(),
     name: "getItem",
     parentId: "",
+    startTime,
     traceId: uuid.v1(),
   };
   try {

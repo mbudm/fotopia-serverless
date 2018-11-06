@@ -31,8 +31,9 @@ export function parseError(err) {
 }
 
 export default function logger(context, base: ILoggerBaseParams, fields) {
+  const startDate = new Date(base.startTime);
   let logObj = {
-    durationMs: Date.now() - base.Timestamp,
+    durationMs: Date.now() - base.startTime,
     errorCode: "",
     errorMessage: "",
     errorRaw: new Error(),
@@ -42,7 +43,7 @@ export default function logger(context, base: ILoggerBaseParams, fields) {
     requestId: "",
     serviceName: context && context.functionName,
     ...base,
-    Timestamp: new Date(base.Timestamp).toString(),
+    time: startDate.toISOString(),
   };
   if (fields && Object.keys(fields)) {
     Object.keys(fields).forEach((field) => {

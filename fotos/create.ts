@@ -218,10 +218,10 @@ export async function createItem(event, context, callback) {
   const id = uuid.v1();
   const data: ICreateBody = JSON.parse(event.body);
   const loggerBaseParams: ILoggerBaseParams = {
-    Timestamp: startTime,
     id: uuid.v1(),
     name: "createItem",
     parentId: "",
+    startTime,
     traceId: uuid.v1(),
   };
   try {

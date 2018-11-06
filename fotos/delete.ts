@@ -70,10 +70,10 @@ export async function deleteItem(event, context, callback) {
   const s3 = createS3Client();
   const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
-    Timestamp: startTime,
     id: uuid.v1(),
     name: "deleteItem",
     parentId: traceMeta && traceMeta!.parentId || "",
+    startTime,
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {

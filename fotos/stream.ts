@@ -152,10 +152,10 @@ export async function indexRecords(event, context, callback) {
   const startTime = Date.now();
   s3 = createS3Client();
   const loggerBaseParams: ILoggerBaseParams = {
-    Timestamp: startTime,
     id: uuid.v1(),
     name: "indexRecords",
     parentId: "",
+    startTime,
     traceId: uuid.v1(),
   };
   try {

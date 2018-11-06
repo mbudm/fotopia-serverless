@@ -85,10 +85,10 @@ export async function createThumb(event, context, callback) {
   const thumb = data.thumb;
   s3 = createS3Client();
   const loggerBaseParams: ILoggerBaseParams = {
-    Timestamp: startTime,
     id: uuid.v1(),
     name: "createThumb",
     parentId: traceMeta && traceMeta!.parentId || "",
+    startTime,
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {

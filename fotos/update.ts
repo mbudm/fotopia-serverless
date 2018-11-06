@@ -77,10 +77,10 @@ export async function updateItem(event, context, callback) {
   const traceMeta = data!.traceMeta;
   const pathParams = event.pathParameters;
   const loggerBaseParams: ILoggerBaseParams = {
-    Timestamp: startTime,
     id: uuid.v1(),
     name: "updateItem",
     parentId: traceMeta && traceMeta!.parentId || "",
+    startTime,
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {

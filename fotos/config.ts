@@ -38,10 +38,10 @@ export async function getItem(event, context, callback) {
   const startTime = Date.now();
   const s3 = createS3Client();
   const loggerBaseParams: ILoggerBaseParams = {
-    Timestamp: startTime,
     id: uuid.v1(),
     name: "getItem",
     parentId: "",
+    startTime,
     traceId: uuid.v1(),
   };
   try {

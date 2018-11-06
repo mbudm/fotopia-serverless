@@ -44,10 +44,10 @@ export async function updatePerson(event, context, callback) {
   const data = event.body ? JSON.parse(event.body) : null;
   const pathParams = event.pathParameters;
   const loggerBaseParams: ILoggerBaseParams = {
-    Timestamp: startTime,
     id: uuid.v1(),
     name: "updatePerson",
     parentId: "",
+    startTime,
     traceId: uuid.v1(),
   };
   try {
