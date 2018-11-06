@@ -176,7 +176,7 @@ export function getRekognitionLabelData(data) {
 
 export function getInvokeFacesParams(ddbParams, loggerBaseParams: ILoggerBaseParams) {
   return {
-    FunctionName: "faces",
+    FunctionName: process.env.IS_OFFLINE ? "faces" : `${process.env.LAMBDA_PREFIX}faces`,
     InvocationType: INVOCATION_EVENT,
     LogType: "Tail",
     Payload: JSON.stringify({
