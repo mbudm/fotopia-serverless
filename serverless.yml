@@ -249,12 +249,11 @@ functions:
     memorySize: 128
     timeout: 20
     events:
-      - stream:
-          type: dynamodb
-          arn:
-            Fn::GetAtt:
-              - FotopiaDynamoDbTable
-              - StreamArn
+      - http:
+          path: faces
+          method: post
+          cors: true
+          authorizer: aws_iam
 resources:
   Resources:
     FotopiaDynamoDbTable:

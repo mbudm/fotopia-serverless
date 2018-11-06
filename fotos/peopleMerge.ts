@@ -1,3 +1,5 @@
+
+import * as uuid from "uuid";
 import { safeLength } from "./create";
 import { getExistingPeople, putPeople } from "./faces";
 import {
@@ -9,6 +11,9 @@ import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
+import {
+  ILoggerBaseParams,
+} from "./types";
 
 export function mergePeopleObjects(data, existingPeople) {
   const mergedPeople = existingPeople
@@ -127,6 +132,13 @@ export async function mergePeople(event, context, callback) {
   const bucket = process.env.S3_BUCKET;
   const key = PEOPLE_KEY;
   const data = event.body ? JSON.parse(event.body) : null;
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "mergePeople",
+    parentId: null,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: uuid.v1(),
+  };
   try {
     const existingPeople = await getExistingPeople(s3, bucket, key);
     const mergedPerson = mergePeopleObjects(data, existingPeople);
@@ -135,7 +147,7 @@ export async function mergePeople(event, context, callback) {
     await updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople);
     const updatedPeople = getUpdatedPeople(existingPeople, mergedPerson, deletePeople);
     putPeople(s3, updatedPeople, bucket, key);
-    logger(context, startTime, getLogFields({
+    logger(context, loggerBaseParams, getLogFields({
       data,
       deletePeople,
       existingPeople,
@@ -145,7 +157,7 @@ export async function mergePeople(event, context, callback) {
     }));
     return callback(null, success(existingPeople));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields({
+    logger(context, loggerBaseParams, { err, ...getLogFields({
       data,
       deletePeople: null,
       existingPeople: null,

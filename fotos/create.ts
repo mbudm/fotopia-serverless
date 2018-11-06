@@ -2,14 +2,20 @@
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 import { IndexFacesError } from "./errors/indexFaces";
-import { INVOCATION_REQUEST_RESPONSE } from "./lib/constants";
+import { INVOCATION_EVENT, INVOCATION_REQUEST_RESPONSE } from "./lib/constants";
 import dynamodb from "./lib/dynamodb";
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import rekognition from "./lib/rekognition";
 import { failure, success } from "./lib/responses";
+import {
+  ICreateBody,
+  ILoggerBaseParams,
+  ILoggerCreateParams,
+  ITraceMeta,
+} from "./types";
 
-const fotopiaGroup = process.env.FOTOPIA_GROUP;
+const fotopiaGroup = process.env.FOTOPIA_GROUP || "";
 export const THUMB_SUFFIX = "-thumbnail";
 
 export function replicateAuthKey(imgKey, userIdentityId) {
@@ -27,8 +33,14 @@ export function getTagsFromRekognitionLabels(labels) {
     labels.Labels.map((label) => label.Name) :
     [];
 }
+export function getTraceMeta(loggerBaseParams: ILoggerBaseParams): ITraceMeta {
+  return {
+    parentId: loggerBaseParams.spanId,
+    traceId: loggerBaseParams.traceId,
+  };
+}
 
-export function getLogFields(request, dbItem, faces, labels) {
+export function getLogFields(request, dbItem, faces, labels): ILoggerCreateParams {
   return {
     createIdentifiedFacesCount: safeLength(faces),
     createIdentifiedLabelsCount: safeLength(getTagsFromRekognitionLabels(labels)),
@@ -58,7 +70,7 @@ export function createThumbKey(key) {
   return `${key.substr(0, key.lastIndexOf(ext) - 1)}${THUMB_SUFFIX}.${ext}`;
 }
 
-export function getInvokeThumbnailsParams(data) {
+export function getInvokeThumbnailsParams(data, loggerBaseParams: ILoggerBaseParams) {
   const authKey = replicateAuthKey(data.img_key, data.userIdentityId);
   return {
     FunctionName: process.env.IS_OFFLINE ? "thumbs" : `${process.env.LAMBDA_PREFIX}thumbs`,
@@ -66,8 +78,11 @@ export function getInvokeThumbnailsParams(data) {
     LogType: "Tail",
     Payload: JSON.stringify({
       body: JSON.stringify({
-        key: authKey,
-        thumbKey: createThumbKey(authKey),
+        thumb: {
+          key: authKey,
+          thumbKey: createThumbKey(authKey),
+        },
+        traceMeta: getTraceMeta(loggerBaseParams),
       }),
     }),
   };
@@ -159,9 +174,23 @@ export function getRekognitionLabelData(data) {
     [];
 }
 
-export function getInvokeParams(ddbParams, name) {
+export function getInvokeFacesParams(ddbParams, loggerBaseParams: ILoggerBaseParams) {
   return {
-    FunctionName: name,
+    FunctionName: "faces",
+    InvocationType: INVOCATION_EVENT,
+    LogType: "Tail",
+    Payload: JSON.stringify({
+      body: JSON.stringify({
+        image: ddbParams.Item,
+        traceMeta: getTraceMeta(loggerBaseParams),
+      }),
+    }),
+  };
+}
+
+export function getInvokeStreamParams(ddbParams) {
+  return {
+    FunctionName: "stream",
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
@@ -187,32 +216,39 @@ export function getInvokeParams(ddbParams, name) {
 export async function createItem(event, context, callback) {
   const startTime = Date.now();
   const id = uuid.v1();
-  const data = JSON.parse(event.body);
+  const data: ICreateBody = JSON.parse(event.body);
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "createItem",
+    parentId: null,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: uuid.v1(),
+  };
   try {
-    const request = validateRequest(data);
-    const invokeParams = getInvokeThumbnailsParams(request);
+    const invokeParams = getInvokeThumbnailsParams(data, loggerBaseParams);
     const thumbPromise = lambda.invoke(invokeParams).promise();
-    const facesPromise = getRekognitionFaceData(request, id, context, startTime);
-    const labelsPromise = getRekognitionLabelData(request);
+    const facesPromise = getRekognitionFaceData(data, id, context, loggerBaseParams);
+    const labelsPromise = getRekognitionLabelData(data);
 
     await thumbPromise;
     const faces = await facesPromise;
     const labels = await labelsPromise;
 
-    const ddbParams = getDynamoDbParams(request, id, fotopiaGroup, faces, labels);
+    const ddbParams = getDynamoDbParams(data, id, fotopiaGroup, faces, labels);
     await dynamodb.put(ddbParams).promise();
+
+    const facesParams = getInvokeFacesParams(ddbParams, loggerBaseParams);
+    lambda.invoke(facesParams).promise();
+
     if (process.env.IS_OFFLINE) {
-      const streamParams = getInvokeParams(ddbParams, "stream");
+      const streamParams = getInvokeStreamParams(ddbParams);
       const streamPromise = lambda.invoke(streamParams).promise();
-      const facesParams = getInvokeParams(ddbParams, "faces");
-      const facesLambdaPromise = lambda.invoke(facesParams).promise();
       await streamPromise;
-      await facesLambdaPromise;
     }
-    logger(context, startTime, getLogFields(request, ddbParams.Item, faces, labels));
+    logger(context, loggerBaseParams, getLogFields(data, ddbParams.Item, faces, labels));
     return callback(null, success(ddbParams.Item));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields(data, { id }, [], []) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(data, { id }, [], []) });
     return callback(null, failure(err));
   }
 }

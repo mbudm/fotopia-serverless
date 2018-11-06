@@ -1,7 +1,11 @@
+import * as uuid from "uuid";
 import { GetObjectError } from "./errors/getObject";
 import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
+import {
+  ILoggerBaseParams,
+} from "./types";
 
 export function getS3Params() {
   const Bucket: string | undefined = process.env.S3_OUTPUT_BUCKET;
@@ -33,12 +37,19 @@ export function getLogParams(params) {
 export async function getItem(event, context, callback) {
   const startTime = Date.now();
   const s3 = createS3Client();
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "getItem",
+    parentId: null,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: uuid.v1(),
+  };
   try {
     const s3Body = await getConfigObject(s3);
-    logger(context, startTime, getLogParams(s3Body));
+    logger(context, loggerBaseParams, getLogParams(s3Body));
     return callback(null, success(s3Body));
   } catch (err) {
-    logger(context, startTime, { err });
+    logger(context, loggerBaseParams, { err });
     return callback(null, failure(err));
   }
 }

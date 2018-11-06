@@ -1,4 +1,5 @@
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
+import * as uuid from "uuid";
 
 import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
@@ -7,6 +8,9 @@ import createS3Client from "./lib/s3";
 
 import { safeLength } from "./create";
 import { getZeroCount } from "./indexes";
+import {
+  ILoggerBaseParams,
+} from "./types";
 
 let s3;
 
@@ -147,14 +151,21 @@ export function getLogFields(records, existingIndex, updatedIndexes) {
 export async function indexRecords(event, context, callback) {
   const startTime = Date.now();
   s3 = createS3Client();
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "indexRecords",
+    parentId: null,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: uuid.v1(),
+  };
   try {
     const existingIndex = await getExistingIndex();
     const updatedIndexes = getUpdatedIndexes(existingIndex, event.Records);
     const response = await putIndex(updatedIndexes);
-    logger(context, startTime, getLogFields(event.Records, existingIndex, updatedIndexes));
+    logger(context, loggerBaseParams, getLogFields(event.Records, existingIndex, updatedIndexes));
     return callback(null, success(response));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields(event.Records, null, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(event.Records, null, null) });
     return callback(null, failure(err));
   }
 }

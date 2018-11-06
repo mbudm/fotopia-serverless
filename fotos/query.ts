@@ -1,13 +1,15 @@
+import * as uuid from "uuid";
+
 import { safeLength } from "./create";
 import dynamodb from "./lib/dynamodb";
 import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";
+import {
+  ILoggerBaseParams,
+  IQueryBody,
+} from "./types";
 
-export function validateRequest(data) {
- return data;
-}
-
-export const getUserDynamoDbParams = (data) => {
+export const getUserDynamoDbParams = (data: IQueryBody) => {
   const params = {
     ExpressionAttributeNames: {
       "#birthtime": "birthtime",
@@ -26,7 +28,7 @@ export const getUserDynamoDbParams = (data) => {
   return params;
 };
 
-export const getGroupDynamoDbParams = (data) => {
+export const getGroupDynamoDbParams = (data: IQueryBody) => {
   const params = {
     ExpressionAttributeNames: {
       "#birthtime": "birthtime",
@@ -46,7 +48,7 @@ export const getGroupDynamoDbParams = (data) => {
   return params;
 };
 
-export const getDynamoDbParams = (data) => {
+export const getDynamoDbParams = (data: IQueryBody) => {
   if (data.username) {
     return getUserDynamoDbParams(data);
   }
@@ -59,14 +61,14 @@ export const hasCriteria = (criteria = {}) =>
 export const filterByCriteria = (item, criteriaKey, criteriaData) =>
   criteriaData.some((criteriaDataItem) => item[criteriaKey].includes(criteriaDataItem));
 
-export const filterItemsByCriteria = (items, data) =>
+export const filterItemsByCriteria = (items, data: IQueryBody) =>
   (hasCriteria(data.criteria) ?
     items.filter((item) => item &&
-      Object.keys(data.criteria).some((criteriaKey) =>
-        filterByCriteria(item, criteriaKey, data.criteria[criteriaKey]))) :
+      Object.keys(data!.criteria || {}).some((criteriaKey) =>
+        filterByCriteria(item, criteriaKey, data!.criteria![criteriaKey]))) :
     items);
 
-export function getResponseBody(ddbResponse, data) {
+export function getResponseBody(ddbResponse, data: IQueryBody) {
   const filteredItems = filterItemsByCriteria(ddbResponse.Items, data);
   return filteredItems.length > 0 ? filteredItems : "No items found that match your criteria";
 }
@@ -75,7 +77,7 @@ export function queryDatabase(ddbParams) {
   return dynamodb.query(ddbParams).promise();
 }
 
-export function getLogFields(data, ddbResponse, responseBody) {
+export function getLogFields(data: IQueryBody, ddbResponse, responseBody) {
   return {
     queryFilteredCount: safeLength(responseBody),
     queryFiltersPeopleCount: data.criteria && safeLength(data.criteria.people),
@@ -88,16 +90,23 @@ export function getLogFields(data, ddbResponse, responseBody) {
 
 export async function queryItems(event, context, callback) {
   const startTime = Date.now();
-  const data = JSON.parse(event.body);
+  const data: IQueryBody = JSON.parse(event.body);
+  const traceMeta = data!.traceMeta;
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "queryItems",
+    parentId: traceMeta && traceMeta!.parentId || null,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
+  };
   try {
-    const request = validateRequest(data);
-    const ddbParams = getDynamoDbParams(request);
+    const ddbParams = getDynamoDbParams(data);
     const ddbResponse = await queryDatabase(ddbParams);
-    const responseBody = getResponseBody(ddbResponse, request);
-    logger(context, startTime, getLogFields(data, ddbResponse, responseBody));
+    const responseBody = getResponseBody(ddbResponse, data);
+    logger(context, loggerBaseParams, getLogFields(data, ddbResponse, responseBody));
     return callback(null, success(responseBody));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields(data, null, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(data, null, null) });
     return callback(null, failure(err));
   }
 }

@@ -1,7 +1,12 @@
+import * as uuid from "uuid";
 import { safeLength } from "./create";
 import dynamodb from "./lib/dynamodb";
 import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";
+import {
+  ILoggerBaseParams,
+  ITraceMeta,
+} from "./types";
 
 export function validateRequest(pathParameters) {
   return pathParameters;
@@ -47,15 +52,23 @@ export function getLogFields(pathParams, responseBody) {
 }
 export async function getItem(event, context, callback) {
   const startTime = Date.now();
+  const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "getItem",
+    parentId: traceMeta && traceMeta!.parentId,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
+  };
   try {
     const request = validateRequest(event.pathParameters);
     const ddbParams = getDynamoDbParams(request);
     const ddbResponse = await getImageRecord(ddbParams);
     const responseBody = getResponseBody(ddbResponse, request);
-    logger(context, startTime, getLogFields(request, responseBody));
+    logger(context, loggerBaseParams, getLogFields(request, responseBody));
     return callback(null, success(responseBody));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields(event.pathParameters, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(event.pathParameters, null) });
     return callback(null, failure(err));
   }
 }

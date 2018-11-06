@@ -1,4 +1,4 @@
-import { Callback, Context, DynamoDBRecord, DynamoDBStreamEvent, StreamRecord} from "aws-lambda";
+import { APIGatewayProxyEvent, Callback, Context, DynamoDBRecord, StreamRecord} from "aws-lambda";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import { FaceMatch, FaceMatchList } from "aws-sdk/clients/rekognition";
 import { PutObjectOutput, PutObjectRequest } from "aws-sdk/clients/s3";
@@ -21,7 +21,8 @@ import {
   IFaceMatcherCallbackResponse,
   IFaceWithPeople,
   IImage,
-  ILoggerParams,
+  ILoggerBaseParams,
+  ILoggerFacesParams,
   IPathParameters,
   IPerson,
   IPersonMatch,
@@ -121,25 +122,15 @@ export function getPeopleForFace(existingPeople: IPerson[], faceMatches: FaceMat
   }));
 }
 
-export function getNewImageRecords(records: DynamoDBRecord[]): IImage[] {
-  return records.filter((record) => record.dynamodb &&
-    record.dynamodb.NewImage &&
-    !record.dynamodb.OldImage)
-    .map((record: DynamoDBRecord) => {
-      const ddbRec: StreamRecord = record.dynamodb || {};
-      return {
-        ...ddbAttVals.unwrap(ddbRec.Keys),
-        ...ddbAttVals.unwrap(ddbRec.NewImage),
-      };
-    });
+export function getNewImage(body: string): IImage {
+  return JSON.parse(body);
 }
 
-// can there be multiple insert records in one event? probably?
 export function getPeopleForFaces(
-  newImages: IImage[],
+  newImage: IImage,
   existingPeople: IPerson[],
   faceMatcher: IFaceMatcherCallback): Promise<IFaceWithPeople[]> {
-  return Promise.all(newImages[0].faces
+  return Promise.all(newImage.faces!
     .map((face) => faceMatcher(face.Face!.FaceId || "")
       .then(({ FaceMatches, SearchedFaceId }) => {
         const peopleMatches = getPeopleForFace(existingPeople, FaceMatches);
@@ -154,12 +145,12 @@ export function getPeopleForFaces(
           FaceId: SearchedFaceId,
           FaceMatches, // I dont think this is needed, just bloating the record
           ImageDimensions: {
-            height: newImages[0].meta && newImages[0].meta.height,
-            width: newImages[0].meta && newImages[0].meta.width,
+            height: newImage.meta && newImage.meta.height,
+            width: newImage.meta && newImage.meta.width,
           },
           People: peopleMatches,
-          img_key: newImages[0].img_key,
-          userIdentityId: newImages[0].userIdentityId,
+          img_key: newImage.img_key,
+          userIdentityId: newImage.userIdentityId,
         };
       })));
 }
@@ -201,20 +192,29 @@ export function getNewPeople(facesWithPeople: IFaceWithPeople[]): IPerson[] {
   }));
 }
 
-export function getInvokePersonThumbParams(personInThisImage: IPerson): InvocationRequest {
+export function getInvokePersonThumbParams(
+    personInThisImage: IPerson,
+    logBaseParams: ILoggerBaseParams,
+  ): InvocationRequest {
   return {
     FunctionName: process.env.IS_OFFLINE ? "personThumb" : `${process.env.LAMBDA_PREFIX}personThumb`,
     InvocationType: INVOCATION_EVENT,
     LogType: "None",
     Payload: JSON.stringify({
-      body: JSON.stringify(personInThisImage),
+      body: JSON.stringify({
+        person: personInThisImage,
+        traceMeta: {
+          parentId: logBaseParams.parentId,
+          traceId: logBaseParams.traceId,
+        },
+      }),
     }),
   };
 }
 
-export function invokePeopleThumbEvents(newPeopleInThisImage: IPerson[]) {
+export function invokePeopleThumbEvents(newPeopleInThisImage: IPerson[], logBaseParams: ILoggerBaseParams) {
   newPeopleInThisImage.forEach((person) => {
-    const newPersonThumbParams: InvocationRequest = getInvokePersonThumbParams(person);
+    const newPersonThumbParams: InvocationRequest = getInvokePersonThumbParams(person, logBaseParams);
     lambda.invoke(newPersonThumbParams).promise();
   });
 }
@@ -244,10 +244,10 @@ export function getUpdateBody(peopleForTheseFaces: IFaceWithPeople[], updatedPeo
     people: uniquePeople,
   };
 }
-export function getUpdatePathParameters(newImages): IPathParameters {
+export function getUpdatePathParameters(newImage: IImage): IPathParameters {
   return {
-    id: newImages[0].id,
-    username: newImages[0].username,
+    id: newImage.id,
+    username: newImage.username,
   };
 }
 
@@ -264,81 +264,82 @@ export function getInvokeUpdateParams(pathParameters, body): InvocationRequest {
 }
 
 export function getLogFields({
-  newImages,
-  eventRecords,
+  newImage,
   updateBody,
   existingPeople,
   facesWithPeople,
   updatedPeople,
   newPeopleInThisImage,
-}: ILoggerParams) {
-  const firstNewImage = newImages[0] || {};
+}: ILoggerFacesParams) {
   return {
-    ddbEventInsertRecordsCount: newImages.length,
-    ddbEventRecordsCount: safeLength(eventRecords),
-    ddbEventRecordsRaw: eventRecords,
     existingPeopleRaw: existingPeople,
     facesWithPeopleRaw: facesWithPeople,
-    imageBirthtime: firstNewImage.birthtime,
-    imageCreatedAt: firstNewImage.createdAt,
+    imageBirthtime: newImage.birthtime,
+    imageCreatedAt: newImage.createdAt,
     imageFaceMatchCount: updateBody && safeLength(updateBody.faceMatches),
-    imageFacesCount: safeLength(firstNewImage.faces),
+    imageFacesCount: safeLength(newImage.faces),
     imageFacesWithPeopleCount: safeLength(facesWithPeople),
-    imageFamilyGroup: firstNewImage.group,
-    imageHeight: firstNewImage.meta && firstNewImage.meta.height,
-    imageId: firstNewImage.id,
-    imageKey: firstNewImage.img_key,
+    imageFamilyGroup: newImage.group,
+    imageHeight: newImage.meta && newImage.meta.height,
+    imageId: newImage.id,
+    imageKey: newImage.img_key,
     imagePeopleCount: updateBody && safeLength(updateBody.people),
-    imageTagCount: safeLength(firstNewImage.tags),
-    imageUpdatedAt: firstNewImage.updatedAt,
-    imageUserIdentityId: firstNewImage.userIdentityId,
-    imageUsername: firstNewImage.username,
-    imageWidth: firstNewImage.meta && firstNewImage.meta.width,
+    imageTagCount: safeLength(newImage.tags),
+    imageUpdatedAt: newImage.updatedAt,
+    imageUserIdentityId: newImage.userIdentityId,
+    imageUsername: newImage.username,
+    imageWidth: newImage.meta && newImage.meta.width,
     newPeopleCount: safeLength(newPeopleInThisImage),
     peopleCount: safeLength(existingPeople),
     updatedPeopleCount: safeLength(updatedPeople),
   };
 }
 
-export async function addToPerson(event: DynamoDBStreamEvent, context: Context, callback: Callback): Promise<void> {
+export async function addToPerson(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime: number = Date.now();
-  const newImages: IImage[] = getNewImageRecords(event.Records);
+  const eventBodyObj = event.body ? JSON.parse(event.body) : null;
+  const newImage = eventBodyObj.image;
   const s3 = createS3Client();
   const bucket: string | undefined = process.env.S3_BUCKET;
   const key: string | undefined = PEOPLE_KEY;
-  let logMetaParams: ILoggerParams = {
-    eventRecords: event.Records,
-    newImages,
+  const logBaseParams: ILoggerBaseParams = {
+    name: "addToPerson",
+    parentId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.parentId,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.parentId,
   };
   try {
-    if (newImages.length > 0) {
-      // todo handle multiple new image records if feasible scenario - it is eg two uploads
-      const existingPeople: IPerson[] = await getExistingPeople(s3, bucket, key);
-      const facesWithPeople: IFaceWithPeople[] = await getPeopleForFaces(newImages, existingPeople, getFaceMatch);
-      const newPeopleInThisImage: IPerson[] = getNewPeople(facesWithPeople);
-      if (newPeopleInThisImage.length > 0) {
-        invokePeopleThumbEvents(newPeopleInThisImage);
-      }
-      const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThisImage);
-      const putPeoplePromise: Promise<PutObjectOutput> = putPeople(s3, updatedPeople, bucket, key);
-      const pathParameters: IPathParameters = getUpdatePathParameters(newImages);
-      const updateBody: IUpdateBody = getUpdateBody(facesWithPeople, newPeopleInThisImage);
-      const updateParams: InvocationRequest = getInvokeUpdateParams(pathParameters, updateBody);
-      await lambda.invoke(updateParams).promise();
-      logMetaParams = {
-        ...logMetaParams,
-        existingPeople,
-        facesWithPeople,
-        newPeopleInThisImage,
-        updateBody,
-        updatedPeople,
-      };
-      await putPeoplePromise;
+    const existingPeople: IPerson[] = await getExistingPeople(s3, bucket, key);
+    const facesWithPeople: IFaceWithPeople[] = await getPeopleForFaces(newImage, existingPeople, getFaceMatch);
+    const newPeopleInThisImage: IPerson[] = getNewPeople(facesWithPeople);
+    if (newPeopleInThisImage.length > 0) {
+      invokePeopleThumbEvents(newPeopleInThisImage, logBaseParams);
     }
-    logger(context, startTime, getLogFields(logMetaParams));
+    const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThisImage);
+    const putPeoplePromise: Promise<PutObjectOutput> = putPeople(s3, updatedPeople, bucket, key);
+    const pathParameters: IPathParameters = getUpdatePathParameters(newImage);
+    const updateBody: IUpdateBody = getUpdateBody(facesWithPeople, newPeopleInThisImage);
+    const updateParams: InvocationRequest = getInvokeUpdateParams(pathParameters, updateBody);
+    await lambda.invoke(updateParams).promise();
+    const logMetaParams = {
+      existingPeople,
+      facesWithPeople,
+      newImage,
+      newPeopleInThisImage,
+      updateBody,
+      updatedPeople,
+    };
+    await putPeoplePromise;
+    logger(context, logBaseParams, getLogFields(logMetaParams));
     return callback(null, success({ logMetaParams }));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields(logMetaParams) });
+    logger(context, logBaseParams, {
+      err,
+      ...getLogFields({
+        newImage,
+      }),
+    });
     return callback(null, failure(err));
   }
 }

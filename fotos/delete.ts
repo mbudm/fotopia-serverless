@@ -1,3 +1,4 @@
+import * as uuid from "uuid";
 import { safeLength } from "./create";
 import { getDynamoDbParams, validateRequest } from "./get";
 import { INVOCATION_REQUEST_RESPONSE } from "./lib/constants";
@@ -6,6 +7,10 @@ import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
+import {
+  ILoggerBaseParams,
+  ITraceMeta,
+} from "./types";
 
 export function getBodyFromDbGetResponse(dbGetResponse) {
   const payload = dbGetResponse && JSON.parse(dbGetResponse.Payload);
@@ -63,6 +68,14 @@ export function getLogFields(pathParams, dbGetResponse) {
 export async function deleteItem(event, context, callback) {
   const startTime = Date.now();
   const s3 = createS3Client();
+  const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "deleteItem",
+    parentId: traceMeta && traceMeta!.parentId,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
+  };
   try {
     const request = validateRequest(event.pathParameters);
     const params = getInvokeGetParams(request);
@@ -71,10 +84,10 @@ export async function deleteItem(event, context, callback) {
     await deleteObject(s3, s3Params);
     const ddbParams = getDynamoDbParams(request);
     await deleteImageRecord(ddbParams);
-    logger(context, startTime, getLogFields(request, dbGetResponse));
+    logger(context, loggerBaseParams, getLogFields(request, dbGetResponse));
     return callback(null, success(ddbParams.Key));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields(event.pathParameters, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(event.pathParameters, null) });
     return callback(null, failure(err));
   }
 }

@@ -25,66 +25,30 @@ const uuids = {
   someUserImageOneFaceTwo: uuid.v1(),
 };
 
-const records: DynamoDBRecord[] = [{
-  dynamodb: {
-    ApproximateCreationDateTime: 1529636100,
-    Keys: {
-      id: {
-        S: uuids.someUserImageOne,
-      },
-      username: {
-        S: "someuser",
-      },
+const newImage: IImage = {
+  birthtime: "454654654",
+  createdAt: 454654654,
+  faces: [{
+    Face: {
+      ExternalImageId: uuids.someUserImageOne,
+      FaceId: uuids.someUserImageOneFaceOne,
     },
-    NewImage: {
-      birthtime: {
-        N: "454654654",
-      },
-      faces: {
-        L: [{
-          M: {
-            Face: {
-              M: {
-                ExternalImageId: { S: uuids.someUserImageOne },
-                FaceId: { S: uuids.someUserImageOneFaceOne },
-              },
-            },
-          },
-        }, {
-          M: {
-            Face: {
-              M: {
-                ExternalImageId: { S: uuids.someUserImageOne },
-                FaceId: { S: uuids.someUserImageOneFaceTwo },
-              },
-            },
-          },
-        }],
-      },
-      group: {
-        S: "mygroup",
-      },
-      img_key: {
-        S: "someuser/three.jpg",
-      },
-      userIdentityId: {
-        S: "us-east-1:7261e973-d20d-406a-828c-d8cf70fd888e",
-      },
+  }, {
+    Face: {
+      ExternalImageId: uuids.someUserImageOne,
+      FaceId: uuids.someUserImageOneFaceTwo,
     },
+  }],
+  group: "mygroup",
+  id: uuids.someUserImageOne,
+  img_key: "someuser/three.jpg",
+  meta: {
+    height: 480,
+    width: 640,
   },
-  eventName: "INSERT",
-}, {
-  dynamodb: {
-    NewImage: {},
-    OldImage: {},
-  },
-  eventName: "MODIFY",
-}, {
-  dynamodb: {
-    OldImage: {},
-  },
-  eventName: "REMOVE",
-}];
+  userIdentityId: "us-east-1:7261e973-d20d-406a-828c-d8cf70fd888e",
+  username: "someuser",
+};
 
 const boundingBox: BoundingBox =  {
   Height: 0.1976570039987564,
@@ -165,16 +129,14 @@ test("getExistingPeople", (t) => {
 });
 
 test("getNewImageRecords", (t) => {
-  const result = faces.getNewImageRecords(records);
-  t.equal(result.length, 1, "getPeopleForFace length should be 1");
-  const insertedRecImgKey: string | undefined = records[0].dynamodb!.NewImage!.img_key!.S;
-  t.equal(result[0].img_key, insertedRecImgKey, "matches the img key of the inserted record");
+  const result = faces.getNewImage(JSON.stringify(newImage));
+  const insertedRecImgKey: string | undefined = newImage.img_key;
+  t.equal(result.img_key, insertedRecImgKey, "matches the img key of the inserted record");
   t.end();
 });
 
 test("mockFaceMatcher", (t) => {
-  const newImage = faces.getNewImageRecords(records);
-  const face: FaceRecord = newImage[0].faces[0];
+  const face: FaceRecord = newImage.faces![0];
   const faceToSearchWith: string = face.Face!.FaceId || "";
   mockFaceMatcher(faceToSearchWith)
     .then(({ FaceMatches }) => {
@@ -297,7 +259,7 @@ test("getPeopleForFace", (t) => {
 
 test("getPeopleForFaces", (t) => {
   try {
-    faces.getPeopleForFaces(faces.getNewImageRecords(records), existingPeople, mockFaceMatcher)
+    faces.getPeopleForFaces(newImage, existingPeople, mockFaceMatcher)
       .then((res) => {
         t.equal(res.length, 2);
         t.equal(res[0].FaceId, uuids.someUserImageOneFaceOne);
@@ -529,8 +491,7 @@ test("getUpdatedPeople - no faces detected in image", (t) => {
 });
 
 test("getUpdateBody - no people", (t) => {
-  const newImageRecords: IImage[] = faces.getNewImageRecords(records);
-  faces.getPeopleForFaces(newImageRecords, existingPeople, mockFaceMatcher)
+  faces.getPeopleForFaces(newImage, existingPeople, mockFaceMatcher)
     .then((facesWithPeople) => {
       const result = faces.getUpdateBody(facesWithPeople, new Array<IPerson>());
       t.equal(result.people.length, 0, "passes joi validation but has 0 results, as none over threshold");
@@ -678,8 +639,8 @@ test("getUpdateBody - has matches with a new person but none with existing peopl
 });
 
 test("getUpdatePathParameters", (t) => {
-  const newImageRecords: IImage[] = [{
-    birthtime: 34354345,
+  const newImageForUpdate: IImage = {
+    birthtime: "34354345",
     createdAt: 575565,
     faces: new Array<FaceRecord>(),
     group: "ghjg",
@@ -687,6 +648,10 @@ test("getUpdatePathParameters", (t) => {
     img_key: "hghgj",
     meta: {
       height: 555,
+      lastModified: 68768687,
+      name: "filename.jpg",
+      size: 343434,
+      type: "jpg",
       width: 333,
     },
     people: [],
@@ -694,8 +659,8 @@ test("getUpdatePathParameters", (t) => {
     updatedAt: 7797979789,
     userIdentityId: "ghjghg",
     username: "bob",
-  }];
-  const result = faces.getUpdatePathParameters(newImageRecords);
+  };
+  const result = faces.getUpdatePathParameters(newImageForUpdate);
   t.equal(result.username, "bob");
   t.end();
 });

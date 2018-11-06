@@ -1,7 +1,8 @@
 import * as test from "tape";
 import * as query from "./query";
+import { IQueryBody } from "./types";
 
-const requestBody = {
+const requestBody: IQueryBody = {
   criteria: {
     people: ["Lucy", "Ahmed"],
     tags: ["flowers", "trees"],
@@ -10,16 +11,6 @@ const requestBody = {
   to: 678,
   username: "saloni",
 };
-
-test("validateRequest", (t) => {
-  try {
-    const result = query.validateRequest(requestBody);
-    t.deepEqual(result, requestBody);
-    t.end();
-  } catch (e) {
-    t.fail(e);
-  }
-});
 
 test("hasCriteria - no arg", (t) => {
   const result = query.hasCriteria();
@@ -69,7 +60,7 @@ test("getResponseBody - no results from db", (t) => {
 });
 
 test("getResponseBody - items after filter", (t) => {
-  const requestBodyNoCriteria = {
+  const requestBodyNoCriteria: IQueryBody = {
     ...requestBody,
     criteria: {
       people: [],
@@ -119,7 +110,7 @@ test("getResponseBody - items after filter", (t) => {
 });
 
 test("getResponseBody - items after single criteria filter", (t) => {
-  const requestBodySingleCriteria = {
+  const requestBodySingleCriteria: IQueryBody = {
     ...requestBody,
     criteria: {
       people: ["Lucy"],
@@ -160,7 +151,7 @@ test("filterByCriteria", (t) => {
     people: ["Lucy", "Bob"],
     tags: [],
   };
-  const result = query.filterByCriteria(item, "people", requestBody.criteria.people);
+  const result = query.filterByCriteria(item, "people", requestBody!.criteria!.people);
   t.ok(result);
   t.end();
 });

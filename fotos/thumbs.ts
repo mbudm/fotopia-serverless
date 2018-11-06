@@ -1,9 +1,14 @@
 
 import * as Sharp from "sharp";
+import * as uuid from "uuid";
+
 import { safeLength } from "./create";
 import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
+import {
+  ILoggerBaseParams,
+} from "./types";
 
 let s3;
 
@@ -76,15 +81,23 @@ export function getLogFields(data) {
 export async function createThumb(event, context, callback) {
   const startTime = Date.now();
   const data = JSON.parse(event.body);
+  const traceMeta = data!.traceMeta;
+  const thumb = data.thumb;
   s3 = createS3Client();
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "createThumb",
+    parentId: traceMeta && traceMeta!.parentId || null,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
+  };
   try {
-    const request = validateRequest(data);
-    const objData = await getObject(request.key);
-    const result = await resizeAndUpload({ data: objData, key: request.thumbKey });
-    logger(context, startTime, getLogFields(data));
+    const objData = await getObject(thumb.key);
+    const result = await resizeAndUpload({ data: objData, key: thumb.thumbKey });
+    logger(context, loggerBaseParams, getLogFields(thumb));
     return callback(null, success(result));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields(data) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(thumb) });
     return callback(null, failure(err));
   }
 }

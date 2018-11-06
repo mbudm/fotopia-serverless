@@ -1,5 +1,9 @@
 import * as bunyan from "bunyan";
 
+import {
+  ILoggerBaseParams,
+} from "../types";
+
 const log = bunyan.createLogger({ name: "fotopia" });
 
 export function parseError(err) {
@@ -26,16 +30,18 @@ export function parseError(err) {
   return errorFields;
 }
 
-export default function logger(context, startTime, fields = {}) {
+export default function logger(context, base: ILoggerBaseParams, fields) {
   let logObj = {
+    durationMs: Date.now() - base.timestamp,
     errorCode: "",
     errorMessage: "",
     errorRaw: new Error(),
     functionName: "",
     functionVersion: "",
     isOffline: false,
-    latencyMs: Date.now() - startTime,
     requestId: "",
+    serviceName: context && context.functionName,
+    ...base,
   };
   if (fields && Object.keys(fields)) {
     Object.keys(fields).forEach((field) => {
@@ -58,9 +64,7 @@ export default function logger(context, startTime, fields = {}) {
     };
   } else {
     logObj = {
-      functionName: context.functionName,
-      functionVersion: context.functionVersion,
-      requestId: context.awsRequestId,
+      requestId: context!.awsRequestId,
       ...logObj,
       ...context,
     };

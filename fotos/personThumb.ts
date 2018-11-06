@@ -1,5 +1,6 @@
 
 import * as Sharp from "sharp";
+import * as uuid from "uuid";
 
 import { replicateAuthKey, safeLength } from "./create";
 import { GetObjectError } from "./errors/getObject";
@@ -8,6 +9,11 @@ import logger from "./lib/logger";
 import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
 import { validatePut } from "./thumbs";
+
+import {
+  ILoggerBaseParams,
+  IPerson,
+} from "./types";
 
 let s3;
 
@@ -68,7 +74,7 @@ export function cropAndUpload(request, s3Object) {
     }));
 }
 
-export function getLogFields(data) {
+export function getLogFields(data: IPerson) {
   return {
     imageHeight: data && data.imageDimensions && data.imageDimensions.height,
     imageKey: data && data.img_key,
@@ -88,15 +94,23 @@ export function getLogFields(data) {
 export async function createThumb(event, context, callback) {
   const startTime = Date.now();
   const data = JSON.parse(event.body);
+  const traceMeta = data!.traceMeta;
   s3 = createS3Client();
+  const loggerBaseParams: ILoggerBaseParams = {
+    name: "createThumb",
+    parentId: traceMeta && traceMeta!.parentId,
+    spanId: uuid.v1(),
+    timestamp: startTime,
+    traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
+  };
+  const person: IPerson = data.person;
   try {
-    const request = validateRequest(data);
-    const s3Object = await getObject(request);
-    const result = await cropAndUpload(request, s3Object);
-    logger(context, startTime, getLogFields(data));
+    const s3Object = await getObject(person);
+    const result = await cropAndUpload(person, s3Object);
+    logger(context, loggerBaseParams, getLogFields(person));
     return callback(null, success(result));
   } catch (err) {
-    logger(context, startTime, { err, ...getLogFields(data) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(person) });
     return callback(null, failure(err));
   }
 }
