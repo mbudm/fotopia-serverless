@@ -73,7 +73,7 @@ export async function deleteItem(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "deleteItem",
-    parentId: traceMeta && traceMeta!.parentId,
+    parentId: traceMeta && traceMeta!.parentId || "",
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {

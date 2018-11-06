@@ -221,7 +221,7 @@ export async function createItem(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "createItem",
-    parentId: null,
+    parentId: "",
     traceId: uuid.v1(),
   };
   try {

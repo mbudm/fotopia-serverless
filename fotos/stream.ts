@@ -155,7 +155,7 @@ export async function indexRecords(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "indexRecords",
-    parentId: null,
+    parentId: "",
     traceId: uuid.v1(),
   };
   try {

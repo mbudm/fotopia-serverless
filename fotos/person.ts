@@ -47,7 +47,7 @@ export async function updatePerson(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "updatePerson",
-    parentId: null,
+    parentId: "",
     traceId: uuid.v1(),
   };
   try {

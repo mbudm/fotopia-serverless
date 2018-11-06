@@ -100,7 +100,7 @@ export async function createThumb(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "createThumb",
-    parentId: traceMeta && traceMeta!.parentId,
+    parentId: traceMeta && traceMeta!.parentId || "",
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   const person: IPerson = data.person;

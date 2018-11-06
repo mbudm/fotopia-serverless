@@ -42,7 +42,7 @@ export async function getItem(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "getItem",
-    parentId: null,
+    parentId: "",
     traceId: uuid.v1(),
   };
   try {

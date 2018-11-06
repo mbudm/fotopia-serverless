@@ -136,7 +136,7 @@ export async function mergePeople(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "mergePeople",
-    parentId: null,
+    parentId: "",
     traceId: uuid.v1(),
   };
   try {

@@ -80,7 +80,7 @@ export async function updateItem(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "updateItem",
-    parentId: traceMeta && traceMeta!.parentId || null,
+    parentId: traceMeta && traceMeta!.parentId || "",
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {

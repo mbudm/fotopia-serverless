@@ -306,7 +306,7 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
     Timestamp: startTime,
     id: uuid.v1(),
     name: "addToPerson",
-    parentId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.parentId,
+    parentId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.parentId || "",
     traceId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.traceId,
   };
   try {

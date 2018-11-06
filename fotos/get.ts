@@ -57,7 +57,7 @@ export async function getItem(event, context, callback) {
     Timestamp: startTime,
     id: uuid.v1(),
     name: "getItem",
-    parentId: traceMeta && traceMeta!.parentId,
+    parentId: traceMeta && traceMeta!.parentId || "",
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {
