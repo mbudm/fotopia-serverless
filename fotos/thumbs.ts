@@ -15,10 +15,6 @@ let s3;
 export const THUMB_WIDTH = 200;
 export const THUMB_HEIGHT = 200;
 
-export function validateRequest(data) {
-  return data;
-}
-
 export function validatePut({
   buffer, key,
 }) {
