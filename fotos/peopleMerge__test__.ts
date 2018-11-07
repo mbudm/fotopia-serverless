@@ -2,6 +2,9 @@ import * as test from "tape";
 // import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
 
 import * as peopleMerge from "./peopleMerge";
+import {
+  ILoggerBaseParams,
+} from "./types";
 
 const existingPeople = [
   {
@@ -120,6 +123,7 @@ test("getAllInvokeUpdateParams", (t) => {
     imagesWithAffectedPeople,
     mergedPerson,
     deletePeople,
+    {} as ILoggerBaseParams,
   );
   t.equal(result.length, 2, "length");
   try {
@@ -164,6 +168,7 @@ test("getAllInvokeUpdateParams - simpler mocks", (t) => {
     imagesWithAffectedPeople,
     mergedPerson,
     deletePeople,
+    {} as ILoggerBaseParams,
   );
   t.equal(result.length, 2, "length");
   try {

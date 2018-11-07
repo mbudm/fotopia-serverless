@@ -1,6 +1,6 @@
 
 import * as uuid from "uuid";
-import { safeLength } from "./create";
+import { getTraceMeta, safeLength } from "./create";
 import { getExistingPeople, putPeople } from "./faces";
 import {
   INVOCATION_EVENT,
@@ -34,7 +34,7 @@ export function getDeletePeople(data, mergedPerson, existingPeople) {
     .map((pid2) => existingPeople.find((p) => pid2 === p.id));
 }
 
-export function getInvokeQueryParams(deletedPeople, mergedPerson) {
+export function getInvokeQueryParams(deletedPeople, mergedPerson, loggerBaseParams) {
   const body = {
     criteria: {
       people: deletedPeople.map((person) => person.id).concat(mergedPerson.id),
@@ -47,7 +47,10 @@ export function getInvokeQueryParams(deletedPeople, mergedPerson) {
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        ...body,
+        traceMeta: getTraceMeta(loggerBaseParams),
+      }),
     }),
   };
 }
@@ -56,8 +59,8 @@ export function getInvokeQueryParams(deletedPeople, mergedPerson) {
 // or use aliases for people in all searches
 // first see how this goes
 // doing the updates as events so it might be fine
-export async function queryImagesByPeople(deletePeople, mergedPerson) {
-  const params = getInvokeQueryParams(deletePeople, mergedPerson);
+export async function queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams) {
+  const params = getInvokeQueryParams(deletePeople, mergedPerson, loggerBaseParams);
   return lambda.invoke(params).promise()
     .then((response) => {
       const payload = typeof response.Payload === "string" ? JSON.parse(response.Payload) : null ;
@@ -66,19 +69,22 @@ export async function queryImagesByPeople(deletePeople, mergedPerson) {
     });
 }
 
-export function getInvokeUpdateParams(pathParameters, body) {
+export function getInvokeUpdateParams(pathParameters, body, loggerBaseParams) {
   return {
     FunctionName: process.env.IS_OFFLINE ? "update" : `${process.env.LAMBDA_PREFIX}update`,
     InvocationType: INVOCATION_EVENT,
     LogType: "Tail",
     Payload: JSON.stringify({
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        ...body,
+        traceMeta: getTraceMeta(loggerBaseParams),
+      }),
       pathParameters,
     }),
   };
 }
 
-export function getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson, deletePeople) {
+export function getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams) {
   return imagesWithAffectedPeople.map((image) => {
     const pathParameters = {
       id: image.id,
@@ -88,13 +94,13 @@ export function getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson,
       people: image.people.filter((p) => !deletePeople.find((dp) => dp.id === p))
         .concat((image.people.includes(mergedPerson.id) ? [] : [mergedPerson.id])),
     };
-    return getInvokeUpdateParams(pathParameters, body);
+    return getInvokeUpdateParams(pathParameters, body, loggerBaseParams);
   });
 }
 
-export async function updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople) {
+export async function updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams) {
   const allParams = Array.isArray(imagesWithAffectedPeople) ?
-    getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson, deletePeople) :
+    getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams) :
     [];
   return Promise.all(allParams.map((params) => lambda.invoke(params).promise()));
 }
@@ -143,8 +149,8 @@ export async function mergePeople(event, context, callback) {
     const existingPeople = await getExistingPeople(s3, bucket, key);
     const mergedPerson = mergePeopleObjects(data, existingPeople);
     const deletePeople = getDeletePeople(data, mergedPerson, existingPeople);
-    const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson);
-    await updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople);
+    const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams);
+    await updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams);
     const updatedPeople = getUpdatedPeople(existingPeople, mergedPerson, deletePeople);
     putPeople(s3, updatedPeople, bucket, key);
     logger(context, loggerBaseParams, getLogFields({
