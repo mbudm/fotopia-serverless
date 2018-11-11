@@ -272,7 +272,6 @@ export function getLogFields({
   newPeopleInThisImage,
 }: ILoggerFacesParams) {
   return {
-    existingPeopleRaw: existingPeople,
     facesWithPeopleRaw: facesWithPeople,
     imageBirthtime: newImage.birthtime,
     imageCreatedAt: newImage.createdAt,
@@ -290,6 +289,7 @@ export function getLogFields({
     imageUsername: newImage.username,
     imageWidth: newImage.meta && newImage.meta.width,
     newPeopleCount: safeLength(newPeopleInThisImage),
+    newPeopleRaw: newPeopleInThisImage,
     peopleCount: safeLength(existingPeople),
     updatedPeopleCount: safeLength(updatedPeople),
   };
