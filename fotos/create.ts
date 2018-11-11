@@ -48,6 +48,7 @@ export function getLogFields(request, dbItem, faces, labels): ILoggerCreateParam
     imageBirthtime: dbItem && dbItem.birthtime || request.birthtime,
     imageCreatedAt: dbItem && dbItem.createdAt,
     imageFacesCount: safeLength(dbItem.faces),
+    imageFacesRaw: dbItem && JSON.stringify(dbItem.faces),
     imageFamilyGroup: fotopiaGroup,
     imageHeight: request.meta && request.meta.height,
     imageId: dbItem && dbItem.id,

@@ -94,6 +94,7 @@ export interface ILoggerImageParams {
   imageBirthtime: number;
   imageCreatedAt: number;
   imageFacesCount: number;
+  imageFacesRaw?: string;
   imageFamilyGroup: string;
   imageHeight: number;
   imageId: string;
