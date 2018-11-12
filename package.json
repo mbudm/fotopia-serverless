@@ -9,7 +9,7 @@
   "author": "Steve Roberts <mbudm.com@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "tape -r ts-node/register -r babel-register './fotos/**/*__test__.ts' | tap-dot",
+    "test": "tape -r ts-node/register -r babel-register './fotos/**/*__test__.ts' | tap-spec",
     "test-watch": "tape-watch './fotos/**/*__test__.js' -r babel-register -p tap-spec",
     "functional-prod": "STAGE=prod tape ./test/functional.remote.js -r babel-register | tap-spec",
     "functional-dev": "STAGE=dev tape ./test/functional.remote.js -r babel-register | tap-spec",

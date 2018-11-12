@@ -1,4 +1,4 @@
-import { BoundingBox, FaceMatch, FaceMatchList, FaceRecord } from "aws-sdk/clients/rekognition";
+import { BoundingBox, FaceMatch, FaceMatchList, FaceRecord, Landmark } from "aws-sdk/clients/rekognition";
 
 export interface IPathParameters {
   username: string;
@@ -16,6 +16,7 @@ export interface IFaceWithPeople extends IFace {
   People: IPersonMatch[];
   FaceMatches: FaceMatchList;
   BoundingBox: BoundingBox;
+  Landmarks?: Landmark[];
   ImageDimensions: IImageDimensions;
   ExternalImageId: string;
 }

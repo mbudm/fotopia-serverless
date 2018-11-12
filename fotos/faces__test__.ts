@@ -33,10 +33,16 @@ const newImage: IImage = {
       ExternalImageId: uuids.someUserImageOne,
       FaceId: uuids.someUserImageOneFaceOne,
     },
+    FaceDetail: {
+      Landmarks: [],
+    },
   }, {
     Face: {
       ExternalImageId: uuids.someUserImageOne,
       FaceId: uuids.someUserImageOneFaceTwo,
+    },
+    FaceDetail: {
+      Landmarks: [],
     },
   }],
   group: "mygroup",
