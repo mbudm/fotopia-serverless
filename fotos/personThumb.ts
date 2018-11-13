@@ -10,7 +10,6 @@ import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
 import { validatePut } from "./thumbs";
 
-import { createPersonThumbKey } from "./faces";
 import {
   ILoggerBaseParams,
   IPerson,
@@ -116,6 +115,7 @@ export function getDims(person) {
 
 export function crop(dims, s3Object) {
   return Sharp(s3Object.Body)
+    .rotate()
     .extract(dims)
     .toBuffer();
 }
