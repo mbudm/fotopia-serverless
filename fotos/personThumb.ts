@@ -86,9 +86,10 @@ export function getDimsFromBounds(bounds, person) {
 }
 
 export function expandAndSqareUpDims(dims, person) {
-  // expand 10% and square up
+  // expand x3 if we are using landmarks and square up
+  const factor = Array.isArray(person.landMarks) ? 3 : 1;
   const maxDim = Math.max(dims.width, dims.height);
-  const expandedDim =  Math.round(maxDim * 1.1);
+  const expandedDim =  Math.round(maxDim * factor);
   return {
     height: Math.min(expandedDim, person.imageDimensions.height),
     left: Math.max(0, Math.round(dims.left - (expandedDim - dims.width) / 2)),
@@ -126,7 +127,7 @@ export function cropAndUpload(person, dims, s3Object) {
     }));
 }
 
-export function getLogFields(data: IPerson) {
+export function getLogFields(data: IPerson, dims) {
   return {
     imageHeight: data && data.imageDimensions && data.imageDimensions.height,
     imageKey: data && data.img_key,
@@ -135,10 +136,10 @@ export function getLogFields(data: IPerson) {
     personFacesCount: data && safeLength(data.faces),
     personId: data && data.id,
     personName: data && data.name,
-    personThumbHeight: data && data.boundingBox && data.boundingBox.Height,
-    personThumbLeft: data && data.boundingBox && data.boundingBox.Left,
-    personThumbTop: data && data.boundingBox && data.boundingBox.Top,
-    personThumbWidth: data && data.boundingBox && data.boundingBox.Width,
+    personThumbHeight: dims && dims.height,
+    personThumbLeft: dims && dims.left,
+    personThumbTop: dims && dims.top,
+    personThumbWidth: dims && dims.width,
     personThumbnail: data && data.thumbnail,
   };
 }
@@ -160,10 +161,10 @@ export async function createThumb(event, context, callback) {
     const s3Object = await getObject(person);
     const dims = getDims(person);
     const result = await cropAndUpload(person, dims, s3Object);
-    logger(context, loggerBaseParams, getLogFields(person));
+    logger(context, loggerBaseParams, getLogFields(person, dims));
     return callback(null, success(result));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(person) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(person, null) });
     return callback(null, failure(err));
   }
 }

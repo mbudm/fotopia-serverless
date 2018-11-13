@@ -89,29 +89,29 @@ test("expandAndSqareUpDims", (t) => {
     },
   };
   const result = personThumb.expandAndSqareUpDims(dims, p);
-  t.equal(result.width, 110, "width");
-  t.equal(result.height, 110, "height");
-  t.equal(result.left, 5, "left");
-  t.equal(result.top, 15, "top");
+  t.equal(result.width, 100, "width");
+  t.equal(result.height, 100, "height");
+  t.equal(result.left, 10, "left");
+  t.equal(result.top, 20, "top");
   t.end();
 });
 
 test("getDims", (t) => {
   const result = personThumb.getDims(person);
-  t.equal(result.width, 264, "width");
-  t.equal(result.height, 264, "height");
-  t.equal(result.left, 468, "left");
-  t.equal(result.top, 348, "top");
+  t.equal(result.width, 720, "width");
+  t.equal(result.height, 720, "height");
+  t.equal(result.left, 240, "left");
+  t.equal(result.top, 120, "top");
   t.end();
 });
 
 test("getDims - no landmarks", (t) => {
   const p = {
     boundingBox: {
-      Height: 0.5, // 250 < 330
-      Left: 0.2, // 200 - 15
-      Top: 0.2, // 100 - 40
-      Width: 0.3, // 330
+      Height: 0.2, // 100
+      Left: 0.2, // 200 - 25
+      Top: 0.2, // 100
+      Width: 0.05, // 50  ... 100
     },
     imageDimensions: {
       height: 500,
@@ -119,20 +119,20 @@ test("getDims - no landmarks", (t) => {
     },
   };
   const result = personThumb.getDims(p);
-  t.equal(result.width, 330, "width");
-  t.equal(result.height, 330, "height");
-  t.equal(result.left, 185, "left");
-  t.equal(result.top, 60, "top");
+  t.equal(result.width, 100, "width");
+  t.equal(result.height, 100, "height");
+  t.equal(result.left, 175, "left");
+  t.equal(result.top, 100, "top");
   t.end();
 });
 
 test("getDims - no landmarks, negative bounds", (t) => {
   const p = {
     boundingBox: {
-      Height: 0.5, // 250 ... 275
+      Height: 0.5, // 250
       Left: -0.2, // 0
-      Top: 0.2, // 100 - 12.5 rounded - 13. 87
-      Width: 0.3, // 300 - 200 = 100 < 250 so 275
+      Top: 0.2, // 100
+      Width: 0.3, // 300 - 200 = 100 < 250 so 250
     },
     imageDimensions: {
       height: 500,
@@ -140,9 +140,9 @@ test("getDims - no landmarks, negative bounds", (t) => {
     },
   };
   const result = personThumb.getDims(p);
-  t.equal(result.width, 275, "width");
-  t.equal(result.height, 275, "height");
+  t.equal(result.width, 250, "width");
+  t.equal(result.height, 250, "height");
   t.equal(result.left, 0, "left");
-  t.equal(result.top, 87, "top");
+  t.equal(result.top, 100, "top");
   t.end();
 });
