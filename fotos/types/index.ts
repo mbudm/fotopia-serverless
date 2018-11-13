@@ -89,6 +89,7 @@ export interface ILoggerFacesParams {
   facesWithPeople?: IFaceWithPeople[];
   updatedPeople?: IPerson[];
   newPeopleInThisImage?: IPerson[];
+  newPeopleThatAreOkSize?: IPerson[];
 }
 
 export interface ILoggerImageParams {

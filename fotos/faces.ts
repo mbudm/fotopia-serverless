@@ -2,7 +2,6 @@ import { APIGatewayProxyEvent, Callback, Context, DynamoDBRecord, StreamRecord} 
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import { FaceMatch, FaceMatchList } from "aws-sdk/clients/rekognition";
 import { PutObjectOutput, PutObjectRequest } from "aws-sdk/clients/s3";
-import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 
 import {
@@ -14,6 +13,7 @@ import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import rekognition from "./lib/rekognition";
 import createS3Client from "./lib/s3";
+import { getDims } from "./personThumb";
 
 import {
   IFace,
@@ -37,6 +37,8 @@ import { safeLength } from "./create";
 const MATCH_THRESHOLD = 80;
 const PERSON_THUMB_SUFFIX = "-face-";
 const fotopiaGroup = process.env.FOTOPIA_GROUP || "";
+
+const PERSON_THUMB_MIN = 40; // if the thumb is less that this, dont bother creating a person
 
 export function getS3Params(Bucket: string | undefined, Key: string | undefined) {
   return {
@@ -175,6 +177,13 @@ export function createPersonThumbKey(newFace: IFaceWithPeople): string {
     ${PERSON_THUMB_SUFFIX}-${newFace.FaceId}.${ext}`;
 }
 
+export function filterNewPeopleThatAreTooSmall(newPeople) {
+  return newPeople.filter((person) => {
+    const dims = getDims(person);
+    return dims.width >= PERSON_THUMB_MIN;
+  });
+}
+
 export function getNewPeople(facesWithPeople: IFaceWithPeople[]): IPerson[] {
   const newFaces = facesWithPeople
     .filter((face) => !face.People.find((person) => person.Match >= MATCH_THRESHOLD));
@@ -272,6 +281,7 @@ export function getLogFields({
   facesWithPeople,
   updatedPeople,
   newPeopleInThisImage,
+  newPeopleThatAreOkSize,
 }: ILoggerFacesParams) {
   return {
     facesWithPeopleRaw: facesWithPeople,
@@ -290,8 +300,9 @@ export function getLogFields({
     imageUserIdentityId: newImage.userIdentityId,
     imageUsername: newImage.username,
     imageWidth: newImage.meta && newImage.meta.width,
-    newPeopleCount: safeLength(newPeopleInThisImage),
-    newPeopleRaw: newPeopleInThisImage,
+    newPeopleAllSizesCount: safeLength(newPeopleInThisImage),
+    newPeopleCount: safeLength(newPeopleThatAreOkSize),
+    newPeopleRaw: newPeopleThatAreOkSize,
     peopleCount: safeLength(existingPeople),
     updatedPeopleCount: safeLength(updatedPeople),
   };
@@ -315,13 +326,14 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
     const existingPeople: IPerson[] = await getExistingPeople(s3, bucket, key);
     const facesWithPeople: IFaceWithPeople[] = await getPeopleForFaces(newImage, existingPeople, getFaceMatch);
     const newPeopleInThisImage: IPerson[] = getNewPeople(facesWithPeople);
-    if (newPeopleInThisImage.length > 0) {
-      invokePeopleThumbEvents(newPeopleInThisImage, logBaseParams);
+    const newPeopleThatAreOkSize: IPerson[] = filterNewPeopleThatAreTooSmall(newPeopleInThisImage);
+    if (newPeopleThatAreOkSize.length > 0) {
+      invokePeopleThumbEvents(newPeopleThatAreOkSize, logBaseParams);
     }
-    const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleInThisImage);
+    const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleThatAreOkSize);
     const putPeoplePromise: Promise<PutObjectOutput> = putPeople(s3, updatedPeople, bucket, key);
     const pathParameters: IPathParameters = getUpdatePathParameters(newImage);
-    const updateBody: IUpdateBody = getUpdateBody(facesWithPeople, newPeopleInThisImage);
+    const updateBody: IUpdateBody = getUpdateBody(facesWithPeople, newPeopleThatAreOkSize);
     const updateParams: InvocationRequest = getInvokeUpdateParams(pathParameters, updateBody);
     await lambda.invoke(updateParams).promise();
     const logMetaParams = {
@@ -329,6 +341,7 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
       facesWithPeople,
       newImage,
       newPeopleInThisImage,
+      newPeopleThatAreOkSize,
       updateBody,
       updatedPeople,
     };
