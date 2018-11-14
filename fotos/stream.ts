@@ -5,9 +5,12 @@ import {
   DynamoDBStreamEvent,
   StreamRecord,
 } from "aws-lambda";
+import { GetObjectOutput } from "aws-sdk/clients/s3";
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 
+import { getS3Params } from "./common/getS3Params";
+import { getS3PutParams } from "./common/getS3PutParams";
 import { failure, success } from "./common/responses";
 import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
@@ -21,30 +24,14 @@ import {
 
 let s3;
 
-export function getS3Params() {
-  return {
-    Bucket: process.env.S3_BUCKET,
-    Key: INDEXES_KEY,
-  };
-}
-
-export function getS3PutParams(indexData) {
-  return {
-    Body: JSON.stringify(indexData),
-    Bucket: process.env.S3_BUCKET,
-    ContentType: "application/json",
-    Key: INDEXES_KEY,
-  };
-}
-
-export function getExistingIndex() {
-  const s3Params = getS3Params();
+export function getExistingIndex(): Promise<GetObjectOutput> {
+  const s3Params = getS3Params(process.env.S3_BUCKET, INDEXES_KEY);
   return s3.getObject(s3Params).promise()
     .then((s3Object) => JSON.parse(s3Object.Body.toString()))
     .catch((error) => ({ error, tags: {}, people: {} }));
 }
 
-export function normaliseArrayFields(record) {
+export function normaliseArrayFields(record: DynamoDBRecord) {
   const arrayFields = {
     people: {
       new: new Array<any>(),
@@ -121,7 +108,7 @@ export function getUpdatedIndexes(existing, newRecords) {
 }
 
 export function putIndex(index) {
-  const s3PutParams = getS3PutParams(index);
+  const s3PutParams = getS3PutParams(index, process.env.S3_BUCKET, INDEXES_KEY);
   return s3.putObject(s3PutParams).promise();
 }
 
