@@ -1,8 +1,8 @@
 import * as uuid from "uuid";
+import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
 import dynamodb from "./lib/dynamodb";
 import logger from "./lib/logger";
-import { failure, success } from "./lib/responses";
 import {
   ILoggerBaseParams,
   ITraceMeta,

@@ -2,11 +2,11 @@
 import * as Sharp from "sharp";
 import * as uuid from "uuid";
 
+import { failure, success } from "./common/responses";
 import { replicateAuthKey, safeLength } from "./create";
 import { GetObjectError } from "./errors/getObject";
 import { PutObjectError} from "./errors/putObject";
 import logger from "./lib/logger";
-import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
 import { validatePut } from "./thumbs";
 

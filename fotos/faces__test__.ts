@@ -1,8 +1,8 @@
-import { DynamoDBRecord } from "aws-lambda";
 import { BoundingBox, FaceMatch, FaceMatchList, FaceRecord } from "aws-sdk/clients/rekognition";
 import * as test from "tape";
 import * as uuid from "uuid";
 
+import * as getExistingPeople from "./common/getExistingPeople";
 import * as faces from "./faces";
 
 import {
@@ -124,7 +124,7 @@ test("getExistingPeople", (t) => {
     }),
   };
   try {
-    faces.getExistingPeople(s3, "bucket", "key")
+    getExistingPeople.getExistingPeople(s3, "bucket", "key")
       .then((result) => {
         t.deepEqual(result, existingPeople, "passes joi validation for peopleSchema");
         t.end();

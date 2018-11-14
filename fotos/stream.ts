@@ -1,9 +1,16 @@
+import {
+  Callback,
+  Context,
+  DynamoDBRecord,
+  DynamoDBStreamEvent,
+  StreamRecord,
+} from "aws-lambda";
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 
+import { failure, success } from "./common/responses";
 import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
-import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
 
 import { safeLength } from "./create";
@@ -148,8 +155,8 @@ export function getLogFields(records, existingIndex, updatedIndexes) {
   };
 }
 
-export async function indexRecords(event, context, callback) {
-  const startTime = Date.now();
+export async function indexRecords(event: DynamoDBStreamEvent, context: Context, callback: Callback) {
+  const startTime: number = Date.now();
   s3 = createS3Client();
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),

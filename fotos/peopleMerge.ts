@@ -1,7 +1,9 @@
 
 import * as uuid from "uuid";
+import { getExistingPeople } from "./common/getExistingPeople";
+import { putPeople } from "./common/putPeople";
+import { failure, success } from "./common/responses";
 import { getTraceMeta, safeLength } from "./create";
-import { getExistingPeople, putPeople } from "./faces";
 import {
   INVOCATION_EVENT,
   INVOCATION_REQUEST_RESPONSE,
@@ -9,7 +11,6 @@ import {
 } from "./lib/constants";
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
-import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
 import {
   ILoggerBaseParams,

@@ -1,7 +1,7 @@
-import { APIGatewayProxyEvent, Callback, Context, DynamoDBRecord, StreamRecord} from "aws-lambda";
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import { FaceMatch, FaceMatchList } from "aws-sdk/clients/rekognition";
-import { PutObjectOutput, PutObjectRequest } from "aws-sdk/clients/s3";
+import { PutObjectOutput } from "aws-sdk/clients/s3";
 import * as uuid from "uuid";
 
 import {
@@ -29,59 +29,17 @@ import {
   IUpdateBody,
 } from "./types";
 
-import { failure, success } from "./lib/responses";
+import { failure, success } from "./common/responses";
 
 import { SearchFacesRequest } from "aws-sdk/clients/rekognition";
+import { getExistingPeople } from "./common/getExistingPeople";
+import { putPeople } from "./common/putPeople";
 import { safeLength } from "./create";
 
 const MATCH_THRESHOLD = 80;
 const PERSON_THUMB_SUFFIX = "-face-";
 const fotopiaGroup = process.env.FOTOPIA_GROUP || "";
-
 const PERSON_THUMB_MIN = 40; // if the thumb is less that this, dont bother creating a person
-
-export function getS3Params(Bucket: string | undefined, Key: string | undefined) {
-  return {
-    Bucket,
-    Key,
-  };
-}
-
-export function getS3PutParams(indexData, Bucket, Key): PutObjectRequest {
-  return {
-    Body: JSON.stringify(indexData),
-    Bucket,
-    ContentType: "application/json",
-    Key,
-  };
-}
-
-export function getExistingPeople(s3, Bucket, Key): Promise<IPerson[]> {
-  const s3Params = getS3Params(Bucket, Key);
-  return s3.getObject(s3Params).promise()
-    .then((s3Object) => {
-      return JSON.parse(s3Object.Body.toString());
-    })
-    .catch((e) => {
-      if (e.code === "NoSuchKey" || e.code === "AccessDenied") {
-        // tslint:disable-next-line:no-console
-        console.log("No object found / AccessDenied - assuming empty people list");
-        return [];
-      }
-      // tslint:disable-next-line:no-console
-      console.log("Another error with get people object", e);
-      return { error: e, s3Params };
-    });
-}
-
-export function putPeople(s3, people, Bucket, Key): Promise<PutObjectOutput> {
-  const s3PutParams = getS3PutParams(people, Bucket, Key);
-  return s3.putObject(s3PutParams).promise()
-    .catch((e) => {
-      const logitall = { e, people };
-      throw new Error(JSON.stringify(logitall));
-    });
-}
 
 export function getFaceMatch(face: string): Promise<IFaceMatcherCallbackResponse> {
   const params: SearchFacesRequest = {

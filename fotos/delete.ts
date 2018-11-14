@@ -1,11 +1,11 @@
 import * as uuid from "uuid";
+import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
 import { getDynamoDbParams, validateRequest } from "./get";
 import { INVOCATION_REQUEST_RESPONSE } from "./lib/constants";
 import dynamodb from "./lib/dynamodb";
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
-import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
 import {
   ILoggerBaseParams,

@@ -1,7 +1,7 @@
 import * as uuid from "uuid";
+import { failure, success } from "./common/responses";
 import { GetObjectError } from "./errors/getObject";
 import logger from "./lib/logger";
-import { failure, success } from "./lib/responses";
 import createS3Client from "./lib/s3";
 import {
   ILoggerBaseParams,

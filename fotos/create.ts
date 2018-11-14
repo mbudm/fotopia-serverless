@@ -1,13 +1,13 @@
 
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
+import { failure, success } from "./common/responses";
 import { IndexFacesError } from "./errors/indexFaces";
 import { INVOCATION_EVENT, INVOCATION_REQUEST_RESPONSE } from "./lib/constants";
 import dynamodb from "./lib/dynamodb";
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import rekognition from "./lib/rekognition";
-import { failure, success } from "./lib/responses";
 import {
   ICreateBody,
   ILoggerBaseParams,
