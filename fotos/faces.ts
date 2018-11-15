@@ -5,6 +5,7 @@ import { PutObjectOutput } from "aws-sdk/clients/s3";
 import * as uuid from "uuid";
 
 import {
+  EXIF_ORIENT,
   INVOCATION_EVENT,
   INVOCATION_REQUEST_RESPONSE,
   PEOPLE_KEY,
@@ -137,7 +138,7 @@ export function createPersonThumbKey(newFace: IFaceWithPeople): string {
 
 export function filterNewPeopleThatAreTooSmall(newPeople) {
   return newPeople.filter((person) => {
-    const dims = getDims(person);
+    const dims = getDims(person, EXIF_ORIENT.TOP_LEFT);
     return dims.width >= PERSON_THUMB_MIN;
   });
 }
