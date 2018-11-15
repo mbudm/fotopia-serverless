@@ -157,14 +157,14 @@ export async function createThumb(event, context, callback) {
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   const person: IPerson = data.person;
+  const dims = getDims(person);
   try {
     const s3Object = await getObject(person);
-    const dims = getDims(person);
     const result = await cropAndUpload(person, dims, s3Object);
     logger(context, loggerBaseParams, getLogFields(person, dims));
     return callback(null, success(result));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(person, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(person, dims) });
     return callback(null, failure(err));
   }
 }
