@@ -10,6 +10,7 @@ import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import { validatePut } from "./thumbs";
 
+import { EXIF_ORIENT } from "./lib/constants";
 import {
   ILoggerBaseParams,
   IPerson,
@@ -75,29 +76,41 @@ export function getBounds(person) {
   return bounds;
 }
 
-export function getDimsFromBounds(bounds, person) {
+export function getDimsFromBounds(bounds, correctedImageDimensions) {
   return {
-    height: (bounds.bottom - bounds.top) * person.imageDimensions.height,
-    left: bounds.left * person.imageDimensions.width,
-    top: bounds.top * person.imageDimensions.height,
-    width: (bounds.right - bounds.left) * person.imageDimensions.width,
+    height: (bounds.bottom - bounds.top) * correctedImageDimensions.height,
+    left: bounds.left * correctedImageDimensions.width,
+    top: bounds.top * correctedImageDimensions.height,
+    width: (bounds.right - bounds.left) * correctedImageDimensions.width,
   };
 }
 
-export function expandAndSqareUpDims(dims, person) {
+export function expandAndSqareUpDims(dims, person, correctedImageDimensions) {
   // expand x3 if we are using landmarks and square up
   const factor = Array.isArray(person.landMarks) ? 3 : 1;
   const maxDim = Math.max(dims.width, dims.height);
   const expandedDim =  Math.round(maxDim * factor);
   return {
-    height: Math.min(expandedDim, person.imageDimensions.height),
+    height: Math.min(expandedDim, correctedImageDimensions.height),
     left: Math.max(0, Math.round(dims.left - (expandedDim - dims.width) / 2)),
     top: Math.max(0, Math.round(dims.top - (expandedDim - dims.height) / 2)),
-    width: Math.min(expandedDim, person.imageDimensions.width),
+    width: Math.min(expandedDim, correctedImageDimensions.width),
   };
 }
 
-export function getDims(person) {
+export function getCorrectImageDimension(imageDimensions, orientation) {
+  return orientation === EXIF_ORIENT.TOP_LEFT ||
+  orientation === EXIF_ORIENT.TOP_RIGHT ||
+  orientation === EXIF_ORIENT.BOTTOM_LEFT ||
+  orientation === EXIF_ORIENT.BOTTOM_RIGHT ?
+  { ...imageDimensions} :
+  {
+    height: imageDimensions.width,
+    width: imageDimensions.height,
+  };
+}
+
+export function getDims(person, orientation) {
   let dims = {
     height: 200,
     left: 0,
@@ -107,8 +120,9 @@ export function getDims(person) {
 
   if (hasValidDimensions(person.imageDimensions)) {
     const bounds = getBounds(person);
-    dims = getDimsFromBounds(bounds, person);
-    dims = expandAndSqareUpDims(dims, person);
+    const correctedImageDimensions = getCorrectImageDimension(person.imageDimensions, orientation);
+    dims = getDimsFromBounds(bounds, correctedImageDimensions);
+    dims = expandAndSqareUpDims(dims, person, correctedImageDimensions);
   }
   return dims;
 }
@@ -127,10 +141,18 @@ export function cropAndUpload(person, dims, s3Object) {
     }));
 }
 
-export function getLogFields(data: IPerson, dims) {
+export function getOrientation(s3Object) {
+  return Sharp(s3Object.Body)
+    .metadata((metadata) => {
+      return metadata.orientation || EXIF_ORIENT.TOP_LEFT;
+    });
+}
+
+export function getLogFields(data: IPerson, dims, orientation) {
   return {
     imageHeight: data && data.imageDimensions && data.imageDimensions.height,
     imageKey: data && data.img_key,
+    imageOrientation: orientation,
     imageUserIdentityId: data && data.userIdentityId,
     imageWidth: data && data.imageDimensions && data.imageDimensions.width,
     personFacesCount: data && safeLength(data.faces),
@@ -157,14 +179,16 @@ export async function createThumb(event, context, callback) {
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   const person: IPerson = data.person;
-  const dims = getDims(person);
   try {
     const s3Object = await getObject(person);
+    const orientation = await getOrientation(s3Object);
+    const dims = getDims(person, orientation);
     const result = await cropAndUpload(person, dims, s3Object);
-    logger(context, loggerBaseParams, getLogFields(person, dims));
+    logger(context, loggerBaseParams, getLogFields(person, dims, orientation));
     return callback(null, success(result));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(person, dims) });
+    const dims = getDims(person, EXIF_ORIENT.TOP_LEFT);
+    logger(context, loggerBaseParams, { err, ...getLogFields(person, dims, EXIF_ORIENT.TOP_LEFT) });
     return callback(null, failure(err));
   }
 }
