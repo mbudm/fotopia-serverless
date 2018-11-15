@@ -144,7 +144,7 @@ export function cropAndUpload(person, dims, s3Object) {
 export function getOrientation(s3Object) {
   return Sharp(s3Object.Body)
     .metadata((metadata) => {
-      return metadata.orientation || EXIF_ORIENT.TOP_LEFT;
+      return (metadata && metadata.orientation) || EXIF_ORIENT.TOP_LEFT;
     });
 }
 
