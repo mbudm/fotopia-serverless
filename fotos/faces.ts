@@ -132,8 +132,8 @@ export function getFacesThatMatchThisPerson(
 export function createPersonThumbKey(newFace: IFaceWithPeople): string {
   const keySplit = newFace.img_key.split(".");
   const ext = keySplit[keySplit.length - 1];
-  return `${newFace.img_key.substr(0, newFace.img_key.lastIndexOf(ext) - 1)}
-    ${PERSON_THUMB_SUFFIX}-${newFace.FaceId}.${ext}`;
+  const key = newFace.img_key.substr(0, newFace.img_key.lastIndexOf(ext) - 1);
+  return `${key}${PERSON_THUMB_SUFFIX}-${newFace.FaceId}.${ext}`;
 }
 
 export function filterNewPeopleThatAreTooSmall(newPeople) {

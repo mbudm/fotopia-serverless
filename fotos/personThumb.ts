@@ -90,39 +90,55 @@ export function expandAndSqareUpDims(dims, person, correctedImageDimensions) {
   const factor = Array.isArray(person.landMarks) ? 3 : 1;
   const maxDim = Math.max(dims.width, dims.height);
   const expandedDim =  Math.round(maxDim * factor);
-  return {
+  const idealDims = {
     height: Math.min(expandedDim, correctedImageDimensions.height),
     left: Math.max(0, Math.round(dims.left - (expandedDim - dims.width) / 2)),
     top: Math.max(0, Math.round(dims.top - (expandedDim - dims.height) / 2)),
     width: Math.min(expandedDim, correctedImageDimensions.width),
   };
+  return {
+    ...idealDims,
+    height: Math.min(idealDims.height, correctedImageDimensions.height - idealDims.top),
+    width: Math.min(idealDims.width, correctedImageDimensions.width - idealDims.left),
+  };
 }
 
-export function getCorrectImageDimension(imageDimensions, orientation) {
+export function guessOrientation(imageDims) {
+  return imageDims.width < imageDims.height ?
+    EXIF_ORIENT.TOP_LEFT :
+    EXIF_ORIENT.LEFT_TOP;
+}
+
+export function getCorrectImageDimension(imageDimensions, metadata) {
+  const validImageDims = hasValidDimensions(metadata) && metadata ||
+    hasValidDimensions(imageDimensions) && imageDimensions;
+  const orientation = metadata.orientation || guessOrientation(validImageDims);
   return orientation === EXIF_ORIENT.TOP_LEFT ||
   orientation === EXIF_ORIENT.TOP_RIGHT ||
   orientation === EXIF_ORIENT.BOTTOM_LEFT ||
   orientation === EXIF_ORIENT.BOTTOM_RIGHT ?
-  { ...imageDimensions} :
   {
-    height: imageDimensions.width,
-    width: imageDimensions.height,
+    height: validImageDims.height,
+    width: validImageDims.width,
+  } :
+  {
+    height: validImageDims.width,
+    width: validImageDims.height,
   };
 }
 
-export function getDims(person, orientation) {
+export function getDims(person, metadata) {
   let dims = {
     height: 200,
     left: 0,
     top: 0,
     width: 200,
   };
-
-  if (hasValidDimensions(person.imageDimensions)) {
+  const imageDimensions = getCorrectImageDimension(person.imageDimensions, metadata);
+  if (imageDimensions) {
     const bounds = getBounds(person);
-    const correctedImageDimensions = getCorrectImageDimension(person.imageDimensions, orientation);
-    dims = getDimsFromBounds(bounds, correctedImageDimensions);
-    dims = expandAndSqareUpDims(dims, person, correctedImageDimensions);
+    dims = getDimsFromBounds(bounds, imageDimensions);
+    dims = expandAndSqareUpDims(dims, person, imageDimensions);
   }
   return dims;
 }
@@ -141,20 +157,22 @@ export function cropAndUpload(person, dims, s3Object) {
     }));
 }
 
-export function getOrientation(s3Object) {
-  return Sharp(s3Object.Body)
-    .metadata((metadata) => {
-      return (metadata && metadata.orientation) || EXIF_ORIENT.TOP_LEFT;
-    });
+export function getMetadata(s3Object) {
+  const sharpImage = Sharp(s3Object.Body);
+  return sharpImage.metadata();
 }
 
-export function getLogFields(data: IPerson, dims, orientation) {
+export function getLogFields(data: IPerson, dims, metadata) {
   return {
-    imageHeight: data && data.imageDimensions && data.imageDimensions.height,
+    imageHeight: data!.imageDimensions!.height ?
+      data.imageDimensions.height :
+      metadata && metadata.height,
     imageKey: data && data.img_key,
-    imageOrientation: orientation,
+    imageOrientation: metadata && metadata.orientation,
     imageUserIdentityId: data && data.userIdentityId,
-    imageWidth: data && data.imageDimensions && data.imageDimensions.width,
+    imageWidth: data!.imageDimensions!.width ?
+      data.imageDimensions.width :
+      metadata && metadata.width,
     personFacesCount: data && safeLength(data.faces),
     personId: data && data.id,
     personName: data && data.name,
@@ -181,11 +199,11 @@ export async function createThumb(event, context, callback) {
   const person: IPerson = data.person;
   try {
     const s3Object = await getObject(person);
-    const orientation = await getOrientation(s3Object);
-    const dims = getDims(person, orientation);
-    const result = await cropAndUpload(person, dims, s3Object);
-    logger(context, loggerBaseParams, getLogFields(person, dims, orientation));
-    return callback(null, success(result));
+    const metadata = await getMetadata(s3Object);
+    const dims = getDims(person, metadata);
+    await cropAndUpload(person, dims, s3Object);
+    logger(context, loggerBaseParams, getLogFields(person, dims, metadata));
+    return callback(null, success(dims));
   } catch (err) {
     const dims = getDims(person, EXIF_ORIENT.TOP_LEFT);
     logger(context, loggerBaseParams, { err, ...getLogFields(person, dims, EXIF_ORIENT.TOP_LEFT) });

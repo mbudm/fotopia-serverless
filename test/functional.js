@@ -8,10 +8,10 @@ import test from 'tape';
 dotEnv.config();
 
 const getEndpointPath = rec => `/foto/${rec.username}/${rec.id}`;
-const formatError = (e) => {
-  const data = e && e.response && e.response.data ?
-    JSON.stringify(e.response.data, null, 2) :
-    util.inspect(e);
+export const formatError = (e) => {
+  const data = e && e.response && e.response.data
+    ? JSON.stringify(e.response.data, null, 2)
+    : util.inspect(e);
   console.log('error', data);
 };
 
@@ -22,10 +22,11 @@ export function getConfig() {
         ServiceEndpoint: 'http://localhost:3000',
       });
     } else {
-      const customDomain = process.env.STAGE === 'prod' ?
-        process.env.CUSTOM_DOMAIN_PROD :
-        process.env.CUSTOM_DOMAIN_DEV;
+      const customDomain = process.env.STAGE === 'prod'
+        ? process.env.CUSTOM_DOMAIN_PROD
+        : process.env.CUSTOM_DOMAIN_DEV;
       const configEndpoint = `https://${customDomain}/config`;
+      // eslint-disable-next-line no-undef
       fetch(configEndpoint)
         .then(response => res(response.json()))
         .catch(rej);
@@ -47,6 +48,7 @@ export default function (auth, api, upload) {
         return auth(config);
       })
       .then((signedIn) => {
+        // eslint-disable-next-line prefer-destructuring
         username = signedIn.username;
         images = [{
           path: path.resolve(__dirname, './mock/one.jpg'),

@@ -100,8 +100,8 @@ test("expandAndSqareUpDims", (t) => {
 });
 
 test("getDims", (t) => {
-  const result = personThumb.getDims(person, EXIF_ORIENT.TOP_LEFT);
-  t.equal(result.width, 720, "width");
+  const result = personThumb.getDims(person, { orientation: EXIF_ORIENT.TOP_LEFT });
+  t.equal(result.width, 560, "width"); // edge of image is 800
   t.equal(result.height, 720, "height");
   t.equal(result.left, 240, "left");
   t.equal(result.top, 120, "top");
@@ -121,7 +121,7 @@ test("getDims - no landmarks", (t) => {
       width: 1000,
     },
   };
-  const result = personThumb.getDims(p, EXIF_ORIENT.TOP_LEFT);
+  const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.TOP_LEFT });
   t.equal(result.width, 100, "width");
   t.equal(result.height, 100, "height");
   t.equal(result.left, 175, "left");
@@ -142,7 +142,7 @@ test("getDims - no landmarks, negative bounds", (t) => {
       width: 1000,
     },
   };
-  const result = personThumb.getDims(p, EXIF_ORIENT.TOP_LEFT);
+  const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.TOP_LEFT });
   t.equal(result.width, 250, "width");
   t.equal(result.height, 250, "height");
   t.equal(result.left, 0, "left");
@@ -163,7 +163,7 @@ test("orientation 2 - TOP_RIGHT", (t) => {
       width: 600,
     },
   };
-  const result = personThumb.getDims(p, EXIF_ORIENT.TOP_RIGHT);
+  const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.TOP_RIGHT });
   t.equal(result.width, 200, "width");
   t.equal(result.height, 200, "height");
   t.equal(result.left, 20, "left");
@@ -184,7 +184,7 @@ test("orientation 5 - LEFT_TOP", (t) => {
       width: 600,
     },
   };
-  const result = personThumb.getDims(p, EXIF_ORIENT.LEFT_TOP);
+  const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.LEFT_TOP });
   t.equal(result.width, 200, "width");
   t.equal(result.height, 200, "height");
   t.equal(result.left, 100, "left");
