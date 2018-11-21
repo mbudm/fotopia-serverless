@@ -61,11 +61,12 @@ The `.travis.yml` file does the following steps on commit:
 ### Required environmnet vars
 
 ```sh
+NAME_SPACE=identifier-to-make-s3-buckets-unique # eg my-identifier which becomes fotopia-web-app-my-identifier-prod
 AWS_ACCESS_KEY_ID=<aws access key>
 AWS_SECRET_ACCESS_KEY=<aws secret key>
-BUCKET_PREFIX=your-s3-bucket-name-before-stage-is-added # eg my-bucket- which becomes my-bucket-prod
 CUSTOM_DOMAIN_DEV=dev-api.yourdomain.com
 CUSTOM_DOMAIN_PROD=api.yourdomain.com
+USE_CUSTOM_DOMAIN=true # set to false if you don't want to use the serverless-domain-manager plugin
 TEST_EXISTING_USER=YourTestUserName
 TEST_EXISTING_USER_PWD=Y0urTestP*ssword
 FOTOPIA_GROUP=my-group # a string used as dynamodb global index key to allow queries across all users photos. in future this will allow for a simple way to have separate groups in one fotopia instance

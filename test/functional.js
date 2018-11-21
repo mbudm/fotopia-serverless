@@ -22,9 +22,8 @@ export function getConfig() {
         ServiceEndpoint: 'http://localhost:3000',
       });
     } else {
-      const customDomain = process.env.STAGE === 'prod'
-        ? process.env.CUSTOM_DOMAIN_PROD
-        : process.env.CUSTOM_DOMAIN_DEV;
+      const stage = process.env.STAGE || 'dev';
+      const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
       const configEndpoint = `https://${customDomain}/config`;
       // eslint-disable-next-line no-undef
       fetch(configEndpoint)
