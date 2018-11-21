@@ -39,8 +39,8 @@ CUSTOM_DOMAIN_PROD=api.yourdomain.com
 
 Serverless offline is a mock environment, which sometimes needs a bit of cleaning up.
 
-- remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-dev" already exists`. To avoid this do these two remove cmds
-  `rm -R /tmp/s3Bucket/fotopia-web-app-dev/ && rm -R /tmp/s3Bucket/fotopia-web-app-dev-output/`
+- remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-[namespace]-dev" already exists`. To avoid this do these two remove cmds
+  `rm -R /tmp/s3Bucket/fotopia-web-app-[namespace]-dev/ && rm -R /tmp/s3Bucket/fotopia-web-app-[namespace]-dev-output/`
 - kill node server `killall node` (warning: kills all node scripts)
 - kill dynamodb local `lsof -i:8000` then `kill [PID]`
 - - or use [kill-port](https://www.npmjs.com/package/kill-port) npm package to simply do `kill-port 8000` (recommended)
@@ -70,6 +70,8 @@ USE_CUSTOM_DOMAIN=true # set to false if you don't want to use the serverless-do
 TEST_EXISTING_USER=YourTestUserName
 TEST_EXISTING_USER_PWD=Y0urTestP*ssword
 FOTOPIA_GROUP=my-group # a string used as dynamodb global index key to allow queries across all users photos. in future this will allow for a simple way to have separate groups in one fotopia instance
+LOCAL_TEST_DOMAIN='http://localhost:5000' # for the local functional tests
+LOCAL_TEST_BUCKET=fotopia-web-app-<your-name-space>-dev # for the local functional tests
 ```
 
 If you are setting up a test user for a new stack or a new user each time then, remove `TEST_EXISTING_USER` and use:
