@@ -13,6 +13,7 @@
     "test-watch": "tape-watch './fotos/**/*__test__.js' -r babel-register -p tap-spec",
     "functional-prod": "STAGE=prod tape ./test/functional.remote.js -r babel-register | tap-spec",
     "functional-dev": "STAGE=dev tape ./test/functional.remote.js -r babel-register | tap-spec",
+    "functional-alpha": "STAGE=alpha tape ./test/functional.remote.js -r babel-register | tap-spec",
     "functional-local": "IS_OFFLINE=1 tape ./test/functional.local.js -r babel-register | tap-spec",
     "lint": "tslint -c tslint.json 'fotos/**/*.ts'"
   },
