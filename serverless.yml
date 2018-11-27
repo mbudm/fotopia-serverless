@@ -344,18 +344,6 @@ resources:
       DeletionPolicy: Delete
       Properties:
         BucketName: ${self:provider.environment.S3_OUTPUT_BUCKET}
-        AccessControl: PublicRead
-    FotopiaOutputBucketPolicy:
-      Type: "AWS::S3::BucketPolicy"
-      Properties:
-        Bucket: ${self:provider.environment.S3_OUTPUT_BUCKET}
-        PolicyDocument:
-          Statement:
-          - Principal: "*"
-            Action:
-              - s3:GetObject
-            Effect: Allow
-            Resource: "arn:aws:s3:::${self:provider.environment.S3_OUTPUT_BUCKET}/*"
     UserPool:
       Type: "AWS::Cognito::UserPool"
       Properties:
