@@ -1,20 +1,26 @@
 {
   "compilerOptions": {
+    "sourceMap": true,
+    "lib": [
+      "es5",
+      "es6",
+      "dom",
+      "es2015",
+      "esnext.asynciterable"
+    ],
     "preserveConstEnums": true,
     "strictNullChecks": true,
-    "sourceMap": true,
     "target": "es5",
     "outDir": ".build",
     "moduleResolution": "node",
-    "lib": ["es2015"],
     "rootDir": "./",
     "downlevelIteration": true
   },
   "include": [
-      "fotos/**/*"
+    "fotos/**/*"
   ],
   "exclude": [
-      "node_modules",
-      "fotos/**/*.spec.ts"
+    "node_modules",
+    "fotos/**/*.spec.ts"
   ]
 }

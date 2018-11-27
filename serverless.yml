@@ -5,7 +5,6 @@ frameworkVersion: ">=1.1.0 <2.0.0"
 plugins:
   - serverless-stack-output
   - serverless-domain-manager
-  - serverless-plugin-typescript
   - serverless-webpack
   - serverless-dynamodb-local
   - serverless-s3-sync
@@ -15,7 +14,11 @@ plugins:
   - serverless-s3-remover
 
 custom:
-  webpackIncludeModules: true
+  webpack:
+    includeModules:
+      forceExclude:
+        - aws-sdk
+        - tape
   dynamodb:
     start:
       port: 8000
@@ -43,15 +46,18 @@ custom:
     basePath: ''
     stage: ${opt:stage, self:provider.stage}
     createRoute53Record: true
-
+    enabled: ${self:provider.environment.USE_CUSTOM_DOMAIN}
+  fotopia:
+    nameSpace: ${file(./serverless.env.yml):NAME_SPACE}
+    resourcePrefix: ${self:service}-${self:custom.fotopia.nameSpace}-${opt:stage, self:provider.stage}
 provider:
   name: aws
   runtime: nodejs8.10
   region: us-east-1
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
-    S3_BUCKET: ${self:service}-${opt:stage, self:provider.stage}
-    S3_OUTPUT_BUCKET: ${self:service}-${opt:stage, self:provider.stage}-output
+    S3_BUCKET: ${self:custom.fotopia.resourcePrefix}
+    S3_OUTPUT_BUCKET: ${self:custom.fotopia.resourcePrefix}-output
     S3_OUTPUT_FILENAME: config.json
     LAMBDA_PREFIX: ${self:service}-${opt:stage, self:provider.stage}-
     USER_POOL_NAME: ${self:service}-${opt:stage, self:provider.stage}-user-pool
@@ -64,6 +70,7 @@ provider:
     COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
     CUSTOM_DOMAIN: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
     FOTOPIA_GROUP: ${file(./serverless.env.yml):FOTOPIA_GROUP}
+    USE_CUSTOM_DOMAIN: ${file(./serverless.env.yml):USE_CUSTOM_DOMAIN}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -246,12 +253,11 @@ functions:
     memorySize: 128
     timeout: 20
     events:
-      - stream:
-          type: dynamodb
-          arn:
-            Fn::GetAtt:
-              - FotopiaDynamoDbTable
-              - StreamArn
+      - http:
+          path: faces
+          method: post
+          cors: true
+          authorizer: aws_iam
 resources:
   Resources:
     FotopiaDynamoDbTable:
@@ -326,8 +332,11 @@ resources:
             - AllowedHeaders:
                 - "*"
               AllowedMethods:
+                - HEAD
                 - GET
                 - PUT
+                - POST
+                - DELETE
               AllowedOrigins:
                 - "*"
     FotopiaOutput:
@@ -502,7 +511,6 @@ resources:
 package:
   exclude:
     - node_modules/**
-    - '!node_modules/joi/**'
     - '!node_modules/uuid/**'
     - '!node_modules/babel-runtime/**'
     - '!node_modules/sharp/**'

@@ -3,6 +3,7 @@ import 'isomorphic-fetch';
 import AWS from 'aws-sdk';
 import Amplify from 'aws-amplify';
 
+// Amplify.Logger.LOG_LEVEL = 'DEBUG';
 
 function configureAmplify(config) {
   Amplify.configure({

@@ -4,13 +4,13 @@ export default function upload(key, object, options) {
   return new Promise((resolve, reject) => {
     const s3config = {
       s3ForcePathStyle: true,
-      endpoint: new AWS.Endpoint('http://localhost:5000'),
+      endpoint: new AWS.Endpoint(process.env.LOCAL_TEST_DOMAIN),
     };
     const client = new AWS.S3(s3config);
 
     const params = {
       Key: key,
-      Bucket: 'fotopia-web-app-dev',
+      Bucket: process.env.LOCAL_TEST_BUCKET,
       Body: object,
       ...options,
     };

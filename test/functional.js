@@ -8,10 +8,10 @@ import test from 'tape';
 dotEnv.config();
 
 const getEndpointPath = rec => `/foto/${rec.username}/${rec.id}`;
-const formatError = (e) => {
-  const data = e && e.response && e.response.data ?
-    JSON.stringify(e.response.data, null, 2) :
-    util.inspect(e);
+export const formatError = (e) => {
+  const data = e && e.response && e.response.data
+    ? JSON.stringify(e.response.data, null, 2)
+    : util.inspect(e);
   console.log('error', data);
 };
 
@@ -22,10 +22,10 @@ export function getConfig() {
         ServiceEndpoint: 'http://localhost:3000',
       });
     } else {
-      const customDomain = process.env.STAGE === 'prod' ?
-        process.env.CUSTOM_DOMAIN_PROD :
-        process.env.CUSTOM_DOMAIN_DEV;
+      const stage = process.env.STAGE || 'dev';
+      const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
       const configEndpoint = `https://${customDomain}/config`;
+      // eslint-disable-next-line no-undef
       fetch(configEndpoint)
         .then(response => res(response.json()))
         .catch(rej);
@@ -47,6 +47,7 @@ export default function (auth, api, upload) {
         return auth(config);
       })
       .then((signedIn) => {
+        // eslint-disable-next-line prefer-destructuring
         username = signedIn.username;
         images = [{
           path: path.resolve(__dirname, './mock/one.jpg'),
@@ -79,16 +80,14 @@ export default function (auth, api, upload) {
       .catch(formatError);
   });
 
-  test('upload image with four ppl', (t) => {
+  test('upload image two - don\'t create as this just forces storage to get creds... idk why', (t) => {
     t.plan(1);
-    const object = fs.createReadStream(images[2].path);
-    upload(images[2].key, object, {
+    const object = fs.createReadStream(images[1].path);
+    upload(images[1].key, object, {
       contentType: 'image/jpeg',
     })
       .then((responseBody) => {
-        console.log('image one reponse', responseBody);
-        t.equal(responseBody.key, images[2].key);
-        records[2].img_key = responseBody.key;
+        t.equal(responseBody.key, images[1].key);
       })
       .catch(formatError);
   });
@@ -107,14 +106,15 @@ export default function (auth, api, upload) {
       .catch(formatError);
   });
 
-  test('upload image two', (t) => {
+  test('upload image with four ppl', (t) => {
     t.plan(1);
-    const object = fs.createReadStream(images[1].path);
-    upload(images[1].key, object, {
+    const object = fs.createReadStream(images[2].path);
+    upload(images[2].key, object, {
       contentType: 'image/jpeg',
     })
       .then((responseBody) => {
-        t.equal(responseBody.key, images[1].key);
+        console.log('image 4 ppl reponse', responseBody);
+        t.equal(responseBody.key, images[2].key);
         records[1].img_key = responseBody.key;
       })
       .catch(formatError);
@@ -123,13 +123,13 @@ export default function (auth, api, upload) {
   test('create image with four people meta data', (t) => {
     t.plan(1);
     api.post(apiUrl, '/create', {
-      body: records[2],
+      body: records[1],
     })
       .then((responseBody) => {
-        t.equal(responseBody.key, records[2].key);
-        records[2].id = responseBody.id;
-        records[2].birthtime = responseBody.birthtime;
-        records[2].people = responseBody.people;
+        t.equal(responseBody.img_key, records[1].img_key);
+        records[1].id = responseBody.id;
+        records[1].birthtime = responseBody.birthtime;
+        records[1].people = responseBody.people;
       })
       .catch(formatError);
   });
@@ -140,24 +140,10 @@ export default function (auth, api, upload) {
       body: records[0],
     })
       .then((responseBody) => {
-        t.equal(responseBody.key, records[0].key);
+        t.equal(responseBody.img_key, records[0].img_key, `image one key is ${responseBody.img_key} id is ${responseBody.id}`);
         records[0].id = responseBody.id;
         records[0].birthtime = responseBody.birthtime;
         records[0].people = responseBody.people;
-      })
-      .catch(formatError);
-  });
-
-  test('create image two meta data', (t) => {
-    t.plan(1);
-    api.post(apiUrl, '/create', {
-      body: records[1],
-    })
-      .then((responseBody) => {
-        t.equal(responseBody.key, records[1].key);
-        records[1].id = responseBody.id;
-        records[1].birthtime = responseBody.birthtime;
-        records[1].people = responseBody.people;
       })
       .catch(formatError);
   });
