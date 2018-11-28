@@ -8,7 +8,6 @@ before_script:
 before_install:
   - chmod +x .ci/remove.sh
   - chmod +x .ci/deploy.sh
-  - chmod +x .ci/logging.sh
   - chmod +x .ci/deploy-alpha.sh
   - chmod +x .ci/remove-alpha.sh
   - npm install -g serverless
