@@ -4,7 +4,7 @@ cache:
   directories:
     - node_modules
 before_script:
-  - sh serverless.env.sh
+  - node serverless.env.js
 before_install:
   - chmod +x .ci/remove.sh
   - chmod +x .ci/deploy.sh
