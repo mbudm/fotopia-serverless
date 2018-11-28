@@ -44,7 +44,7 @@ resources:
             API_HOST: ${self:provider.environment.HoneycombAPIHost}
             DATASET: ${self:provider.environment.HoneycombDataset}
             SAMPLE_RATE: ${self:provider.environment.HoneycombSampleRate}
-        FunctionName: CloudwatchLambdaHandler-${self:service}
+        FunctionName: CloudwatchLambdaHandler-${self:service}-${opt:stage, self:provider.stage}
         Handler: cloudwatch-handler
         MemorySize: 128
         Role:
