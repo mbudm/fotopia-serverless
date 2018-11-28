@@ -70,7 +70,7 @@ provider:
     COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
     CUSTOM_DOMAIN: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
     FOTOPIA_GROUP: ${file(./serverless.env.yml):FOTOPIA_GROUP}
-    USE_CUSTOM_DOMAIN: ${file(./serverless.env.yml):USE_CUSTOM_DOMAIN}
+    USE_CUSTOM_DOMAIN: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.USE_CUSTOM_DOMAIN}
   iamRoleStatements:
     - Effect: Allow
       Action:

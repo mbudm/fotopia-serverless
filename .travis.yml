@@ -9,14 +9,20 @@ before_install:
   - chmod +x .ci/remove.sh
   - chmod +x .ci/deploy.sh
   - chmod +x .ci/logging.sh
+  - chmod +x .ci/deploy-alpha.sh
+  - chmod +x .ci/remove-alpha.sh
   - npm install -g serverless
 jobs:
   include:
     - stage: remove
       script: ".ci/remove.sh"
-      if: commit_message =~ /(redeploy)/
+      if: branch = "master" AND commit_message =~ /(redeploy)/
     - stage: deploy
       script: ".ci/deploy.sh"
-    - stage: logging
-      script: ".ci/logging.sh"
-      if: commit_message =~ /(recreatelogging)/
+      if: branch = "master"
+    - stage: alpha-remove
+      script: ".ci/remove-alpha.sh"
+      if: branch = "alpha" AND commit_message =~ /(redeploy)/
+    - stage: alpha-deploy
+      script: ".ci/deploy-alpha.sh"
+      if: branch = "master"
