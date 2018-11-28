@@ -24,4 +24,4 @@ jobs:
       if: branch = "alpha" AND commit_message =~ /(redeploy)/
     - stage: alpha-deploy
       script: ".ci/deploy-alpha.sh"
-      if: branch = "master"
+      if: branch = "alpha"
