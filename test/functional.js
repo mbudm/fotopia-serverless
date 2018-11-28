@@ -15,6 +15,31 @@ export const formatError = (e) => {
   console.log('error', data);
 };
 
+export function fetchConfig(domain) {
+  const configEndpoint = `https://${domain}/config`;
+  // eslint-disable-next-line no-undef
+  return fetch(configEndpoint)
+    .then(response => response.json());
+}
+
+export function readOutputConfig() {
+  return new Promise((resolve, reject) => {
+    fs.readFile('./output/config.json', (err, json) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      try {
+        const data = JSON.parse(json);
+        console.log('output', data);
+        resolve(data);
+      } catch (exception) {
+        reject(exception);
+      }
+    });
+  });
+}
+
 export function getConfig() {
   return new Promise((res, rej) => {
     if (process.env.IS_OFFLINE) {
@@ -23,12 +48,18 @@ export function getConfig() {
       });
     } else {
       const stage = process.env.STAGE || 'dev';
-      const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
-      const configEndpoint = `https://${customDomain}/config`;
-      // eslint-disable-next-line no-undef
-      fetch(configEndpoint)
-        .then(response => res(response.json()))
-        .catch(rej);
+      const useCustomDomain = process.env[`USE_CUSTOM_DOMAIN_${stage.toUpperCase()}`];
+      console.log(stage, useCustomDomain);
+      if (useCustomDomain === 'true') {
+        const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
+        fetchConfig(customDomain)
+          .then(res)
+          .catch(rej);
+      } else {
+        readOutputConfig()
+          .then(res)
+          .catch(rej);
+      }
     }
   });
 }
