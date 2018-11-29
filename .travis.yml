@@ -6,6 +6,10 @@ cache:
 before_install:
   - chmod +x .ci/remove.sh
   - chmod +x .ci/deploy.sh
+  - chmod +x .ci/remove-alpha.sh
+  - chmod +x .ci/deploy-alpha.sh
+  - chmod +x .ci/remove-prod.sh
+  - chmod +x .ci/deploy-prod.sh
   - npm install -g serverless
 jobs:
   include:
