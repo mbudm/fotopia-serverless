@@ -22,7 +22,6 @@
     "test"
   ],
   "dependencies": {
-    "active-handles": "^1.1.0",
     "aws4": "^1.8.0",
     "babel-runtime": "^6.26.0",
     "bunyan": "^1.8.12",
