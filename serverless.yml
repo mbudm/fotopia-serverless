@@ -43,6 +43,7 @@ custom:
        - ${self:provider.environment.S3_BUCKET}
   customDomain:
     domainName: ${self:provider.environment.CUSTOM_DOMAIN}
+    certificateArn: '${file(./serverlessEnv.js):config.CUSTOM_DOMAIN_ARN}'
     basePath: ''
     stage: ${opt:stage, self:provider.stage}
     createRoute53Record: true

@@ -8,6 +8,7 @@ module.exports.config = () => {
   const alphaCustomDomain = process.env.CUSTOM_DOMAIN_ALPHA;
   const fotopiaGroup = process.env.FOTOPIA_GROUP;
   const nameSpace = process.env.NAME_SPACE;
+  const customDomainArn = process.env.CUSTOM_DOMAIN_ARN;
   return {
     dev: {
       CUSTOM_DOMAIN: devCustomDomain || 'none',
@@ -23,5 +24,6 @@ module.exports.config = () => {
     },
     FOTOPIA_GROUP: fotopiaGroup || 'none',
     NAME_SPACE: nameSpace || 'none',
+    CUSTOM_DOMAIN_ARN: customDomainArn,
   };
 };
