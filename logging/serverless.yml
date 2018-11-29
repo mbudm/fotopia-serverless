@@ -8,24 +8,24 @@ provider:
   region: us-east-1
   environment:
     Environment: ${opt:stage, self:provider.stage}
-    HoneycombWriteKey: ${file(./serverless.env.yml):HONEY_KEY}
+    HoneycombWriteKey: ${file(./serverlessEnv.js):config.HONEY_KEY}
     HoneycombAPIHost: https://api.honeycomb.io
     HoneycombDataset: dataset-aws-cloudfront
     HoneycombSampleRate: 1
-    LogGroupName: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-create
-    LogGroupName1: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-thumbs
-    LogGroupName2: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-get
-    LogGroupName3: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-indexes
-    LogGroupName4: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-query
-    LogGroupName5: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-stream
-    LogGroupName6: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-faces
-    LogGroupName7: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-update
-    LogGroupName8: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-config
-    LogGroupName9: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-person
-    LogGroupName10: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-people
-    LogGroupName11: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-delete
-    LogGroupName12: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-personThumb
-    LogGroupName13: ${file(./serverless.env.yml):LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-peopleMerge
+    LogGroupName: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-create
+    LogGroupName1: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-thumbs
+    LogGroupName2: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-get
+    LogGroupName3: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-indexes
+    LogGroupName4: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-query
+    LogGroupName5: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-stream
+    LogGroupName6: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-faces
+    LogGroupName7: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-update
+    LogGroupName8: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-config
+    LogGroupName9: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-person
+    LogGroupName10: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-people
+    LogGroupName11: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-delete
+    LogGroupName12: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-personThumb
+    LogGroupName13: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-peopleMerge
     FilterPattern: ''
 resources:
   Resources:
