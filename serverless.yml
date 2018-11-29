@@ -48,7 +48,7 @@ custom:
     createRoute53Record: true
     enabled: ${self:provider.environment.USE_CUSTOM_DOMAIN}
   fotopia:
-    nameSpace: ${file(./serverless.env.yml):NAME_SPACE}
+    nameSpace: ${file(./serverlessEnv.js):config.NAME_SPACE}
     resourcePrefix: ${self:service}-${self:custom.fotopia.nameSpace}-${opt:stage, self:provider.stage}
 provider:
   name: aws
@@ -68,9 +68,9 @@ provider:
     COGNITO_AUTHORIZED_S3_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-s3-policy
     COGNITO_AUTHORIZED_API_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-api-policy
     COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
-    CUSTOM_DOMAIN: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
-    FOTOPIA_GROUP: ${file(./serverless.env.yml):FOTOPIA_GROUP}
-    USE_CUSTOM_DOMAIN: ${file(./serverless.env.yml):${opt:stage, self:provider.stage}.USE_CUSTOM_DOMAIN}
+    CUSTOM_DOMAIN: ${file(./serverlessEnv.js):config.${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
+    FOTOPIA_GROUP: ${file(./serverlessEnv.js):config.FOTOPIA_GROUP}
+    USE_CUSTOM_DOMAIN: ${file(./serverlessEnv.js):config.${opt:stage, self:provider.stage}.USE_CUSTOM_DOMAIN}
   iamRoleStatements:
     - Effect: Allow
       Action:
