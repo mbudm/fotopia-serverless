@@ -3,8 +3,6 @@ cache:
   yarn: true
   directories:
     - node_modules
-before_script:
-  - node serverless.env.js
 before_install:
   - chmod +x .ci/remove.sh
   - chmod +x .ci/deploy.sh
