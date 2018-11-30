@@ -2,7 +2,9 @@
 
 # fotopia-serverless
 
-A photo archive using serverless framework
+A photo archive using serverless framework.
+
+![fotopia in chrome screenshot showing dev tools network tab]("docs/img/fotopia-network.png")
 
 ## Requires
 
