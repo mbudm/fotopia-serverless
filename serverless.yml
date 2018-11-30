@@ -43,7 +43,6 @@ custom:
        - ${self:provider.environment.S3_BUCKET}
   customDomain:
     domainName: ${self:provider.environment.CUSTOM_DOMAIN}
-    certificateArn: '${file(./serverlessEnv.js):config.CUSTOM_DOMAIN_ARN}'
     basePath: ''
     stage: ${opt:stage, self:provider.stage}
     createRoute53Record: true
@@ -70,8 +69,8 @@ provider:
     COGNITO_AUTHORIZED_API_POLICY: ${self:service}-${opt:stage, self:provider.stage}-auth-api-policy
     COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
     CUSTOM_DOMAIN: ${file(./serverlessEnv.js):config.${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
-    FOTOPIA_GROUP: ${file(./serverlessEnv.js):config.FOTOPIA_GROUP}
     USE_CUSTOM_DOMAIN: ${file(./serverlessEnv.js):config.${opt:stage, self:provider.stage}.USE_CUSTOM_DOMAIN}
+    FOTOPIA_GROUP: ${file(./serverlessEnv.js):config.FOTOPIA_GROUP}
   iamRoleStatements:
     - Effect: Allow
       Action:

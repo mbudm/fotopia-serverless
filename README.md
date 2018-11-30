@@ -51,7 +51,7 @@ CUSTOM_DOMAIN_PROD=api.yourdomain.com # optional if you don't want to use the se
 TEST_EXISTING_USER=YourTestUserName
 TEST_EXISTING_USER_PWD=Y0urTestP*ssword
 FOTOPIA_GROUP=my-group # a string used as dynamodb global index key to allow queries across all users photos. in future this will allow for a simple way to have separate groups in one fotopia instance
-LOCAL_TEST_DOMAIN='http://localhost:5000' # for the local functional tests
+LOCAL_TEST_DOMAIN='http://localhost:3000' # for the local functional tests
 LOCAL_TEST_BUCKET=fotopia-web-app-<your-name-space>-dev # for the local functional tests
 ```
 
