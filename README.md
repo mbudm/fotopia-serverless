@@ -4,7 +4,7 @@
 
 A photo archive using serverless framework.
 
-![fotopia in chrome screenshot showing dev tools network tab]("docs/img/fotopia-network.png")
+![fotopia in chrome screenshot showing dev tools network tab](docs/img/fotopia-network.png)
 
 ## Requires
 
