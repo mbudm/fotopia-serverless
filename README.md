@@ -2,12 +2,12 @@
 
 # fotopia-serverless
 
-A photo archive using serverless framework. This is a work in progress (see [issues](https://github.com/mbudm/fotopia-serverless/issues) for planned enhancements - help welcome!). It's a great app for learning and trying out AWS services and it is useful for managing your own photos.
+A photo archive using [serverless framework](https://serverless.com/). This is a work in progress (see [issues](https://github.com/mbudm/fotopia-serverless/issues) for planned enhancements - help welcome!). It's a great app for learning and trying out AWS services and it is useful for managing your own photos.
 
 ![fotopia in chrome screenshot showing dev tools network tab](docs/img/fotopia-network-tab.png)
 
-Currently the fotopia serverless project include:
-- Progressive Web App (PWA) (Separate repo)
+Currently the fotopia serverless project includes:
+- Progressive Web App (PWA) ([Separate repo](https://github.com/mbudm/fotopia-serverless-client))
 - All resources defined and deployed using serverless framework Infra as Code
 - AWS Cognito for auth
 - DynamoDb for storage
@@ -15,7 +15,7 @@ Currently the fotopia serverless project include:
 - AWS Rekognition for detecting people and tags in photos
 - CloudFront distributions for API and PWA SPA
 - Custom Domains using Route 53
-- Bulk uploader (separate repo)
+- Bulk uploader ([separate repo](https://github.com/mbudm/fotopia))
 
 ## Requires
 
