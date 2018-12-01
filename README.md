@@ -2,9 +2,20 @@
 
 # fotopia-serverless
 
-A photo archive using serverless framework.
+A photo archive using serverless framework. This is a work in progress (see [issues](https://github.com/mbudm/fotopia-serverless/issues) for planned enhancements - help welcome!). It's a great app for learning and trying out AWS services and it is useful for managing your own photos.
 
-![fotopia in chrome screenshot showing dev tools network tab](docs/img/fotopia-network.png)
+![fotopia in chrome screenshot showing dev tools network tab](docs/img/fotopia-network-tab.png)
+
+Currently the fotopia serverless project include:
+- Progressive Web App (PWA) (Separate repo)
+- All resources defined and deployed using serverless framework Infra as Code
+- AWS Cognito for auth
+- DynamoDb for storage
+- AWS Lambda & API gateway fro API
+- AWS Rekognition for detecting people and tags in photos
+- CloudFront distributions for API and PWA SPA
+- Custom Domains using Route 53
+- Bulk uploader (separate repo)
 
 ## Requires
 
@@ -17,7 +28,7 @@ A photo archive using serverless framework.
 ## Local development
 
 ### Run locally
-To get an api running at http://localhost:5000 run the following commands:
+To get an api running at http://localhost:3000 run the following commands:
 
 - `yarn`
 - `sls dynamodb install`
@@ -41,6 +52,11 @@ For proper deploying - it's best to use CI/CD as you're certain to use the right
 - `sls deploy -s dev` Deploy to dev stage environment
 - `yarn functional-dev` Run functional tests against the dev stage stack
 - `sls deploy -s prod` Deploy to prod stage environment
+
+### Removing, using 'alpha' stage
+Sometimes you need to remove your stack and start again. If you are using the `travis.yml` spac this is as easy as adding 'redeploy' to your commit message or travis-ci trigger.
+
+`travis.yml` uses conditionals to pick up branch and commit info and decide what build to run. I use an alpha branch to try out experimental stuff.
 
 ### Required environment vars for deployting or removing via CI/CD
 
@@ -67,6 +83,16 @@ TEST_USER_PWD=PermPwd456!
 ```
 ## Troubleshooting
 
+Things will go wrong - with AWS services pretty much everything can be configured so there are a lot of moving parts. Guiding principles are:
+
+- if something suddenly isnt working it's always user error
+- use CI/CD as relying on doing all the steps in the right order is not a good human skill
+- check the AWS console and see what your cloudformation stack has done, what resources have been set up. Read logs or better still use an observability tool like Honeycomb (separate Honeycomb setup is included in /logging).
+- Search for help, there are heaps of discussions at serverless forums and on stack overflow
+- If you're stumped the problem is quite possibly not where you think it is. E.g
+- - For a while I thought that disabling custom domain was the reason my alpha stage was returning 403 errors on fetching s3 objects. No it was because I was deploying locally and had the wrong node version, which meant the sharp library didnt compile, meaning the thumbs Lambda wasnt producing the thumbnail
+- - The thumbnail creation for people, using the AWS Rekognition API was missing faces and cropping incorrectly. Turns out this was not an error in my peopleThumbs AWS Lambda as I thought but was because I wasn't taking into account the EXIF orientation of the images.
+
 ### Use the AWS Lambda node version
 
 Some modules (Sharp I'm looking at you) don't work in AWS Lambdas unless installed via the exact same Node version. So make sure you are always on v8.10.0 or always rely on your CI tool to deploy.
@@ -85,41 +111,12 @@ Serverless offline is a mock environment, which sometimes needs a bit of cleanin
 
 Java is needed by the `serverless-dynamodb-local` plugin. I was getting this message whenever doing `java -version` and no matter how many attempts at updating my .bash_profile nothing worked except for installing the Java JDK.
 
-## Backlog
+# Contributing
 
-- Write up some of this fun stuff as articles
+Yes! Do it.
 
-  - dev workflow with sls offline (eg peopleThumbs change)
-  - dynamodb design with elusive low cost search option and scaling
-  - cognito and amplify, performance, simpler alternatives
-  - PWAs on iOS and perf improvements (react to preact as sep article?)
-  - observability in serverless stack. identify good guids to track esp across dynamodb streams
-  - a full rekognition implememntation grouping faces into people efficiently
-  - a simple CI and functional testing option for serverless apps
-  - an open source google photos alternative that cost $2 per month to host.
-  - AWS SAM and Serverless Framework CLI comparison
-
-- tech backlog
-
-  - db backup and migrate script for changes that need a stack rebuild
-    - POC done (kinda - a bit hand holdy) with logging stack added post deploy
-      - need to also automate somewhere: `aws rekognition delete-collection --profile rekognitionuser --collection-id "collection-id"`
-      - ugh really need a node.js api to replicate what amplify does in the client
-    - could automate with sls package..
-      - if fails then, do backup/remove/deploy/restore
-    - separate s3 stack
-    - separate or backup/restore users
-  - update to aws amplify v1, break up the bundle
-    - tried with functional tests and its even less node friendly
-    - for func tests and bulk uploader maybe fork and use the best bits?
-  - finish bul uploader
-  - migrate to preact & mobx
-  - keep stack warm/performance tweaking. ec2 comparison test.
-  - try out AWS SAM
-
-- Moar features
-  - admin. user/family group
-  - delete
-  - edite meta
-  - public share
-  - rescan with faces attached to person
+Dev setup:
+- use tslint
+- editorconfig
+- unit tests are awesome
+- functional tests are superb
