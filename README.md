@@ -11,7 +11,7 @@ Currently the fotopia serverless project includes:
 - All resources defined and deployed using serverless framework Infra as Code
 - AWS Cognito for auth
 - DynamoDb for storage
-- AWS Lambda & API gateway fro API
+- AWS Lambda & API gateway for API
 - AWS Rekognition for detecting people and tags in photos
 - CloudFront distributions for API and PWA SPA
 - Custom Domains using Route 53
@@ -54,7 +54,7 @@ For proper deploying - it's best to use CI/CD as you're certain to use the right
 - `sls deploy -s prod` Deploy to prod stage environment
 
 ### Removing, using 'alpha' stage
-Sometimes you need to remove your stack and start again. If you are using the `travis.yml` spac this is as easy as adding 'redeploy' to your commit message or travis-ci trigger.
+Sometimes you need to remove your stack and start again. If you are using the `travis.yml` spec this is as easy as adding 'redeploy' to your commit message or travis-ci trigger.
 
 `travis.yml` uses conditionals to pick up branch and commit info and decide what build to run. I use an alpha branch to try out experimental stuff.
 
