@@ -25,21 +25,6 @@ Currently the fotopia serverless project includes:
 - AWS account with credentials (https://serverless.com/framework/docs/providers/aws/guide/credentials/)
 - Java Runtime Engine (JRE) version 6.x or newer (for running dynamodb locally with `serverless-dynamodb-local` plugin)
 
-## Local development
-
-### Run locally
-To get an api running at http://localhost:3000 run the following commands:
-
-- `yarn`
-- `sls dynamodb install`
-- `sls offline start`
-- `yarn functional-local` to run functional (api) tests against local
-
-Dev commands
-- `yarn lint`
-- `yarn test` - unit tests
-
-
 ## CI/CD
 
 For proper deploying - it's best to use CI/CD as you're certain to use the right settings (eg node version) every time. The `.travis.yml` file does the following steps on commit:
@@ -81,6 +66,32 @@ TEST_USER_NAME=YourTestUserName
 TEST_USER_TEMP_PWD=TempPwd123!
 TEST_USER_PWD=PermPwd456!
 ```
+
+## Local development
+To run the app locally, you'll be running an API on loclahost:3000, have an s3 bucket on localhost:5000 and a dynamodb instance on localhost:8000. So you'll need these ports free.
+
+### Run locally
+To get an api running at http://localhost:3000 run the following commands:
+
+- `yarn`
+- `sls dynamodb install`
+- `sls offline start`
+
+To run the functional tests, create a `.env` file with the following environment vars:
+```sh
+LOCAL_TEST_DOMAIN='http://localhost:3000' # for the local functional tests
+LOCAL_TEST_BUCKET=fotopia-web-app-none-dev # for the local functional tests - 'none' is the default NAME_SPACE
+AWS_ACCESS_KEY_ID='12121' # add some fake creds if you want to try it out before setting up your AWS credentials
+AWS_SECRET_ACCESS_KEY='sdsd'
+```
+Then you can run
+- `yarn functional-local` to run functional (api) tests against local
+
+Dev commands
+- `yarn lint`
+- `yarn test` - unit tests
+
+
 ## Troubleshooting
 
 Things will go wrong - with AWS services pretty much everything can be configured so there are a lot of moving parts. Guiding principles are:
