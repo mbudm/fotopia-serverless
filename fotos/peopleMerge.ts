@@ -14,6 +14,7 @@ import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
   ILoggerBaseParams,
+  IQueryResponse,
 } from "./types";
 
 export function mergePeopleObjects(data, existingPeople) {
@@ -65,8 +66,8 @@ export async function queryImagesByPeople(deletePeople, mergedPerson, loggerBase
   return lambda.invoke(params).promise()
     .then((response) => {
       const payload = typeof response.Payload === "string" ? JSON.parse(response.Payload) : null ;
-      const body = payload && JSON.parse(payload.body);
-      return Array.isArray(body) ? body : [];
+      const body: IQueryResponse = payload && JSON.parse(payload.body);
+      return Array.isArray(body.items) ? body.items : [];
     });
 }
 
