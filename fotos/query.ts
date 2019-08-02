@@ -172,12 +172,12 @@ export function getLogFields({
     queryLimit: data.limit,
     queryRawCount: ddbResponse && safeLength(ddbResponse.Items),
     queryRevisedFromDate:
-      ddbParams && new Date(ddbParams.ExpressionAttributeValues![":from"]).toISOString(),
+      ddbParams && new Date(ddbParams.ExpressionAttributeValues![":from"]).getTime(), // why logging as 0 ?
     queryRevisedFromDateRaw:
         ddbParams && ddbParams.ExpressionAttributeValues![":from"],
     queryRevisedLimit: ddbParams && ddbParams.Limit,
     queryRevisedToDate:
-      ddbParams && new Date(ddbParams.ExpressionAttributeValues![":to"]).toISOString(),
+      ddbParams && new Date(ddbParams.ExpressionAttributeValues![":to"]).toString(), // why logging as 0 ?
     queryRevisedToDateRaw:
         ddbParams && ddbParams.ExpressionAttributeValues![":to"],
     queryToDate: new Date(data.to).toISOString(),
