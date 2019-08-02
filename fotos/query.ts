@@ -151,13 +151,31 @@ export function queryDatabase(ddbParams): Promise<PromiseResult<DocClient.QueryO
   return dynamodb.query(ddbParams).promise();
 }
 
-export function getLogFields(data: IQueryBody, ddbResponse, responseBody) {
+export function getLogFields({
+    data,
+    ddbParams,
+    ddbResponse,
+    responseBody,
+  }: {
+    data: IQueryBody;
+    ddbParams: DocClient.QueryInput | null;
+    ddbResponse;
+    responseBody;
+  }) {
   return {
     queryFilteredCount: safeLength(responseBody),
-    queryFiltersPeopleCount: data.criteria && safeLength(data.criteria.people),
-    queryFiltersTagsCount: data.criteria && safeLength(data.criteria.tags),
+    queryFiltersPeopleCount:
+      data.criteria && safeLength(data.criteria.people),
+    queryFiltersTagsCount:
+      data.criteria && safeLength(data.criteria.tags),
     queryFromDate: data.from,
+    queryLimit: data.limit,
     queryRawCount: ddbResponse && safeLength(ddbResponse.Items),
+    queryRevisedFromDate:
+      ddbParams && ddbParams.ExpressionAttributeValues![":from"],
+    queryRevisedLimit: ddbParams && ddbParams.Limit,
+    queryRevisedToDate:
+      ddbParams && ddbParams.ExpressionAttributeValues![":from"],
     queryToDate: data.to,
   };
 }
@@ -177,10 +195,18 @@ export async function queryItems(event, context, callback) {
     const ddbParams = getDynamoDbParams(data);
     const ddbResponse: DocClient.QueryOutput = await queryDatabase(ddbParams);
     const responseBody = getResponseBody(ddbResponse, data);
-    logger(context, loggerBaseParams, getLogFields(data, ddbResponse, responseBody));
+    logger(context, loggerBaseParams, getLogFields({ data, ddbParams, ddbResponse, responseBody }));
     return callback(null, success(responseBody));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(data, null, null) });
+    logger(context, loggerBaseParams, {
+      err,
+      ...getLogFields({
+        data,
+        ddbParams: null,
+        ddbResponse: null,
+        responseBody: null,
+      }),
+    });
     return callback(null, failure(err));
   }
 }
