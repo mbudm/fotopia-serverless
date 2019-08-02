@@ -79,6 +79,13 @@ TEST_USER_PWD=PermPwd456!
 ## Local development
 To run the app locally, you'll be running an API on http://localhost:3000, have an s3 bucket on http://localhost:5000 and a dynamodb instance on http://localhost:8000. So you'll need these ports free.
 
+### Run functional tests from local against a deployed environment
+Add an environment var that forces the functional test to get config from a deployed api/config endpoint, eg for `dev` add to `.env`:
+
+- `USE_CUSTOM_DOMAIN_DEV=true`
+
+The functional test will pick up the endpoint from the `CUSTOM_DOMAIN_DEV` env var.
+
 ### Run locally
 To get an api running at http://localhost:3000 these setup items are compulsory:
 

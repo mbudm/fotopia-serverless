@@ -50,6 +50,7 @@ export function getConfig() {
       const stage = process.env.STAGE || 'dev';
       const useCustomDomain = process.env[`USE_CUSTOM_DOMAIN_${stage.toUpperCase()}`];
       console.log(stage, useCustomDomain);
+      console.log('use custom domain?', stage, useCustomDomain);
       if (useCustomDomain === 'true') {
         const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
         fetchConfig(customDomain)
@@ -196,8 +197,8 @@ export default function (auth, api, upload) {
       body: query,
     })
       .then((responseBody) => {
-        t.ok(responseBody.find(rec => rec.id === records[0].id));
-        t.ok(responseBody.find(rec => rec.id === records[1].id));
+        t.ok(responseBody.items.find(rec => rec.id === records[0].id));
+        t.ok(responseBody.items.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });
@@ -219,8 +220,8 @@ export default function (auth, api, upload) {
       body: query,
     })
       .then((responseBody) => {
-        t.notOk(responseBody.find(rec => rec.id === records[0].id));
-        t.ok(responseBody.find(rec => rec.id === records[1].id));
+        t.notOk(responseBody.items.find(rec => rec.id === records[0].id));
+        t.ok(responseBody.items.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });
@@ -240,9 +241,9 @@ export default function (auth, api, upload) {
       body: query,
     })
       .then((responseBody) => {
-        t.equal(responseBody.length, 1);
-        t.ok(responseBody.find(rec => rec.id === records[0].id));
-        t.notOk(responseBody.find(rec => rec.id === records[1].id));
+        t.equal(responseBody.items.length, 1);
+        t.ok(responseBody.items.find(rec => rec.id === records[0].id));
+        t.notOk(responseBody.items.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });
@@ -263,7 +264,7 @@ export default function (auth, api, upload) {
       body: query,
     })
       .then((responseBody) => {
-        t.ok(responseBody.find(rec => rec.id === records[0].id));
+        t.ok(responseBody.items.find(rec => rec.id === records[0].id));
       })
       .catch(formatError);
   });
