@@ -163,18 +163,11 @@ export function getLogFields({
     responseBody;
   }) {
 
-  let queryActualFromDate;
-  let queryActualToDate;
-  if (ddbParams) {
-    const revisedFromDate = new Date(ddbParams.ExpressionAttributeValues![":from"]);
-    const revisedToDate = new Date(ddbParams.ExpressionAttributeValues![":to"]);
-    queryActualFromDate = revisedFromDate.toISOString();
-    queryActualToDate = revisedToDate.toISOString();
-  }
-
   return {
-    queryActualFromDate,
-    queryActualToDate,
+    queryActualFromDate: ddbParams &&
+      new Date(ddbParams.ExpressionAttributeValues![":from"]).toISOString(),
+    queryActualToDate: ddbParams &&
+      new Date(ddbParams.ExpressionAttributeValues![":to"]).toISOString(),
     queryFilteredCount: safeLength(responseBody),
     queryFiltersPeopleCount:
       data.criteria && safeLength(data.criteria.people),
