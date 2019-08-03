@@ -170,6 +170,28 @@ export function getLogFields({
     const revisedToDate = new Date(ddbParams.ExpressionAttributeValues![":to"]);
     queryRevisedFromDate = revisedFromDate.toISOString();
     queryRevisedToDate = revisedToDate.toISOString();
+
+    // ugh - lets get to the bottom of this
+    // tslint:disable:no-console
+    console.log("Date input value:", ddbParams.ExpressionAttributeValues![":to"]);
+    console.log("type of input value", typeof ddbParams.ExpressionAttributeValues![":to"]);
+
+    console.log("--output--");
+    console.log("toISOString():", revisedToDate.toISOString());
+    console.log("toDateString():", revisedToDate.toDateString());
+    console.log("toString():", revisedToDate.toString());
+    console.log("getTime():", revisedToDate.getTime());
+
+    // also try anothr way of constructing the date
+    const emptyDateObj = new Date();
+    emptyDateObj.setTime(ddbParams.ExpressionAttributeValues![":to"]);
+
+    console.log("--output - using setTime--");
+    console.log("toISOString():", emptyDateObj.toISOString());
+    console.log("toDateString():", emptyDateObj.toDateString());
+    console.log("toString():", emptyDateObj.toString());
+    console.log("getTime():", emptyDateObj.getTime());
+    // tslint:enable:no-console
   }
 
   return {
