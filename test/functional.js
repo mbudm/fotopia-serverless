@@ -204,6 +204,50 @@ export default function (auth, api, upload) {
   });
 
 
+  test('query with restricted date range', (t) => {
+    t.plan(2);
+
+    const query = {
+      username,
+      criteria: {
+        people: [],
+        tags: [],
+      },
+      from: '2014-06-27',
+      to: '2014-07-25',
+    };
+
+    api.post(apiUrl, '/query', {
+      body: query,
+    })
+      .then((responseBody) => {
+        t.notOk(responseBody.items.find(rec => rec.id === records[0].id), 'find record 0');
+        t.ok(responseBody.items.find(rec => rec.id === records[1].id), 'find record 1');
+      })
+      .catch(formatError);
+  });
+
+  test('query with over long date range', (t) => {
+    const query = {
+      username,
+      criteria: {
+        people: [],
+        tags: [],
+      },
+      from: '2004-06-27',
+      to: '2014-07-25',
+    };
+
+    api.post(apiUrl, '/query', {
+      body: query,
+    })
+      .then((responseBody) => {
+        t.equal(responseBody.items.length, 0, 'response items length is 0');
+        t.end();
+      })
+      .catch(formatError);
+  });
+
   test('query by tag and person', (t) => {
     t.plan(2);
 
