@@ -162,14 +162,6 @@ export function getLogFields({
     ddbResponse;
     responseBody;
   }) {
-
-  const queryRevisedFromDate = ddbParams ?
-    new Date(ddbParams.ExpressionAttributeValues![":from"]).toISOString() :
-    Date.now();
-  const queryRevisedToDate = ddbParams ?
-    new Date(ddbParams.ExpressionAttributeValues![":to"]).toISOString() :
-    Date.now();
-
   return {
     queryFilteredCount: safeLength(responseBody),
     queryFiltersPeopleCount:
@@ -179,9 +171,15 @@ export function getLogFields({
     queryFromDate: new Date(data.from).toISOString(),
     queryLimit: data.limit,
     queryRawCount: ddbResponse && safeLength(ddbResponse.Items),
-    queryRevisedFromDate,
+    queryRevisedFromDate:
+      ddbParams && new Date(ddbParams.ExpressionAttributeValues![":from"]).getTime(), // why logging as 0 ?
+    queryRevisedFromDateRaw:
+        ddbParams && ddbParams.ExpressionAttributeValues![":from"],
     queryRevisedLimit: ddbParams && ddbParams.Limit,
-    queryRevisedToDate,
+    queryRevisedToDate:
+      ddbParams && new Date(ddbParams.ExpressionAttributeValues![":to"]).toString(), // why logging as 0 ?
+    queryRevisedToDateRaw:
+        ddbParams && ddbParams.ExpressionAttributeValues![":to"],
     queryToDate: new Date(data.to).toISOString(),
   };
 }
