@@ -14,11 +14,8 @@ import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
   ILoggerBaseParams,
-  IQueryBody,
   IQueryResponse,
 } from "./types";
-
-const FUNCTION_NAME = "mergePeople";
 
 export function mergePeopleObjects(data, existingPeople) {
   const mergedPeople = existingPeople
@@ -40,9 +37,7 @@ export function getDeletePeople(data, mergedPerson, existingPeople) {
 }
 
 export function getInvokeQueryParams(deletedPeople, mergedPerson, loggerBaseParams) {
-  const body: IQueryBody = {
-    breakDateRestriction: true,
-    clientId: FUNCTION_NAME,
+  const body = {
     criteria: {
       people: deletedPeople.map((person) => person.id).concat(mergedPerson.id),
     },
@@ -147,7 +142,7 @@ export async function mergePeople(event, context, callback) {
   const data = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
-    name: FUNCTION_NAME,
+    name: "mergePeople",
     parentId: "",
     startTime,
     traceId: uuid.v1(),

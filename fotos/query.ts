@@ -48,17 +48,11 @@ export const calculateFromDate = (data: IQueryBody): number => {
 
 const anyDateFormatToMilliseconds = (d) => new Date(d).getTime();
 
-export const canBreakLimit = (data: IQueryBody): boolean => {
-  return data.breakDateRestriction === true && typeof data.clientId === "string";
-};
-
 export const calculateToDate = (data: IQueryBody): number => {
   const fromDate = calculateFromDate(data);
   const proposedToDate = anyDateFormatToMilliseconds(data.to);
   if (proposedToDate >= (fromDate + MAX_DATE_RANGE)) {
-    return canBreakLimit(data) ?
-      proposedToDate :
-      fromDate + MAX_DATE_RANGE;
+    return  fromDate + MAX_DATE_RANGE;
   } else if (proposedToDate >= fromDate) {
     return proposedToDate;
   } else {
@@ -174,8 +168,6 @@ export function getLogFields({
       new Date(ddbParams.ExpressionAttributeValues![":from"]).toISOString(),
     queryActualToDate: ddbParams &&
       new Date(ddbParams.ExpressionAttributeValues![":to"]).toISOString(),
-    queryBreakDateRestriction: data.breakDateRestriction,
-    queryClientId: data.clientId,
     queryFilteredCount: safeLength(responseBody),
     queryFiltersPeopleCount:
       data.criteria && safeLength(data.criteria.people),

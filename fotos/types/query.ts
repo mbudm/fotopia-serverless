@@ -5,16 +5,14 @@ import { IImageMeta } from "./images";
 export interface IQueryBody {
   traceMeta?: ITraceMeta;
   criteria?: {
-    tags?: string[],
-    people?: string[],
+    tags: string[],
+    people: string[],
   };
   lastRetrievedBirthtime?: number;
   limit?: number;
   from: number;
   to: number;
-  username?: string;
-  breakDateRestriction?: boolean;
-  clientId?: string;
+  username: string;
 }
 
 export interface IQueryDBResponseItem {
