@@ -28,7 +28,7 @@ import {
   have enough results after filtering on criteria to still return a full page of results to the user.
 */
 export const MAX_QUERY_LIMIT = 500;
-export const MAX_DATE_RANGE = (90 * 24 * 60 * 60 * 1000); // 90 days
+export const MAX_DATE_RANGE = (90 * 24 * 60 * 1000); // 90 days
 
 export const getTableName = (): string => {
   if (process.env.DYNAMODB_TABLE) {
