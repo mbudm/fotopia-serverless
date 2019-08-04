@@ -94,7 +94,7 @@ export default function (auth, api, upload) {
         records = [{
           username,
           userIdentityId: signedIn.userIdentityId,
-          birthtime: '2014-07-28T00:55:11.000Z',
+          birthtime: '2012-06-28T00:55:11.000Z',
           tags: ['blue', 'red', uniqueTag],
         }, {
           username,
@@ -104,7 +104,7 @@ export default function (auth, api, upload) {
         }, {
           username,
           userIdentityId: signedIn.userIdentityId,
-          birthtime: '2014-09-14T08:22:03.000Z',
+          birthtime: '2014-11-14T08:22:03.000Z',
           tags: ['xlabs', 'Melbourne University'],
         }];
         t.end();
@@ -189,16 +189,16 @@ export default function (auth, api, upload) {
         people: [],
         tags: [],
       },
-      from: '2014-06-27',
-      to: '2014-09-25',
+      from: '2004-04-04',
+      to: '2017-11-02',
     };
 
     api.post(apiUrl, '/query', {
       body: query,
     })
       .then((responseBody) => {
-        t.ok(responseBody.items.find(rec => rec.id === records[0].id), 'find record 0');
-        t.ok(responseBody.items.find(rec => rec.id === records[1].id), 'find record 1');
+        t.ok(responseBody.items.find(rec => rec.id === records[0].id));
+        t.ok(responseBody.items.find(rec => rec.id === records[1].id));
       })
       .catch(formatError);
   });
@@ -212,8 +212,8 @@ export default function (auth, api, upload) {
         tags: ['yellow'],
         people: records[1].people,
       },
-      from: '2014-06-27',
-      to: '2014-09-25',
+      from: '2004-04-04',
+      to: '2017-11-02',
     };
 
     api.post(apiUrl, '/query', {
@@ -233,8 +233,8 @@ export default function (auth, api, upload) {
       criteria: {
         tags: [uniqueTag],
       },
-      from: '2014-06-27',
-      to: '2014-09-25',
+      from: '2004-04-04',
+      to: '2017-11-02',
     };
 
     api.post(apiUrl, '/query', {
@@ -256,8 +256,8 @@ export default function (auth, api, upload) {
       criteria: {
         people: records[0].people,
       },
-      from: '2014-06-27',
-      to: '2014-09-25',
+      from: '2004-04-04',
+      to: '2017-11-02',
     };
 
     api.post(apiUrl, '/query', {
