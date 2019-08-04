@@ -369,7 +369,7 @@ export default function (auth, api, upload) {
   });
 
   test('peopleMerge', (t) => {
-    if (people.length > 0) {
+    if (people.length > 1) {
       const body = people
         .reduce((accum, person) => (accum.length < 2 ? accum.concat(person.id) : accum), []);
       api.post(apiUrl, '/people/merge', {
@@ -386,7 +386,7 @@ export default function (auth, api, upload) {
   });
 
   test('getPeople - check peopleMerge', (t) => {
-    if (people.length > 0) {
+    if (people.length > 1) {
       api.get(apiUrl, '/people')
         .then((responseBody) => {
           t.equal(responseBody.length, people.length - 1, 'one less person');
