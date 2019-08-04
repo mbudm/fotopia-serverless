@@ -7,86 +7,28 @@ import logger from "./lib/logger";
 import {
   ILoggerBaseParams,
   IQueryBody,
-  IQueryDBResponseItem,
-  IQueryResponse,
 } from "./types";
 
-import {
-  AWSError,
-} from "aws-sdk/lib/error";
-import {
-  PromiseResult,
-} from "aws-sdk/lib/request";
-
-import {
-  DocumentClient as DocClient,
-} from "aws-sdk/lib/dynamodb/document_client.d";
-
-/*
-  With the in-lambda filtering that I'm currently using (cheaper than elastic search)
-  pagination is a bit tricky. By setting a maximum database query limit we will usually
-  have enough results after filtering on criteria to still return a full page of results to the user.
-*/
-export const MAX_QUERY_LIMIT = 500;
-export const MAX_DATE_RANGE = (90 * 24 * 60 * 1000); // 90 days
-
-export const getTableName = (): string => {
-  if (process.env.DYNAMODB_TABLE) {
-    return process.env.DYNAMODB_TABLE;
-  } else {
-    throw new Error("No DYNAMODB_TABLE env variable set");
-  }
-};
-
-export const calculateFromDate = (data: IQueryBody): number => {
-  const proposedFromDate = anyDateFormatToMilliseconds(data.from);
-  const lastRetrievedBirthtime = data.lastRetrievedBirthtime ?
-    anyDateFormatToMilliseconds(data.lastRetrievedBirthtime) :
-    proposedFromDate;
-  return Math.max(proposedFromDate, lastRetrievedBirthtime);
-};
-
-const anyDateFormatToMilliseconds = (d) => new Date(d).getTime();
-
-export const calculateToDate = (data: IQueryBody): number => {
-  const fromDate = calculateFromDate(data);
-  const proposedToDate = anyDateFormatToMilliseconds(data.to);
-  if (proposedToDate >= (fromDate + MAX_DATE_RANGE)) {
-    return  fromDate + MAX_DATE_RANGE;
-  } else if (proposedToDate >= fromDate) {
-    return proposedToDate;
-  } else {
-    throw new Error(`'To' date is prior to 'from' date`);
-  }
-};
-
-export const calculateLimit = (data: IQueryBody): number => {
-  return hasCriteria(data) ?
-    MAX_QUERY_LIMIT :
-    (data.limit || MAX_QUERY_LIMIT );
-};
-
-export const getUserDynamoDbParams = (data: IQueryBody): DocClient.QueryInput => {
+export const getUserDynamoDbParams = (data: IQueryBody) => {
   const params = {
     ExpressionAttributeNames: {
       "#birthtime": "birthtime",
       "#username": "username",
     },
     ExpressionAttributeValues: {
-      ":from": new Date(data.from).getTime(), // make this after birthtime of the last item from the prev query
+      ":from": new Date(data.from).getTime(),
       ":to": new Date(data.to).getTime(),
       ":username": data.username,
     },
     IndexName: "UsernameBirthtimeIndex",
     KeyConditionExpression: "#username = :username AND #birthtime BETWEEN :from AND :to",
-    Limit: calculateLimit(data),
     ProjectionExpression: "id, meta, people, tags, img_location, img_key, img_thumb_key",
-    TableName: getTableName(),
+    TableName: process.env.DYNAMODB_TABLE,
   };
   return params;
 };
 
-export const getGroupDynamoDbParams = (data: IQueryBody): DocClient.QueryInput => {
+export const getGroupDynamoDbParams = (data: IQueryBody) => {
   const params = {
     ExpressionAttributeNames: {
       "#birthtime": "birthtime",
@@ -99,55 +41,39 @@ export const getGroupDynamoDbParams = (data: IQueryBody): DocClient.QueryInput =
     },
     IndexName: "GroupBirthtimeIndex",
     KeyConditionExpression: "#group = :group AND #birthtime BETWEEN :from AND :to",
-    Limit: calculateLimit(data),
     // tslint:disable-next-line:max-line-length
     ProjectionExpression: "#group, #birthtime, username, userIdentityId, id, meta, people, tags, img_key, img_thumb_key",
-    TableName: getTableName(),
+    TableName: process.env.DYNAMODB_TABLE,
   };
   return params;
 };
 
-export const getDynamoDbParams = (data: IQueryBody): DocClient.QueryInput => {
+export const getDynamoDbParams = (data: IQueryBody) => {
   if (data.username) {
     return getUserDynamoDbParams(data);
-  } else {
-    return getGroupDynamoDbParams(data);
   }
+  return getGroupDynamoDbParams(data);
 };
-
 export const hasCriteria = (criteria = {}) =>
   Object.keys(criteria).every((key) => Array.isArray(criteria[key])) &&
   Object.keys(criteria).some((key) => criteria[key].length > 0);
 
-export const filterByCriteria = (item: IQueryDBResponseItem, criteriaKey, criteriaData): boolean =>
+export const filterByCriteria = (item, criteriaKey, criteriaData) =>
   criteriaData.some((criteriaDataItem) => item[criteriaKey].includes(criteriaDataItem));
 
-export const filterItemsByCriteria = (items: IQueryDBResponseItem[], data: IQueryBody): IQueryDBResponseItem[] =>
+export const filterItemsByCriteria = (items, data: IQueryBody) =>
   (hasCriteria(data.criteria) ?
     items.filter((item) => item &&
       Object.keys(data!.criteria || {}).some((criteriaKey) =>
         filterByCriteria(item, criteriaKey, data!.criteria![criteriaKey]))) :
     items);
 
-export function getResponseBody(ddbResponse: DocClient.QueryOutput, data: IQueryBody): IQueryResponse {
-  const items: IQueryDBResponseItem[] = ddbResponse.Items ?
-    ddbResponse.Items as IQueryDBResponseItem[] :
-    [];
-  const filteredItems: IQueryDBResponseItem[] = filterItemsByCriteria(items, data);
-
-  const delimitedItems = data.limit && data.limit > 0 ? filteredItems.slice(0, data.limit) : filteredItems;
-  const message = delimitedItems.length > 0 ?
-    `${filteredItems.length} items found, ${delimitedItems.length} returned` :
-    "No items found that match your criteria";
-
-  return {
-    items: delimitedItems,
-    message,
-    remainingResults: filteredItems.length - delimitedItems.length,
-  };
+export function getResponseBody(ddbResponse, data: IQueryBody) {
+  const filteredItems = filterItemsByCriteria(ddbResponse.Items, data);
+  return filteredItems.length > 0 ? filteredItems : "No items found that match your criteria";
 }
 
-export function queryDatabase(ddbParams): Promise<PromiseResult<DocClient.QueryOutput, AWSError>> {
+export function queryDatabase(ddbParams) {
   return dynamodb.query(ddbParams).promise();
 }
 
@@ -175,7 +101,7 @@ export async function queryItems(event, context, callback) {
   };
   try {
     const ddbParams = getDynamoDbParams(data);
-    const ddbResponse: DocClient.QueryOutput = await queryDatabase(ddbParams);
+    const ddbResponse = await queryDatabase(ddbParams);
     const responseBody = getResponseBody(ddbResponse, data);
     logger(context, loggerBaseParams, getLogFields(data, ddbResponse, responseBody));
     return callback(null, success(responseBody));
