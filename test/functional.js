@@ -181,6 +181,8 @@ export default function (auth, api, upload) {
   });
 
   test('query all', (t) => {
+    t.plan(2);
+
     const query = {
       username,
       criteria: {
@@ -197,7 +199,6 @@ export default function (auth, api, upload) {
       .then((responseBody) => {
         t.ok(responseBody.items.find(rec => rec.id === records[0].id), 'find record 0');
         t.ok(responseBody.items.find(rec => rec.id === records[1].id), 'find record 1');
-        t.end();
       })
       .catch(formatError);
   });
@@ -413,7 +414,7 @@ export default function (auth, api, upload) {
   });
 
   test('peopleMerge', (t) => {
-    if (people.length > 1) {
+    if (people.length > 0) {
       const body = people
         .reduce((accum, person) => (accum.length < 2 ? accum.concat(person.id) : accum), []);
       api.post(apiUrl, '/people/merge', {
@@ -430,7 +431,7 @@ export default function (auth, api, upload) {
   });
 
   test('getPeople - check peopleMerge', (t) => {
-    if (people.length > 1) {
+    if (people.length > 0) {
       api.get(apiUrl, '/people')
         .then((responseBody) => {
           t.equal(responseBody.length, people.length - 1, 'one less person');
@@ -440,34 +441,6 @@ export default function (auth, api, upload) {
     } else {
       t.end();
     }
-  });
-
-  test('delete all records', (t) => {
-    const query = {
-      username,
-      criteria: {
-        people: [],
-        tags: [],
-      },
-      from: '2000-01-1',
-      to: Date.now(),
-      breakDateRestriction: true,
-      clientId: 'functionalTestCleanup',
-    };
-
-    api.post(apiUrl, '/query', {
-      body: query,
-    })
-      .then(responseBody => Promise.all(responseBody.items.map((item) => {
-        const apiPath = getEndpointPath({ ...item, username });
-        console.log(`Deleting ${apiPath}`);
-        return api.del(apiUrl, apiPath);
-      })))
-      .then((deleteResponses) => {
-        t.equal(deleteResponses, []);
-        t.end();
-      })
-      .catch(formatError);
   });
 
   test('force kill amplify process', (t) => {
