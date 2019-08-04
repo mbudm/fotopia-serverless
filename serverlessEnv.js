@@ -8,7 +8,7 @@ module.exports.config = () => {
   const alphaCustomDomain = process.env.CUSTOM_DOMAIN_ALPHA;
   const fotopiaGroup = process.env.FOTOPIA_GROUP;
   const nameSpace = process.env.NAME_SPACE || 'none';
-  const localTestDomain = process.env.LOCAL_TEST_DOMAIN;
+  const localTestDomain =  process.env.LOCAL_TEST_DOMAIN;
   return {
     dev: {
       CUSTOM_DOMAIN: devCustomDomain || 'none',
