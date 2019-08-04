@@ -73,8 +73,8 @@ export const getUserDynamoDbParams = (data: IQueryBody): DocClient.QueryInput =>
       "#username": "username",
     },
     ExpressionAttributeValues: {
-      ":from": calculateFromDate(data),
-      ":to": calculateToDate(data),
+      ":from": new Date(data.from).getTime(), // make this after birthtime of the last item from the prev query
+      ":to": new Date(data.to).getTime(),
       ":username": data.username,
     },
     IndexName: "UsernameBirthtimeIndex",
@@ -93,9 +93,9 @@ export const getGroupDynamoDbParams = (data: IQueryBody): DocClient.QueryInput =
       "#group": "group",
     },
     ExpressionAttributeValues: {
-      ":from": calculateFromDate(data),
+      ":from": new Date(data.from).getTime(),
       ":group": process.env.FOTOPIA_GROUP,
-      ":to": calculateToDate(data),
+      ":to": new Date(data.to).getTime(),
     },
     IndexName: "GroupBirthtimeIndex",
     KeyConditionExpression: "#group = :group AND #birthtime BETWEEN :from AND :to",
