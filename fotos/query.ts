@@ -168,15 +168,15 @@ export function getLogFields({
       data.criteria && safeLength(data.criteria.people),
     queryFiltersTagsCount:
       data.criteria && safeLength(data.criteria.tags),
-    queryFromDate: new Date(data.from).toISOString(),
+    queryFromDate: data.from,
     queryLimit: data.limit,
     queryRawCount: ddbResponse && safeLength(ddbResponse.Items),
     queryRevisedFromDate:
-      ddbParams && new Date(ddbParams.ExpressionAttributeValues![":from"]).toISOString(),
+      ddbParams && ddbParams.ExpressionAttributeValues![":from"],
     queryRevisedLimit: ddbParams && ddbParams.Limit,
     queryRevisedToDate:
-      ddbParams && new Date(ddbParams.ExpressionAttributeValues![":to"]).toISOString(),
-    queryToDate: new Date(data.to).toISOString(),
+      ddbParams && ddbParams.ExpressionAttributeValues![":to"],
+    queryToDate: data.to,
   };
 }
 
