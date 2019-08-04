@@ -175,7 +175,7 @@ export function getLogFields({
       ddbParams && ddbParams.ExpressionAttributeValues![":from"],
     queryRevisedLimit: ddbParams && ddbParams.Limit,
     queryRevisedToDate:
-      ddbParams && ddbParams.ExpressionAttributeValues![":to"],
+      ddbParams && ddbParams.ExpressionAttributeValues![":from"],
     queryToDate: data.to,
   };
 }
