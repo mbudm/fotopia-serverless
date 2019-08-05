@@ -8,5 +8,5 @@ export interface IQueryBody {
   };
   from: number;
   to: number;
-  username: string;
+  username?: string;
 }

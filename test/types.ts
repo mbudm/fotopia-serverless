@@ -4,6 +4,7 @@ export interface ISetupData {
   apiUrl: string;
   images: ITestImage[];
   records: ICreateBody[];
+  startTime: number;
   username: string;
   uniqueTag: string;
 }

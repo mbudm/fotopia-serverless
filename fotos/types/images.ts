@@ -1,10 +1,5 @@
 import { FaceRecord } from "aws-sdk/clients/rekognition";
 
-export interface IImageMeta {
-  width: number;
-  height: number;
-}
-
 export interface IImage {
   birthtime: string;
   createdAt?: number;
@@ -32,4 +27,5 @@ export interface IImageMeta {
   name?: string;
   size?: number;
   type?: string;
+  [name: string]: string | number | undefined;
 }

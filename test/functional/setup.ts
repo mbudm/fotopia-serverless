@@ -9,6 +9,7 @@ export default function setupTests(auth: any) {
     apiUrl: "",
     images: [],
     records: [],
+    startTime: Date.now(),
     uniqueTag: `_${Math.random().toString(36).substr(2, 9)}`,
     username: "",
   };
@@ -41,7 +42,7 @@ export default function setupTests(auth: any) {
         userIdentityId: signedIn.userIdentityId,
         username: setupData.username,
       }, {
-        birthtime: Date.now() - (1000 * 60 * 60 * 24 * 30),
+        birthtime: setupData.startTime + Math.round((Date.now() - setupData.startTime) / 2),
         img_key: `${setupData.username}/four_people.jpg`,
         meta: {
           height: 654,

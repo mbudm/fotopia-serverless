@@ -17,3 +17,9 @@ export interface IPersonMatch {
   Person: string;
   Match: number;
 }
+
+export interface IPersonUpdateBody {
+  name: string;
+}
+
+export type IPersonMergeBody = string[];
