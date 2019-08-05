@@ -6,4 +6,5 @@ export interface ICreateBody {
   meta: IImageMeta;
   img_key: string;
   birthtime: number;
+  tags?: string[];
 }

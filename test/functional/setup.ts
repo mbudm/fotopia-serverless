@@ -1,0 +1,57 @@
+import * as path from "path";
+import formatError from "./formatError";
+import getConfig from "./getConfig";
+
+import { ISetupData } from "../types";
+
+export default function setupTests(auth: any) {
+  const setupData: ISetupData = {
+    apiUrl: "",
+    images: [],
+    records: [],
+    uniqueTag: `_${Math.random().toString(36).substr(2, 9)}`,
+    username: "",
+  };
+  return getConfig()
+    .then((config: any) => {
+      setupData.apiUrl = config.ServiceEndpoint;
+      return auth(config);
+    })
+    .then((signedIn) => {
+      // eslint-disable-next-line prefer-destructuring
+      setupData.username = signedIn.username;
+      setupData.images = [{
+        key: `${setupData.username}/one.jpg`,
+        path: path.resolve(__dirname, "../mock/one.jpg"),
+      }, {
+        key: `${setupData.username}/four_people.jpg`,
+        path: path.resolve(__dirname, "../mock/four_people.jpg"),
+      }, {
+        key: `${setupData.username}/two.jpg`,
+        path: path.resolve(__dirname, "../mock/two.jpeg"), // throwaway image used just to hack storage to get creds
+      }];
+      setupData.records = [{
+        birthtime: Date.now(),
+        img_key: `${setupData.username}/one.jpg`,
+        meta: {
+          height: 683,
+          width: 1024,
+        },
+        tags: ["blue", "red", setupData.uniqueTag],
+        userIdentityId: signedIn.userIdentityId,
+        username: setupData.username,
+      }, {
+        birthtime: Date.now() - (1000 * 60 * 60 * 24 * 30),
+        img_key: `${setupData.username}/four_people.jpg`,
+        meta: {
+          height: 654,
+          width: 1359,
+        },
+        tags: ["xlabs", "Melbourne University"],
+        userIdentityId: signedIn.userIdentityId,
+        username: setupData.username,
+      }];
+      return setupData;
+    })
+    .catch(formatError);
+}
