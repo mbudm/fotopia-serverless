@@ -41,8 +41,12 @@ export function putObject(params) {
 export function resize({ data }) {
   return Sharp(data.Body)
     .rotate()
-    .resize(THUMB_WIDTH, THUMB_HEIGHT)
-    .crop(Sharp.strategy.entropy)
+    .resize({
+      fit: Sharp.fit.cover,
+      height: THUMB_HEIGHT,
+      position: Sharp.strategy.entropy,
+      width: THUMB_WIDTH,
+    })
     .toFormat("png")
     .toBuffer();
 }
