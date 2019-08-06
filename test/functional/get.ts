@@ -31,10 +31,11 @@ export default function getTests(setupData: ISetupData, api: any) {
   });
 
   test("get an item", (t) => {
-    t.plan(1);
+    t.plan(2);
     const apiPath = getEndpointPath(imageWithFourPeople);
     api.get(setupData.apiUrl, apiPath)
       .then((responseBody: IImage) => {
+        t.deepEqual(responseBody, imageWithFourPeople);
         t.equal(responseBody.id, imageWithFourPeople!.id);
       })
       .catch(formatError);
