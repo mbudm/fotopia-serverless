@@ -121,8 +121,7 @@ provider:
         - "rekognition:DeleteCollection"
         - "rekognition:DetectLabels"
         - "rekognition:SearchFaces"
-      Resource:
-        - "arn:aws:rekognition:*:*:*"
+      Resource: "*"
 functions:
   create:
     handler: fotos/create.createItem
