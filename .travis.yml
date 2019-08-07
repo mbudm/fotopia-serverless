@@ -26,8 +26,8 @@ jobs:
       script: ".ci/deploy-prod.sh"
       if: branch = master
     - stage: alpha-remove
-      script: ".ci/remove.sh"
+      script: ".ci/remove-alpha.sh"
       if: branch = alpha AND commit_message =~ /(redeploy)/
     - stage: alpha-deploy
-      script: ".ci/deploy.sh"
+      script: ".ci/deploy-alpha.sh"
       if: branch = alpha
