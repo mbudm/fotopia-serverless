@@ -35,8 +35,8 @@ export default function getTests(setupData: ISetupData, api: any) {
     const apiPath = getEndpointPath(imageWithFourPeople);
     api.get(setupData.apiUrl, apiPath)
       .then((responseBody: IImage) => {
-        t.deepEqual(responseBody, imageWithFourPeople);
-        t.equal(responseBody.id, imageWithFourPeople!.id);
+        t.equal(responseBody.img_key, imageWithFourPeople!.img_key, "response has same img_key");
+        t.equal(responseBody.id, imageWithFourPeople!.id, "response has same id");
       })
       .catch(formatError);
   });
