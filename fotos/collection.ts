@@ -8,6 +8,8 @@ import { failure, success } from "./common/responses";
 import logger from "./lib/logger";
 import { ILoggerBaseParams } from "./types";
 
+const fotopiaGroup = process.env.FOTOPIA_GROUP || "";
+
 export function getCreateLogParams(
   name: string,
   params: CreateCollectionResponse,
@@ -32,7 +34,7 @@ export async function createCollection(event, context, callback) {
   try {
     const rekognitionClient = new Rekognition();
     const params = {
-      CollectionId: process.env.REKOGNITION_COLLECTION as string,
+      CollectionId: fotopiaGroup,
     };
     const rekResponse = await rekognitionClient
       .createCollection(params)
@@ -71,7 +73,7 @@ export async function deleteCollection(event, context, callback) {
   try {
     const rekognitionClient = new Rekognition();
     const params = {
-      CollectionId: process.env.REKOGNITION_COLLECTION as string,
+      CollectionId: fotopiaGroup,
     };
     const rekResponse = await rekognitionClient
       .deleteCollection(params)
