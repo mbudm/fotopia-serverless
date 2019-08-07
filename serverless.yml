@@ -118,9 +118,11 @@ provider:
       Action:
         - "rekognition:IndexFaces"
         - "rekognition:CreateCollection"
+        - "rekognition:DeleteCollection"
         - "rekognition:DetectLabels"
         - "rekognition:SearchFaces"
-      Resource: "*"
+      Resource:
+        - "arn:aws:rekognition:*:*:*"
 functions:
   create:
     handler: fotos/create.createItem
