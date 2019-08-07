@@ -131,7 +131,12 @@ functions:
           method: post
           cors: true
           authorizer: aws_iam
-
+  collectionCreate:
+    handler: fotos/collection.createCollection
+    memorySize: 128
+  collectionDelete:
+    handler: fotos/collection.deleteCollection
+    memorySize: 128
   query:
     handler: fotos/query.queryItems
     memorySize: 128
