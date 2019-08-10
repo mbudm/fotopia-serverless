@@ -22,13 +22,10 @@
     "test"
   ],
   "dependencies": {
-    "aws4": "^1.8.0",
     "babel-runtime": "^6.26.0",
     "bunyan": "^1.8.12",
-    "deep-get-set": "^1.1.0",
     "dotenv": "^8.0.0",
     "dynamodb-data-types": "^3.0.1",
-    "leaked-handles": "^5.2.0",
     "serverless-domain-manager": "^3.2.6",
     "serverless-s3-remover": "^0.6.0",
     "serverless-stack-output": "^0.2.3",
@@ -44,14 +41,13 @@
     "@types/node": "^12.6.9",
     "@types/tape": "^4.2.33",
     "aws-amplify": "^1.1.35",
-    "aws-sdk": "^2.503.0",
+    "aws-sdk": "2.474.0",
     "babel-core": "^6.26.3",
     "babel-loader": "^8.0.6",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-3": "^6.24.1",
-    "dynamodb-local": "^0.0.29",
     "es6-promise": "^4.2.8",
     "eslint": "^6.1.0",
     "eslint-config-airbnb": "^17.1.1",
@@ -60,12 +56,7 @@
     "eslint-plugin-react": "^7.14.3",
     "isomorphic-fetch": "^2.2.1",
     "pre-commit": "^1.2.2",
-    "s3-upload-stream": "^1.0.7",
-    "serverless-dynamodb-local": "^0.2.38",
-    "serverless-offline": "^5.8.0",
     "serverless-plugin-typescript": "^1.1.9",
-    "serverless-s3-local": "^0.5.0",
-    "serverless-s3-local-sync": "^1.0.8",
     "serverless-s3-sync": "^1.8.0",
     "serverless-webpack": "^5.3.1",
     "tap-dot": "^2.0.0",
@@ -75,7 +66,10 @@
     "ts-babel-node": "^1.1.1",
     "tslint": "^5.18.0",
     "webpack": "^4.39.1",
-    "webpack-node-externals": "^1.7.2",
-    "zlib": "^1.0.5"
+    "webpack-node-externals": "^1.7.2"
+  },
+  "resolutions": {
+    "serverless-domain-manager/aws-sdk": "2.474.0",
+    "serverless-s3-sync/**/aws-sdk": "2.474.0"
   }
 }
