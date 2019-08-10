@@ -6,11 +6,7 @@ plugins:
   - serverless-stack-output
   - serverless-domain-manager
   - serverless-webpack
-  - serverless-dynamodb-local
   - serverless-s3-sync
-  - serverless-s3-local
-  - serverless-offline
-  - serverless-s3-local-sync
   - serverless-s3-remover
 
 custom:
@@ -19,21 +15,8 @@ custom:
       forceExclude:
         - aws-sdk
         - tape
-  dynamodb:
-    start:
-      port: 8000
-      inMemory: true
-      migrate: true
-    migration:
-      dir: offline/migrations
   output:
     file: output/${self:provider.environment.S3_OUTPUT_FILENAME}
-  s3:
-    host: 0.0.0.0
-    port: 5000
-    directory: /tmp/s3bucket
-    location: ./.webpack/service
-    cors: ./cors-policy.xml
   s3Sync:
     - bucketName: ${self:provider.environment.S3_OUTPUT_BUCKET}
       localDir: output
