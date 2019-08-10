@@ -26,7 +26,7 @@ const uuids = {
 };
 
 const newImage: IImage = {
-  birthtime: "454654654",
+  birthtime: 454654654,
   createdAt: 454654654,
   faces: [{
     Face: {
@@ -646,7 +646,7 @@ test("getUpdateBody - has matches with a new person but none with existing peopl
 
 test("getUpdatePathParameters", (t) => {
   const newImageForUpdate: IImage = {
-    birthtime: "34354345",
+    birthtime: 34354345,
     createdAt: 575565,
     faces: new Array<FaceRecord>(),
     group: "ghjg",

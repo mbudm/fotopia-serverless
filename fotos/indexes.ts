@@ -30,7 +30,7 @@ export function getLogFields(indexesObj) {
     indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
     indexesTagCount: indexesObj && Object.keys(indexesObj.tags).length,
     indexesZeroPeopleCount: indexesObj && getZeroCount(indexesObj.people),
-    indexesZeroTagCount: indexesObj && getZeroCount(indexesObj.people),
+    indexesZeroTagCount: indexesObj && getZeroCount(indexesObj.tags),
   };
 }
 

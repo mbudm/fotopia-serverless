@@ -13,16 +13,6 @@ const requestBody = {
   people: ["Bob"],
 };
 
-test("validateBody", (t) => {
-  try {
-    const result = update.validateBody(requestBody);
-    t.deepEqual(result, requestBody);
-    t.end();
-  } catch (e) {
-    t.fail(e);
-  }
-});
-
 test("getDynamoDbParams", (t) => {
   process.env.DYNAMODB_TABLE = "TABLE";
   try {

@@ -1,6 +1,6 @@
 import { BoundingBox } from "aws-sdk/clients/rekognition";
 import { IFace } from "./faces";
-import { IImageDimensions } from "./images";
+import { IImage, IImageDimensions } from "./images";
 
 export interface IPerson {
   id: string;
@@ -23,3 +23,8 @@ export interface IPersonUpdateBody {
 }
 
 export type IPersonMergeBody = string[];
+
+export interface IPersonWithImages {
+  id: string;
+  imageIds: string[];
+}

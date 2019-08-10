@@ -19,9 +19,9 @@ export default function(auth: any, api: any, upload: any) {
       createTests(setupData, api);
       queryTests(setupData, api);
       getTests(setupData, api);
-      deleteTests(setupData, api);
       updateTests(setupData, api);
       peopleTests(setupData, api);
+      deleteTests(setupData, api);
       cleanup();
     });
 }

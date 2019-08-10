@@ -1,7 +1,7 @@
 import { FaceRecord } from "aws-sdk/clients/rekognition";
 
 export interface IImage {
-  birthtime: string;
+  birthtime: number;
   createdAt?: number;
   faces?: FaceRecord[];
   group: string;

@@ -119,6 +119,7 @@ provider:
         - "rekognition:IndexFaces"
         - "rekognition:CreateCollection"
         - "rekognition:DeleteCollection"
+        - "rekognition:DeleteFaces"
         - "rekognition:DetectLabels"
         - "rekognition:SearchFaces"
       Resource: "*"
