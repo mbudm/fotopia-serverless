@@ -1,9 +1,10 @@
 import "isomorphic-fetch";
 
 import Amplify from "aws-amplify";
+import * as AWS from "aws-sdk";
 import { CognitoIdentityServiceProvider } from "aws-sdk";
 
-// Amplify.Logger.LOG_LEVEL = 'DEBUG';
+// Amplify.Logger.LOG_LEVEL = "DEBUG";
 
 function configureAmplify(config: any) {
   Amplify.configure({
@@ -25,6 +26,7 @@ function configureAmplify(config: any) {
     Storage: {
       bucket: config.Bucket,
       identityPoolId: config.IdentityPoolId,
+      level: "protected",
       region: config.Region,
     },
   });
@@ -81,10 +83,18 @@ function authenticateExistingUser(config: any) {
 }
 export function getIdentityId(response: any) {
   return Amplify.Auth.currentUserCredentials()
-    .then((res: any) => ({
-      userIdentityId: res.params.IdentityId,
-      ...response,
-    }));
+    .then((res: any) => {
+      // forcibly assign the cognito credentials to aws-sdk
+      // storage doesnt pick up the creds from auth, probably because amplify isnt designed for node.js
+      // and competing aws-sdk dependencies may mean storage looks in the wrong
+      // aws-sdk lib version and reverts to tthe creds in the bash profile
+      // at least thats my best explanation so far.
+      AWS.config.credentials = res;
+      return {
+        userIdentityId: res.params.IdentityId,
+        ...response,
+      };
+    });
 }
 
 export function checkUserExists(config: any) {
