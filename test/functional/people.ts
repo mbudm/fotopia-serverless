@@ -11,46 +11,65 @@ import getEndpointPath from "./getEndpointPath";
 
 export default function peopleTests(setupData, api) {
   let people: IPerson[];
+  let imageWithFourPeople: IImage | undefined;
+  let imageWithOnePerson: IImage | undefined;
 
-  test("getPeople", (t) => {
+  test("query all to get the test image records", (t) => {
+    t.plan(2);
+
+    const query: IQueryBody = {
+      criteria: {
+        people: [],
+        tags: [],
+      },
+      from: setupData.startTime,
+      to: Date.now(),
+      username: setupData.username,
+    };
+
+    api.post(setupData.apiUrl, "/query", {
+      body: query,
+    })
+      .then((responseBody: IImage[]) => {
+        imageWithOnePerson = responseBody.find((rec) => rec.img_key === setupData.records[0].img_key);
+        t.ok(imageWithOnePerson, "image one found");
+        t.equal(imageWithOnePerson!.people!.length, 1, "image has one person");
+        imageWithFourPeople = responseBody.find((rec) => rec.img_key === setupData.records[1].img_key);
+        t.ok(imageWithFourPeople, "image with four people found");
+        t.equal(imageWithFourPeople!.people!.length, 4, "image has 4 people");
+      })
+      .catch(formatError);
+  });
+
+  test("get all people, should have at least 5 test image people", (t) => {
     api
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
         people = responseBody;
         t.equal(
-          responseBody.length,
-          5,
-          "each person from image one and image with 4 people should be identified",
+          responseBody.length >= 5,
+          true,
+          "should have each person from image one and image with 4 people",
         );
         t.end();
       })
       .catch(formatError);
   });
 
-  // These test are conditional on people length
-  // this is a temp fix for occasional race condition -
-  // eg: https://travis-ci.org/mbudm/fotopia-serverless/jobs/426215588
-  // sometimes the faces lambda - that creates the people object in s3 is not complete
-  // before the functional tests get to this point. Until I think of a more robust option,
-  // cordoning off these two tests
   const updatedPerson: IPersonUpdateBody = {
     name: "Jacinta Dias",
   };
 
-  test("updatePerson", (t) => {
-    if (people.length > 0) {
-      api
-        .put(setupData.apiUrl, `/person/${people[0].id}`, {
-          body: updatedPerson,
-        })
-        .then((responseBody) => {
-          t.ok(responseBody, "update person ok");
-          t.end();
-        })
-        .catch(formatError);
-    } else {
-      t.end();
-    }
+  test("updatePerson in image 1", (t) => {
+    api
+      .put(setupData.apiUrl, `/person/${imageWithOnePerson!.people![0]}`, {
+        body: updatedPerson,
+      })
+      .then((responseBody) => {
+        t.ok(responseBody, "update person in image one ok");
+        t.end();
+      })
+      .catch(formatError);
   });
 
   test("getPeople - check updated name", (t) => {
@@ -59,45 +78,16 @@ export default function peopleTests(setupData, api) {
       .then((responseBody) => {
         people = responseBody;
         const personInResponse = responseBody.find(
-          (person) => person.id === people[0].id,
+          (person) => person.id === imageWithOnePerson!.people![0],
         );
-        t.equal(personInResponse.name, updatedPerson.name, "updated name");
+        t.equal(personInResponse.name, updatedPerson.name, "updated name in people");
         t.end();
       })
       .catch(formatError);
   });
 
-  let imageWithPerson1: IImage;
-
-  test("get (query) image with person 1 before we merge", (t) => {
-    const query: IQueryBody = {
-      criteria: {
-        people: [people[1].id],
-        tags: [],
-      },
-      from: setupData.startTime,
-      to: Date.now(),
-    };
-
-    api
-      .post(setupData.apiUrl, "/query", {
-        body: query,
-      })
-      .then((responseBody: IImage[]) => {
-        t.equal(responseBody.length, 1);
-        t.equal(
-          responseBody[0].people!.includes(people[1].id),
-          true,
-          "image has person 1",
-        );
-        imageWithPerson1 = responseBody[0];
-        t.end();
-      })
-      .catch(formatError);
-  });
-
-  test("peopleMerge - merge person 1 into person 0", (t) => {
-    const body: IPersonMergeBody = [people[0].id, people[1].id];
+  test("peopleMerge - merge first two people in image with 4 people", (t) => {
+    const body: IPersonMergeBody = [imageWithFourPeople!.people![0], imageWithFourPeople!.people![1]];
     api
       .post(setupData.apiUrl, "/people/merge", {
         body,
@@ -114,32 +104,40 @@ export default function peopleTests(setupData, api) {
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
         t.equal(responseBody.length, people.length - 1, "one less person");
-        t.equal(responseBody[0].id, people[0].id, "person 0 is the same");
-        t.equal(responseBody[1].id, people[2].id, "person 2 is now at pos 1");
-        t.equal(responseBody[2].id, people[3].id, "person 3 is now at pos 2");
+        t.ok(responseBody.find(
+          (person) => person.id === imageWithFourPeople!.people![0],
+        ), "person 0 is still in the people object");
+        t.notOk(responseBody.find(
+          (person) => person.id === imageWithFourPeople!.people![1],
+        ), "person 1 is not in the people object");
         t.end();
       })
       .catch(formatError);
   });
 
   test("after merge image that had person 1 now has person 0", (t) => {
-    const apiPath = getEndpointPath(imageWithPerson1);
+    const apiPath = getEndpointPath(imageWithFourPeople);
     api
       .get(setupData.apiUrl, apiPath)
       .then((responseBody: IImage) => {
         t.equal(
           responseBody.img_key,
-          imageWithPerson1!.img_key,
+          imageWithFourPeople!.img_key,
           "response has same img_key",
         );
-        t.equal(responseBody.id, imageWithPerson1!.id, "response has same id");
+        t.equal(responseBody.id, imageWithFourPeople!.id, "response has same id");
         t.equal(
-          responseBody[0].people.contains(people[1].id),
+          responseBody[0].people.length,
+          3,
+          "image has only 3 people",
+        );
+        t.equal(
+          responseBody[0].people.contains(imageWithFourPeople!.people![1]),
           false,
           "image doesnt have person 1",
         );
         t.equal(
-          responseBody[0].people.contains(people[0].id),
+          responseBody[0].people.contains(imageWithFourPeople!.people![0]),
           true,
           "image has person 0",
         );
