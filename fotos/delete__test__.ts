@@ -14,16 +14,19 @@ const request = {
 };
 
 test("getS3Params parses the invocation response", (t) => {
-  const img = {
+  const img: IImage = {
     ...request,
+    birthtime: 123,
+    group: "L7",
     img_key: "yo.jpg",
+    meta: {
+      height: 200,
+      width: 200,
+    },
+    userIdentityId: "squad-21",
   };
-  const getResponse: InvocationResponse = {
-    Payload: JSON.stringify({
-      body: JSON.stringify(img),
-    }),
-  };
-  const result = deleteFns.getS3Params(getResponse);
+
+  const result = deleteFns.getS3Params(img);
 
   t.deepEqual(result.Key, img.img_key);
   t.end();

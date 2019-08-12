@@ -18,7 +18,6 @@ import {
   IPerson,
   IPersonWithImages,
   IQueryBody,
-  IQueryResponse,
   ITraceMeta,
 } from "./types";
 
@@ -33,19 +32,10 @@ import {
 } from "aws-sdk/clients/lambda";
 import { JSONParseError } from "./errors/jsonParse";
 
-export function getBodyFromDbGetResponse(dbGetResponse) {
-  try {
-    const payload = dbGetResponse && JSON.parse(dbGetResponse.Payload);
-    return payload ? JSON.parse(payload.body) : {};
-  } catch (e) {
-    throw new JSONParseError(e, "getBodyFromDbGetResponse");
-  }
-}
-export function getS3Params(dbGetResponse) {
-  const body = getBodyFromDbGetResponse(dbGetResponse);
+export function getS3Params(imageRecord: IImage) {
   return {
     Bucket: process.env.S3_BUCKET,
-    Key: body.img_key,
+    Key: imageRecord.img_key,
   };
 }
 
@@ -159,22 +149,21 @@ export function getUpdatedPeople(existingPeople: IPerson[], imagesForPeople: IPe
   return existingPeople.filter((p) => !deletePeople.find((dp) => dp === p.id));
 }
 
-export function getLogFields(pathParams, dbGetResponse) {
-  const body = getBodyFromDbGetResponse(dbGetResponse);
+export function getLogFields(pathParams, imageRecord) {
   return {
-    imageBirthtime: body.birthtime,
-    imageCreatedAt: body.createdAt,
-    imageFacesCount: safeLength(body.faces),
-    imageFamilyGroup: body.group,
-    imageHeight: body.meta && body.meta.height,
-    imageId: body.id,
-    imageKey: body.img_key,
-    imagePeopleCount: safeLength(body.people),
-    imageTagCount: safeLength(body.tags),
-    imageUpdatedAt: body.updatedAt,
-    imageUserIdentityId: body.userIdentityId,
-    imageUsername: body.username,
-    imageWidth: body.meta && body.meta.width,
+    imageBirthtime: imageRecord.meta && imageRecord.birthtime,
+    imageCreatedAt: imageRecord.meta && imageRecord.createdAt,
+    imageFacesCount: safeLength(imageRecord.faces),
+    imageFamilyGroup: imageRecord.meta && imageRecord.group,
+    imageHeight: imageRecord.meta && imageRecord.meta.height,
+    imageId: imageRecord.meta && imageRecord.id,
+    imageKey: imageRecord.meta && imageRecord.img_key,
+    imagePeopleCount: safeLength(imageRecord.people),
+    imageTagCount: safeLength(imageRecord.tags),
+    imageUpdatedAt: imageRecord.meta && imageRecord.updatedAt,
+    imageUserIdentityId: imageRecord.meta && imageRecord.userIdentityId,
+    imageUsername: imageRecord.meta && imageRecord.username,
+    imageWidth: imageRecord.meta && imageRecord.meta.width,
     paramId: pathParams.id,
     paramUsername: pathParams.username,
   };
