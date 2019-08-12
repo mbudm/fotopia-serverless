@@ -3,69 +3,36 @@ import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 
-export default function deleteTests(setupData, api) {
-  let imageOne: IImage;
-
-  test("query image one by unique tag", (t) => {
-    const query: IQueryBody = {
-      criteria: {
-        people: [],
-        tags: [setupData.uniqueTag],
-      },
-      from: setupData.startTime,
-      to: Date.now(),
-    };
-
-    api.post(setupData.apiUrl, "/query", {
-      body: query,
-    })
-      .then((responseBody) => {
-        t.equal(responseBody.length, 1);
-        imageOne = responseBody[0];
-        t.end();
-      })
-      .catch(formatError);
-  });
-
-  test("delete imageOne", (t) => {
-    const apiPath = getEndpointPath(imageOne);
-    api.del(setupData.apiUrl, apiPath)
-      .then((responseBody) => {
-        t.equal(responseBody.username, setupData.username);
-        t.equal(responseBody.id, imageOne.id);
-        t.end();
-      })
-      .catch(formatError);
-  });
-
-  let imageWithFourPeople;
-  test("query image w four people by querying all", (t) => {
+export default function deleteAllTests(setupData, api) {
+  let images: IImage[];
+  test("query all to get all images", (t) => {
     const query: IQueryBody = {
       criteria: {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
+      from: 0,
       to: Date.now(),
     };
 
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody) => {
-        t.equal(responseBody.length, 1);
-        imageWithFourPeople = responseBody[0];
+      .then((responseBody: IImage[]) => {
+        t.ok(responseBody, `queried all and found ${responseBody.length} images`);
+        images = responseBody;
         t.end();
       })
       .catch(formatError);
   });
 
-  test("delete image w 4 people", (t) => {
-    const apiPath = getEndpointPath(imageWithFourPeople);
-    api.del(setupData.apiUrl, apiPath)
-      .then((responseBody) => {
-        t.equal(responseBody.username, setupData.username);
-        t.equal(responseBody.id, imageWithFourPeople.id);
+  test("delete all images", (t) => {
+    Promise.all(images.map((img) => {
+      const apiPath = getEndpointPath(img);
+      return api.del(setupData.apiUrl, apiPath);
+    }))
+      .then((responseBodies) => {
+        t.equal(responseBodies.length, images.length, "resolved promises same length as images");
         t.end();
       })
       .catch(formatError);
@@ -77,7 +44,7 @@ export default function deleteTests(setupData, api) {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
+      from: 0,
       to: Date.now(),
     };
 

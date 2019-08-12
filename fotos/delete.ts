@@ -31,10 +31,15 @@ import {
   InvocationRequest,
   InvocationResponse,
 } from "aws-sdk/clients/lambda";
+import { JSONParseError } from "./errors/jsonParse";
 
 export function getBodyFromDbGetResponse(dbGetResponse) {
-  const payload = dbGetResponse && JSON.parse(dbGetResponse.Payload);
-  return payload ? JSON.parse(payload.body) : {};
+  try {
+    const payload = dbGetResponse && JSON.parse(dbGetResponse.Payload);
+    return payload ? JSON.parse(payload.body) : {};
+  } catch (e) {
+    throw new JSONParseError(e, "getBodyFromDbGetResponse");
+  }
 }
 export function getS3Params(dbGetResponse) {
   const body = getBodyFromDbGetResponse(dbGetResponse);
@@ -60,7 +65,11 @@ export function invokeGetImageRecord(params): Promise<IImage> {
   return lambda.invoke(params).promise()
     .then((invocationResponse: InvocationResponse) =>
       JSON.parse(invocationResponse.Payload as string),
-    );
+    )
+    .catch((e) => {
+      throw new JSONParseError(e, "invokeGetImageRecord");
+    });
+
 }
 
 export function deleteObject(s3, s3Params) {
@@ -120,6 +129,9 @@ export function queryImagesByPeople(image: IImage): Promise<IPersonWithImages[]>
   .then((invocationResponse: InvocationResponse) => {
     const queriedImages: IImage[] = JSON.parse(invocationResponse.Payload as string);
     return getPeopleWithImages(image, queriedImages);
+  })
+  .catch((e) => {
+    throw new JSONParseError(e, "queryImagesByPeople");
   });
 }
 

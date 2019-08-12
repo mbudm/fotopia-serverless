@@ -15,7 +15,6 @@ export default function peopleTests(setupData, api) {
   let imageWithOnePerson: IImage | undefined;
 
   test("query all to get the test image records", (t) => {
-    t.plan(2);
 
     const query: IQueryBody = {
       criteria: {
@@ -37,6 +36,7 @@ export default function peopleTests(setupData, api) {
         imageWithFourPeople = responseBody.find((rec) => rec.img_key === setupData.records[1].img_key);
         t.ok(imageWithFourPeople, "image with four people found");
         t.equal(imageWithFourPeople!.people!.length, 4, "image has 4 people");
+        t.end();
       })
       .catch(formatError);
   });
@@ -127,17 +127,17 @@ export default function peopleTests(setupData, api) {
         );
         t.equal(responseBody.id, imageWithFourPeople!.id, "response has same id");
         t.equal(
-          responseBody[0].people.length,
+          responseBody.people!.length,
           3,
           "image has only 3 people",
         );
         t.equal(
-          responseBody[0].people.contains(imageWithFourPeople!.people![1]),
+          responseBody.people!.includes(imageWithFourPeople!.people![1]),
           false,
           "image doesnt have person 1",
         );
         t.equal(
-          responseBody[0].people.contains(imageWithFourPeople!.people![0]),
+          responseBody.people!.includes(imageWithFourPeople!.people![0]),
           true,
           "image has person 0",
         );
