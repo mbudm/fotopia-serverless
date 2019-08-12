@@ -4,7 +4,7 @@ import * as uuid from "uuid";
 import { getExistingPeople } from "./common/getExistingPeople";
 import { putPeople } from "./common/putPeople";
 import { failure, success } from "./common/responses";
-import { safeLength } from "./create";
+import { getTraceMeta, safeLength } from "./create";
 import { getDynamoDbParams } from "./get";
 import { INVOCATION_REQUEST_RESPONSE, PEOPLE_KEY } from "./lib/constants";
 import dynamodb from "./lib/dynamodb";
@@ -39,14 +39,13 @@ export function getS3Params(imageRecord: IImage) {
   };
 }
 
-export function getInvokeGetParams(request): InvocationRequest {
-  const pathParameters: IPathParameters = request as IPathParameters;
+export function getInvokeGetParams(request: IPathParameters): InvocationRequest {
   return {
     FunctionName: process.env.IS_OFFLINE ? "get" : `${process.env.LAMBDA_PREFIX}get`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
-      pathParameters,
+      pathParameters: request,
     }),
   };
 }
@@ -85,7 +84,7 @@ export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> 
   }
 }
 
-export function getInvokeQueryParams(image: IImage) {
+export function getInvokeQueryParams(image: IImage, loggerBaseParams) {
   const request: IQueryBody = {
     criteria: {
       people: image.people!,
@@ -101,6 +100,7 @@ export function getInvokeQueryParams(image: IImage) {
     Payload: JSON.stringify({
       body: {
         ...request,
+        traceMeta: getTraceMeta(loggerBaseParams),
       },
     }),
   };
@@ -113,8 +113,8 @@ export function getPeopleWithImages(image: IImage, queriedImages: IImage[]): IPe
   }));
 }
 
-export function queryImagesByPeople(image: IImage): Promise<IPersonWithImages[]> {
-  const params = getInvokeQueryParams(image);
+export function queryImagesByPeople(image: IImage, loggerBaseParams): Promise<IPersonWithImages[]> {
+  const params = getInvokeQueryParams(image, loggerBaseParams);
   return lambda.invoke(params).promise()
   .then((invocationResponse: InvocationResponse) => {
     const queriedImages: IImage[] = JSON.parse(invocationResponse.Payload as string);
@@ -159,6 +159,7 @@ export function getLogFields(pathParams, imageRecord) {
     imageId: imageRecord && imageRecord.id,
     imageKey: imageRecord && imageRecord.img_key,
     imagePeopleCount: imageRecord && safeLength(imageRecord.people),
+    imageRecordRaw: JSON.stringify(imageRecord),
     imageTagCount: imageRecord && safeLength(imageRecord.tags),
     imageUpdatedAt: imageRecord && imageRecord.updatedAt,
     imageUserIdentityId: imageRecord && imageRecord.userIdentityId,
@@ -191,7 +192,7 @@ export async function deleteItem(event, context, callback) {
     const ddbParams = getDynamoDbParams(request);
     const deleteImageRecordPromise = deleteImageRecord(ddbParams);
     const deleteFacesInImagePromise = deleteFacesInImage(imageRecord);
-    const imagesForPeople: IPersonWithImages[] = await queryImagesByPeople(imageRecord);
+    const imagesForPeople: IPersonWithImages[] = await queryImagesByPeople(imageRecord, loggerBaseParams);
     await Promise.all([
       deletePeopleUniqueToImage(s3, bucket, PEOPLE_KEY, existingPeople, imagesForPeople),
       deleteFacesInImagePromise,

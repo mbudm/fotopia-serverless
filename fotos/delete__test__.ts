@@ -61,7 +61,7 @@ test("getInvokeQueryParams, adds the people from image into the request body", (
       "p-3",
     ],
   };
-  const result = deleteFns.getInvokeQueryParams(imageWithThreepeople);
+  const result = deleteFns.getInvokeQueryParams(imageWithThreepeople, {});
   const payloadParsed = JSON.parse(result.Payload);
   t.deepEqual(payloadParsed.body.criteria.people,  imageWithThreepeople.people);
   t.end();
