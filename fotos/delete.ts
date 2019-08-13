@@ -4,7 +4,7 @@ import * as uuid from "uuid";
 import { getExistingPeople } from "./common/getExistingPeople";
 import { putPeople } from "./common/putPeople";
 import { failure, success } from "./common/responses";
-import { getTraceMeta, safeLength } from "./create";
+import { getTraceMeta, replicateAuthKey, safeLength } from "./create";
 import { getDynamoDbParams } from "./get";
 import { INVOCATION_REQUEST_RESPONSE, PEOPLE_KEY } from "./lib/constants";
 import dynamodb from "./lib/dynamodb";
@@ -38,7 +38,7 @@ export function getS3Params(imageRecord: IImage) {
   if (imageRecord && imageRecord.img_key) {
     return {
       Bucket: process.env.S3_BUCKET,
-      Key: imageRecord.img_key,
+      Key: replicateAuthKey(imageRecord.img_key, imageRecord.userIdentityId),
     };
   } else {
     throw new Error(`No img_key in imageRecord: ${JSON.stringify(imageRecord)}`);

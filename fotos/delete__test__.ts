@@ -28,7 +28,11 @@ test("getS3Params parses the invocation response", (t) => {
 
   const result = deleteFns.getS3Params(img);
 
-  t.deepEqual(result.Key, img.img_key);
+  t.equal(
+    result.Key,
+    `protected/${img.userIdentityId}/${img.img_key}`,
+    "key is combination of img_key and userIdentityId",
+  );
   t.end();
 });
 
