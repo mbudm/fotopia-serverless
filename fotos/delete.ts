@@ -60,7 +60,8 @@ export function invokeGetImageRecord(params): Promise<IImage> {
   return lambda.invoke(params).promise()
     .then((invocationResponse: InvocationResponse) => {
       try {
-        const imageRecord: IImage = JSON.parse(invocationResponse.Payload as string);
+        const payload = JSON.parse(invocationResponse.Payload as string);
+        const imageRecord: IImage = JSON.parse(payload.body);
         return imageRecord;
       } catch (e) {
         // tslint:disable-next-line:max-line-length
