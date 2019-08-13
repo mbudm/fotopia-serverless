@@ -166,15 +166,29 @@ export function getDeletePeople(peopleImages: IPersonWithImages[]): string[] {
   }, []);
 }
 
+export function getInvokeUpdatePeopleParams(body: IPerson[], logBaseParams: ILoggerBaseParams): InvocationRequest {
+  return {
+    FunctionName: process.env.IS_OFFLINE ? "peopleUpdate" : `${process.env.LAMBDA_PREFIX}peopleUpdate`,
+    InvocationType: INVOCATION_REQUEST_RESPONSE,
+    LogType: "Tail",
+    Payload: JSON.stringify({
+      body: JSON.stringify(body),
+      traceMeta: {
+        parentId: logBaseParams.parentId,
+        traceId: logBaseParams.traceId,
+      },
+    }),
+  };
+}
+
 export function deletePeopleUniqueToImage(
-  s3,
-  bucket,
-  key,
   existingPeople: IPerson[],
   imagesForPeople: IPersonWithImages[],
+  logBaseParams: ILoggerBaseParams,
 ) {
   const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, imagesForPeople);
-  return putPeople(s3, updatedPeople, bucket, key);
+  const updateParams: InvocationRequest = getInvokeUpdatePeopleParams(updatedPeople, logBaseParams);
+  return lambda.invoke(updateParams).promise();
 }
 
 export function getUpdatedPeople(existingPeople: IPerson[], imagesForPeople: IPersonWithImages[]) {
@@ -227,7 +241,7 @@ export async function deleteItem(event, context, callback) {
     const deleteFacesInImagePromise = deleteFacesInImage(imageRecord);
     const imagesForPeople: IPersonWithImages[] = await queryImagesByPeople(imageRecord, loggerBaseParams);
     await Promise.all([
-      deletePeopleUniqueToImage(s3, bucket, PEOPLE_KEY, existingPeople, imagesForPeople),
+      deletePeopleUniqueToImage(existingPeople, imagesForPeople, loggerBaseParams),
       deleteFacesInImagePromise,
       deleteImageRecordPromise,
       deleteS3ObjectPromise,

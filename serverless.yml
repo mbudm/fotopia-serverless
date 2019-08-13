@@ -197,6 +197,16 @@ functions:
           cors: true
           authorizer: aws_iam
 
+  peopleUpdate:
+    handler: fotos/people.putItem
+    memorySize: 128
+    events:
+      - http:
+          path: people/update
+           method: put
+          cors: true
+          authorizer: aws_iam
+
   peopleMerge:
     handler: fotos/peopleMerge.mergePeople
     memorySize: 128
