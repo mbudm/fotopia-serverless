@@ -117,10 +117,10 @@ export function getInvokeQueryParams(image: IImage, loggerBaseParams) {
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
-      body: {
+      body: JSON.stringify({
         ...request,
         traceMeta: getTraceMeta(loggerBaseParams),
-      },
+      }),
     }),
   };
 }
