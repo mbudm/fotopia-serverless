@@ -30,6 +30,8 @@ import {
   InvocationRequest,
   InvocationResponse,
 } from "aws-sdk/clients/lambda";
+import { DeleteObjectError } from "./errors/deleteObject";
+import { DeleteRecordError } from "./errors/deleteRecord";
 import { JSONParseError } from "./errors/jsonParse";
 
 export function getS3Params(imageRecord: IImage) {
@@ -68,11 +70,17 @@ export function invokeGetImageRecord(params): Promise<IImage> {
 }
 
 export function deleteObject(s3, s3Params) {
-  return s3.deleteObject(s3Params).promise();
+  return s3.deleteObject(s3Params).promise()
+    .catch((e) => {
+      throw new DeleteObjectError(e, s3Params.Key, s3Params.Bucket);
+    });
 }
 
 export function deleteImageRecord(ddbParams) {
-  return dynamodb.delete(ddbParams).promise();
+  return dynamodb.delete(ddbParams).promise()
+    .catch((e) => {
+      throw new DeleteRecordError(e, ddbParams);
+    });
 }
 
 export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> | DeleteFacesResponse {
