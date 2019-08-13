@@ -72,6 +72,56 @@ test("getInvokeQueryParams, adds the people from image into the request body", (
   t.end();
 });
 
+test("parseQueryResponse - handle a IImage response", (t) => {
+  const image: IImage = {
+    ...imageBase,
+    people: [
+      "p-2",
+      "p-3",
+    ],
+  };
+  const imageInResponse: IImage = {
+    ...imageBase,
+    id: "xyz",
+    people: [
+      "p-3",
+    ],
+  };
+  const queryResponse = {
+    Payload: JSON.stringify({
+      body: JSON.stringify([imageInResponse]),
+    }),
+  };
+  const result = deleteFns.parseQueryResponse(queryResponse, image);
+  t.equal(result.length, 2, "length 2 - people from source image");
+  const p3 = result.find((p) => p.id === "p-3");
+  t.ok(p3, "p-3 item in array");
+  t.deepEqual(p3!.imageIds, [imageInResponse.id], "1 image (xyz) for p-3 person");
+  t.end();
+});
+
+test("parseQueryResponse - handle an empty response", (t) => {
+  const image: IImage = {
+    ...imageBase,
+    people: [
+      "p-2",
+      "p-3",
+    ],
+  };
+
+  const queryResponse = {
+    Payload: JSON.stringify({
+      body: JSON.stringify([]),
+    }),
+  };
+  const result = deleteFns.parseQueryResponse(queryResponse, image);
+
+  t.equal(result.length, 2, "length 2 - people from source image");
+  t.equal(result[0].imageIds.length, 0, "No images for first person");
+  t.equal(result[1].imageIds.length, 0, "No images for 2nd person");
+  t.end();
+});
+
 test("getPeopleWithImages converts an IImage[] to IPersonWithImages[]", (t) => {
   const image: IImage = {
     ...imageBase,

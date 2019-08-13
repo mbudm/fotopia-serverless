@@ -135,17 +135,19 @@ export function getPeopleWithImages(image: IImage, queriedImages: IImage[]): IPe
 export function queryImagesByPeople(image: IImage, loggerBaseParams): Promise<IPersonWithImages[]> {
   const params = getInvokeQueryParams(image, loggerBaseParams);
   return lambda.invoke(params).promise()
-  .then((invocationResponse: InvocationResponse) => {
-    try {
-      const payload = JSON.parse(invocationResponse.Payload as string);
-      const queriedImages: IImage[] = JSON.parse(payload.body);
-      return image && image.people && Array.isArray(queriedImages) ?
-        getPeopleWithImages(image, queriedImages) :
-        [];
-    } catch (e) {
-      throw new JSONParseError(e, `queryImagesByPeople - invocationResponse: ${JSON.stringify(invocationResponse)}`);
-    }
-  });
+  .then((invocationResponse: InvocationResponse) => parseQueryResponse(invocationResponse, image));
+}
+
+export function parseQueryResponse(invocationResponse: InvocationResponse, image: IImage) {
+  try {
+    const payload = JSON.parse(invocationResponse.Payload as string);
+    const queriedImages: IImage[] = JSON.parse(payload.body);
+    return image && image.people && Array.isArray(queriedImages) ?
+      getPeopleWithImages(image, queriedImages) :
+      [];
+  } catch (e) {
+    throw new JSONParseError(e, `parseQueryResponse: ${JSON.stringify(invocationResponse)}`);
+  }
 }
 
 export function getDeletePeople(peopleImages: IPersonWithImages[]): string[] {
