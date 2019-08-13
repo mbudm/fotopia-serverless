@@ -124,10 +124,12 @@ export function queryImagesByPeople(image: IImage, loggerBaseParams): Promise<IP
   return lambda.invoke(params).promise()
   .then((invocationResponse: InvocationResponse) => {
     const queriedImages: IImage[] = JSON.parse(invocationResponse.Payload as string);
-    return getPeopleWithImages(image, queriedImages);
+    return image && image.people && queriedImages ?
+      getPeopleWithImages(image, queriedImages) :
+      [];
   })
   .catch((e) => {
-    throw new JSONParseError(e, "queryImagesByPeople");
+    throw new JSONParseError(e, `queryImagesByPeople - params: ${JSON.stringify(params)}`);
   });
 }
 
