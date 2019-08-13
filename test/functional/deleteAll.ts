@@ -19,6 +19,7 @@ export default function deleteAllTests(setupData, api) {
       body: query,
     })
       .then((responseBody: IImage[]) => {
+        t.ok(Array.isArray(responseBody), "query response is an array");
         t.ok(responseBody, `queried all and found ${responseBody.length} images`);
         images = responseBody;
         t.end();
@@ -27,15 +28,19 @@ export default function deleteAllTests(setupData, api) {
   });
 
   test("delete all images", (t) => {
-    Promise.all(images.map((img) => {
-      const apiPath = getEndpointPath(img);
-      return api.del(setupData.apiUrl, apiPath);
-    }))
-      .then((responseBodies) => {
-        t.equal(responseBodies.length, images.length, "resolved promises same length as images");
-        t.end();
-      })
-      .catch(formatError);
+    if (Array.isArray(images) && images.length > 0) {
+      Promise.all(images.map((img) => {
+        const apiPath = getEndpointPath(img);
+        return api.del(setupData.apiUrl, apiPath);
+      }))
+        .then((responseBodies) => {
+          t.equal(responseBodies.length, images.length, "resolved promises same length as images");
+          t.end();
+        })
+        .catch(formatError);
+    } else {
+      t.end();
+    }
   });
 
   test("query all should return no results", (t) => {
