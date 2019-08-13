@@ -295,3 +295,29 @@ test("getUpdatedPeople removes all existing people if all people are in no other
   t.equal(result.length, 0, "updated people is empty");
   t.end();
 });
+
+test("getFaceIds - handles an empty faces array", (t) => {
+  const imageWithNoFaces: IImage = {
+    ...imageBase,
+    faces: [],
+  };
+
+  const result = deleteFns.getFaceIds(imageWithNoFaces);
+
+  t.equal(result.length, 0, "empty faceIds array");
+  t.end();
+});
+
+test("getFaceIds - handles an faces array with Face objects that lack an id", (t) => {
+  const imageWithNoFaceData: IImage = {
+    ...imageBase,
+    faces: [{
+      Face: {},
+    }],
+  };
+
+  const result = deleteFns.getFaceIds(imageWithNoFaceData);
+
+  t.equal(result.length, 0, "empty faceIds array");
+  t.end();
+});

@@ -87,13 +87,21 @@ export function deleteImageRecord(ddbParams) {
       throw new DeleteRecordError(e, ddbParams);
     });
 }
+export function getFaceIds(image: IImage): string[] {
+  return image && image.faces ?
+    image.faces
+      .filter((f) => f.Face!.FaceId !== undefined)
+      .map((f) => f.Face!.FaceId!) :
+    [];
+}
 
 export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> | DeleteFacesResponse {
-  if (image.faces && image.faces.length > 0) {
+  const faces = getFaceIds(image);
+  if (faces.length > 0) {
     const rekognitionClient = new Rekognition();
     const params: DeleteFacesRequest = {
       CollectionId: process.env.FOTOPIA_GROUP!,
-      FaceIds: image.faces as string[],
+      FaceIds: faces,
     };
     return rekognitionClient.deleteFaces(params).promise();
   } else {
