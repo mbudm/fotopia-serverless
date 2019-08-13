@@ -136,7 +136,8 @@ export function queryImagesByPeople(image: IImage, loggerBaseParams): Promise<IP
   const params = getInvokeQueryParams(image, loggerBaseParams);
   return lambda.invoke(params).promise()
   .then((invocationResponse: InvocationResponse) => {
-    const queriedImages: IImage[] = JSON.parse(invocationResponse.Payload as string);
+    const payload = JSON.parse(invocationResponse.Payload as string);
+    const queriedImages: IImage[] = JSON.parse(payload.body);
     return image && image.people && queriedImages ?
       getPeopleWithImages(image, queriedImages) :
       [];
