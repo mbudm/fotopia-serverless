@@ -35,10 +35,14 @@ import { DeleteRecordError } from "./errors/deleteRecord";
 import { JSONParseError } from "./errors/jsonParse";
 
 export function getS3Params(imageRecord: IImage) {
-  return {
-    Bucket: process.env.S3_BUCKET,
-    Key: imageRecord.img_key,
-  };
+  if (imageRecord && imageRecord.img_key) {
+    return {
+      Bucket: process.env.S3_BUCKET,
+      Key: imageRecord.img_key,
+    };
+  } else {
+    throw new Error(`No img_key in imageRecord: ${JSON.stringify(imageRecord)}`);
+  }
 }
 
 export function getInvokeGetParams(request: IPathParameters): InvocationRequest {
