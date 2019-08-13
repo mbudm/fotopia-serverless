@@ -52,9 +52,15 @@ export function getInvokeGetParams(request: IPathParameters): InvocationRequest 
 
 export function invokeGetImageRecord(params): Promise<IImage> {
   return lambda.invoke(params).promise()
-    .then((invocationResponse: InvocationResponse) =>
-      JSON.parse(invocationResponse.Payload as string),
-    )
+    .then((invocationResponse: InvocationResponse) => {
+      try {
+        const imageRecord: IImage = JSON.parse(invocationResponse.Payload as string);
+        return imageRecord;
+      } catch (e) {
+        // tslint:disable-next-line:max-line-length
+        throw new JSONParseError(e, `invokeGetImageRecord, invocationResponse is : ${JSON.stringify(invocationResponse)}`);
+      }
+    })
     .catch((e) => {
       throw new JSONParseError(e, "invokeGetImageRecord");
     });
