@@ -139,7 +139,7 @@ export function queryImagesByPeople(image: IImage, loggerBaseParams): Promise<IP
     try {
       const payload = JSON.parse(invocationResponse.Payload as string);
       const queriedImages: IImage[] = JSON.parse(payload.body);
-      return image && image.people && queriedImages ?
+      return image && image.people && Array.isArray(queriedImages) ?
         getPeopleWithImages(image, queriedImages) :
         [];
     } catch (e) {
