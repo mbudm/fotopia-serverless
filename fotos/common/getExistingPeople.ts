@@ -10,7 +10,7 @@ export function getExistingPeople(s3, Bucket, Key): Promise<IPerson[]> {
         const s3Body = JSON.parse(s3Object.Body.toString());
         return s3Body;
       } catch (e) {
-        throw new JSONParseError(e, "getExistingPeople");
+        throw new JSONParseError(e, `getExistingPeople ${s3Object.Body.toString()}`);
       }
     })
     .catch((e) => {
