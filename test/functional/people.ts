@@ -14,6 +14,21 @@ export default function peopleTests(setupData, api) {
   let imageWithFourPeople: IImage | undefined;
   let imageWithOnePerson: IImage | undefined;
 
+  test("get all people, should have at least 5 test image people", (t) => {
+    api
+      .get(setupData.apiUrl, "/people")
+      .then((responseBody: IPerson[]) => {
+        people = responseBody;
+        t.equal(
+          responseBody.length >= 5,
+          true,
+          `length of ${responseBody.length} - at least each person from image one and image with 4 people`,
+        );
+        t.end();
+      })
+      .catch(formatError);
+  });
+
   test("query all to get the test image records", (t) => {
 
     const query: IQueryBody = {
@@ -32,24 +47,17 @@ export default function peopleTests(setupData, api) {
       .then((responseBody: IImage[]) => {
         imageWithOnePerson = responseBody.find((rec) => rec.img_key === setupData.records[0].img_key);
         t.ok(imageWithOnePerson, "image one found");
-        t.equal(imageWithOnePerson!.people!.length, 1, "image has one person");
+        t.equal(
+          imageWithOnePerson!.people!.length,
+          1,
+          `image has people length of ${imageWithOnePerson!.people!.length}`,
+        );
         imageWithFourPeople = responseBody.find((rec) => rec.img_key === setupData.records[1].img_key);
         t.ok(imageWithFourPeople, "image with four people found");
-        t.equal(imageWithFourPeople!.people!.length, 4, "image has 4 people");
-        t.end();
-      })
-      .catch(formatError);
-  });
-
-  test("get all people, should have at least 5 test image people", (t) => {
-    api
-      .get(setupData.apiUrl, "/people")
-      .then((responseBody: IPerson[]) => {
-        people = responseBody;
         t.equal(
-          responseBody.length >= 5,
-          true,
-          "should have each person from image one and image with 4 people",
+          imageWithFourPeople!.people!.length,
+          4,
+          `image w 4 has people length of ${imageWithFourPeople!.people!.length}`,
         );
         t.end();
       })

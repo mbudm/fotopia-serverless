@@ -38,7 +38,7 @@ export default function deleteTests(setupData, api) {
       .catch(formatError);
   });
 
-  let imageWithFourPeople;
+  let imagesWithFourPeople: IImage[];
   test("query image w four people by querying all", (t) => {
     const query: IQueryBody = {
       criteria: {
@@ -54,21 +54,26 @@ export default function deleteTests(setupData, api) {
     })
       .then((responseBody) => {
         t.equal(responseBody.length, 1);
-        imageWithFourPeople = responseBody[0];
+        imagesWithFourPeople = responseBody.filter((img) => img.img_key === setupData.records[1].img_key);
         t.end();
       })
       .catch(formatError);
   });
 
-  test("delete image w 4 people", (t) => {
-    const apiPath = getEndpointPath(imageWithFourPeople);
-    api.del(setupData.apiUrl, apiPath)
-      .then((responseBody) => {
-        t.equal(responseBody.username, setupData.username);
-        t.equal(responseBody.id, imageWithFourPeople.id);
-        t.end();
-      })
-      .catch(formatError);
+  test("delete all images w 4 people", (t) => {
+    if (Array.isArray(imagesWithFourPeople) && imagesWithFourPeople.length > 0) {
+      Promise.all(imagesWithFourPeople.map((img) => {
+        const apiPath = getEndpointPath(img);
+        return api.del(setupData.apiUrl, apiPath);
+      }))
+        .then((responseBodies) => {
+          t.equal(responseBodies.length, imagesWithFourPeople.length, "resolved promises same length as images");
+          t.end();
+        })
+        .catch(formatError);
+    } else {
+      t.end();
+    }
   });
 
   test("query all should return no results", (t) => {
