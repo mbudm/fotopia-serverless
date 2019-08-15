@@ -33,15 +33,13 @@ export function combineFaces(mergedPeople: any) {
     }, []);
 }
 
-export function getMergePerson(mergedPeople: any) {
+export function getMergePerson(mergedPeople: IPerson[]) {
   return mergedPeople
-    .reduce((accum, person) => {
-      return accum && accum.faces && person && person.faces ?
-        (accum.faces.length > person.faces.length ?
-          accum :
-          person) :
-        accum ;
-    }, mergedPeople[0]);
+    .reduce((accum, person) => (
+      accum.faces.length >= person.faces.length ?
+      accum :
+      person
+    ), mergedPeople[0]);
 }
 
 export function getDeletePeople(data, mergedPerson, existingPeople) {

@@ -81,13 +81,28 @@ test("combineFaces - faces from several people with shared faces", (t) => {
   t.end();
 });
 
-// test("getMergePerson - finds person with most faces", (t) => {
+test("getMergePerson - finds person with most faces", (t) => {
+  const result = peopleMerge.getMergePerson(existingPeople);
 
-// });
+  t.equals(result.id, existingPeople[0].id, "found the first person that has 3 faces");
+  t.end();
+});
 
-// test("getMergePerson - chooses first person for people have the same number of faces", (t) => {
+test("getMergePerson - chooses first person for people have the same number of faces", (t) => {
+  const evenExistingPeople = [{
+    ...existingPeople[1],
+    faces: existingPeople[1].faces.slice(0, 1),
+  },
+  {
+    ...existingPeople[0],
+    faces: existingPeople[0].faces.slice(0, 1),
+  }];
 
-// });
+  const result = peopleMerge.getMergePerson(evenExistingPeople);
+
+  t.equals(result.id, existingPeople[1].id, "found the first person in array");
+  t.end();
+});
 
 test("mergePeopleObjects", (t) => {
   const data = [existingPeople[0].id, existingPeople[1].id];
@@ -109,7 +124,7 @@ test("mergePeopleObjects - argument order doesnt matter, merged person is most f
   t.end();
 });
 
-test("mergePeopleObjects - if face counts even then last person is target merge", (t) => {
+test("mergePeopleObjects - if face counts even then first person is target merge", (t) => {
   const data = [existingPeople[1].id, existingPeople[0].id];
   const evenExistingPeople = [{
     ...existingPeople[1],
@@ -122,8 +137,8 @@ test("mergePeopleObjects - if face counts even then last person is target merge"
 
   const result = peopleMerge.mergePeopleObjects(data, evenExistingPeople);
 
-  t.equal(result.id, existingPeople[0].id, "id");
-  t.equal(result.name, existingPeople[0].name, "name");
+  t.equal(result.id, existingPeople[1].id, "id");
+  t.equal(result.name, existingPeople[1].name, "name");
   t.equal(result.faces.length, 2, "faces length");
   t.end();
 });
