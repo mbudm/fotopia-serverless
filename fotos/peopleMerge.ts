@@ -13,23 +13,37 @@ import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
-  ILoggerBaseParams,
+  ILoggerBaseParams, IPerson,
 } from "./types";
 
-export function mergePeopleObjects(data, existingPeople) {
+export function mergePeopleObjects(data: string[], existingPeople: IPerson[]) {
   const mergedPeople = existingPeople
     .filter((person) => data.includes(person.id))
     .map((person) => ({ ...person, faces: [...person.faces] }));
-  const mainPerson = mergedPeople
-    .reduce((accum, person) => (accum.faces.length > person.faces.length ?
-      accum : person), { faces: [] });
-  mainPerson.faces = mergedPeople
+  const mainPerson = getMergePerson(mergedPeople);
+  mainPerson.faces = combineFaces(mergedPeople);
+  return mainPerson;
+}
+
+export function combineFaces(mergedPeople: any) {
+  return mergedPeople
     .reduce((accum, person) => {
       const uniqFaces = person.faces.filter((face) => !accum.find((f) => f.FaceId === face.FaceId));
       return accum.concat(uniqFaces);
     }, []);
-  return mainPerson;
 }
+
+export function getMergePerson(mergedPeople: any) {
+  return mergedPeople
+    .reduce((accum, person) => {
+      return accum && accum.faces && person && person.faces ?
+        (accum.faces.length > person.faces.length ?
+          accum :
+          person) :
+        accum ;
+    }, mergedPeople[0]);
+}
+
 export function getDeletePeople(data, mergedPerson, existingPeople) {
   return data.filter((pid) => pid !== mergedPerson.id)
     .map((pid2) => existingPeople.find((p) => pid2 === p.id));
