@@ -40,7 +40,7 @@ export async function getItem(event, context, callback) {
 export async function putItem(event, context, callback) {
   const startTime = Date.now();
 
-  const requestBody = event.body ? JSON.parse(event.body) : null;
+  const requestBody = event.body ? JSON.parse(event.body) : { people: []};
   const traceMeta = requestBody!.traceMeta;
 
   const s3 = createS3Client();
