@@ -162,8 +162,7 @@ export function getLogFields(data: IPerson, dims, metadata) {
       data.imageDimensions.height :
       metadata && metadata.height,
     imageKey: data && data.img_key,
-    imageMetaDataRaw: metadata && JSON.stringify(metadata),
-    imageOrientation: metadata && metadata.orientation,
+    imageOrientation: (metadata && metadata.orientation) || "unknown",
     imageUserIdentityId: data && data.userIdentityId,
     imageWidth: data!.imageDimensions!.width ?
       data.imageDimensions.width :
@@ -199,8 +198,6 @@ export async function createThumb(event, context, callback) {
   try {
     const s3Object = await getObject(person);
     const metadata = await getMetadata(s3Object);
-    // tslint:disable-next-line:no-console
-    console.log("metadata", metadata); // metadata logging as '1' which is weird. like orientation is being returned
     const dims = getDims(person, metadata);
     await cropAndUpload(person, dims, s3Object);
     logger(context, loggerBaseParams, getLogFields(person, dims, metadata));
