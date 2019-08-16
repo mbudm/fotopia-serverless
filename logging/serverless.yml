@@ -26,6 +26,9 @@ provider:
     LogGroupName11: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-delete
     LogGroupName12: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-personThumb
     LogGroupName13: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-peopleMerge
+    LogGroupName14: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-collectionCreate
+    LogGroupName15: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-collectionDelete
+    LogGroupName16: ${file(./serverlessEnv.js):config.LOG_GROUP_PREFIX}${opt:stage, self:provider.stage}-peopleUpdate
     FilterPattern: ''
 resources:
   Resources:
@@ -202,6 +205,36 @@ resources:
             - CloudwatchLambdaHandler
             - Arn
         LogGroupName: ${self:provider.environment.LogGroupName13}
+        FilterPattern: ${self:provider.environment.FilterPattern}
+      DependsOn: ExecutePermission
+    CloudwatchSubscriptionFilter14:
+      Type: "AWS::Logs::SubscriptionFilter"
+      Properties:
+        DestinationArn:
+          "Fn::GetAtt":
+            - CloudwatchLambdaHandler
+            - Arn
+        LogGroupName: ${self:provider.environment.LogGroupName14}
+        FilterPattern: ${self:provider.environment.FilterPattern}
+      DependsOn: ExecutePermission
+    CloudwatchSubscriptionFilter15:
+      Type: "AWS::Logs::SubscriptionFilter"
+      Properties:
+        DestinationArn:
+          "Fn::GetAtt":
+            - CloudwatchLambdaHandler
+            - Arn
+        LogGroupName: ${self:provider.environment.LogGroupName15}
+        FilterPattern: ${self:provider.environment.FilterPattern}
+      DependsOn: ExecutePermission
+    CloudwatchSubscriptionFilter16:
+      Type: "AWS::Logs::SubscriptionFilter"
+      Properties:
+        DestinationArn:
+          "Fn::GetAtt":
+            - CloudwatchLambdaHandler
+            - Arn
+        LogGroupName: ${self:provider.environment.LogGroupName16}
         FilterPattern: ${self:provider.environment.FilterPattern}
       DependsOn: ExecutePermission
     LambdaIAMRole:

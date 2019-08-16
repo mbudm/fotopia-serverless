@@ -1,6 +1,6 @@
 import * as test from "tape";
 import * as query from "./query";
-import { IQueryBody } from "./types";
+import { IQueryBody, IQueryResponse } from "./types";
 
 const requestBody: IQueryBody = {
   criteria: {
@@ -55,7 +55,8 @@ test("hasCriteria - no empty arrays", (t) => {
 
 test("getResponseBody - no results from db", (t) => {
   const result = query.getResponseBody({ Items: [] }, requestBody);
-  t.ok(result.includes("No items found"));
+  const resultAsString = Array.isArray(result) ? "" : result;
+  t.ok(resultAsString.includes("No items found"));
   t.end();
 });
 
@@ -90,7 +91,8 @@ test("getResponseBody - no items after filter", (t) => {
       tags: ["Castle", "Countryside"],
     }],
   }, requestBody);
-  t.ok(result.includes("No items found"));
+  const resultAsString = Array.isArray(result) ? "" : result;
+  t.ok(resultAsString.includes("No items found"));
   t.end();
 });
 
@@ -127,17 +129,35 @@ test("getResponseBody - items after single criteria filter", (t) => {
       tags: ["trees"],
     }],
   }, requestBodySingleCriteria);
-  t.equal(result.length, 1);
-  t.ok(result[0].people.includes("Lucy"));
+  const resultAsArray = Array.isArray(result) ? result : [];
+  t.equal(resultAsArray.length, 1);
+  t.ok(resultAsArray![0].people!.includes("Lucy"));
   t.end();
 });
 
+const baseQueryResponse: IQueryResponse = {
+  birthtime: 0,
+  id: "yadda",
+  img_key: "blah.jpg",
+  img_thumb_key: "blah_thumb.jpg",
+  meta: {
+    height: 100,
+    width: 100,
+  },
+  people: ["Lucy", "Bob"],
+  tags: [],
+  userIdentityId: "ho hum",
+  username: "blah",
+};
+
 test("filterItemsByCriteria", (t) => {
-  const items = [{
+  const items: IQueryResponse[] = [{
+    ...baseQueryResponse,
     people: ["Lucy", "Bob"],
     tags: [],
   },
   {
+    ...baseQueryResponse,
     people: [],
     tags: ["trees"],
   }];
@@ -147,7 +167,8 @@ test("filterItemsByCriteria", (t) => {
 });
 
 test("filterByCriteria", (t) => {
-  const item = {
+  const item: IQueryResponse = {
+    ...baseQueryResponse,
     people: ["Lucy", "Bob"],
     tags: [],
   };

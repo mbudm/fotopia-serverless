@@ -5,5 +5,6 @@ export * from "./images";
 export * from "./logger";
 export * from "./people";
 export * from "./query";
+export * from "./stream";
 export * from "./update";
 export * from "./common";

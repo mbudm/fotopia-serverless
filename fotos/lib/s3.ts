@@ -9,8 +9,10 @@ export default function createS3Client() {
       config.logger = console;
     }
     options = {
+      accessKeyId: "S3RVER",
       endpoint: new Endpoint("http://localhost:5000"),
       s3ForcePathStyle: true,
+      secretAccessKey: "S3RVER",
     };
   }
   return new S3(options);

@@ -15,19 +15,19 @@ jobs:
   include:
     - stage: remove
       script: ".ci/remove.sh"
-      if: branch = "master" AND commit_message =~ /(redeploy)/
+      if: branch = master AND commit_message =~ /(redeploy)/
     - stage: deploy
       script: ".ci/deploy.sh"
-      if: branch = "master"
+      if: branch = master
     - stage: prod-remove
       script: ".ci/remove-prod.sh"
-      if: branch = "master" AND commit_message =~ /(redeploy)/
+      if: branch = master AND commit_message =~ /(redeploy)/
     - stage: prod-deploy
       script: ".ci/deploy-prod.sh"
-      if: branch = "master"
+      if: branch = master
     - stage: alpha-remove
-      script: ".ci/remove.sh"
-      if: branch = "alpha" AND commit_message =~ /(redeploy)/
+      script: ".ci/remove-alpha.sh"
+      if: branch = alpha AND commit_message =~ /(redeploy)/
     - stage: alpha-deploy
-      script: ".ci/deploy.sh"
-      if: branch = "alpha"
+      script: ".ci/deploy-alpha.sh"
+      if: branch = alpha

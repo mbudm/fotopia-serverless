@@ -6,11 +6,7 @@ plugins:
   - serverless-stack-output
   - serverless-domain-manager
   - serverless-webpack
-  - serverless-dynamodb-local
   - serverless-s3-sync
-  - serverless-s3-local
-  - serverless-offline
-  - serverless-s3-local-sync
   - serverless-s3-remover
 
 custom:
@@ -19,21 +15,8 @@ custom:
       forceExclude:
         - aws-sdk
         - tape
-  dynamodb:
-    start:
-      port: 8000
-      inMemory: true
-      migrate: true
-    migration:
-      dir: offline/migrations
   output:
     file: output/${self:provider.environment.S3_OUTPUT_FILENAME}
-  s3:
-    host: 0.0.0.0
-    port: 5000
-    directory: /tmp/s3bucket
-    location: ./.webpack/service
-    cors: ./cors-policy.xml
   s3Sync:
     - bucketName: ${self:provider.environment.S3_OUTPUT_BUCKET}
       localDir: output
@@ -70,7 +53,7 @@ provider:
     COGNITO_UNAUTHORIZED_ROLE_NAME: ${self:service}-${opt:stage, self:provider.stage}-unauth-role-name
     CUSTOM_DOMAIN: ${file(./serverlessEnv.js):config.${opt:stage, self:provider.stage}.CUSTOM_DOMAIN}
     USE_CUSTOM_DOMAIN: ${file(./serverlessEnv.js):config.${opt:stage, self:provider.stage}.USE_CUSTOM_DOMAIN}
-    FOTOPIA_GROUP: ${file(./serverlessEnv.js):config.FOTOPIA_GROUP}
+    FOTOPIA_GROUP: ${file(./serverlessEnv.js):config.FOTOPIA_GROUP}-${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -118,6 +101,8 @@ provider:
       Action:
         - "rekognition:IndexFaces"
         - "rekognition:CreateCollection"
+        - "rekognition:DeleteCollection"
+        - "rekognition:DeleteFaces"
         - "rekognition:DetectLabels"
         - "rekognition:SearchFaces"
       Resource: "*"
@@ -131,7 +116,12 @@ functions:
           method: post
           cors: true
           authorizer: aws_iam
-
+  collectionCreate:
+    handler: fotos/collection.createCollection
+    memorySize: 128
+  collectionDelete:
+    handler: fotos/collection.deleteCollection
+    memorySize: 128
   query:
     handler: fotos/query.queryItems
     memorySize: 128
@@ -204,6 +194,16 @@ functions:
       - http:
           path: people
           method: get
+          cors: true
+          authorizer: aws_iam
+
+  peopleUpdate:
+    handler: fotos/people.putItem
+    memorySize: 128
+    events:
+      - http:
+          path: people/update
+          method: put
           cors: true
           authorizer: aws_iam
 

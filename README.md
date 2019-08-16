@@ -77,6 +77,11 @@ TEST_USER_PWD=PermPwd456!
 ```
 
 ## Local development
+
+*WARNING:* local mocking of AWS services is fraught. I've stopped doing it as the upkeep is not worth the value I get. I prefer to deploy straight to cloud after thorough TDD locally.
+
+*The following instructions may not work, and I may move all local dev setup from this repo soon.*
+
 To run the app locally, you'll be running an API on http://localhost:3000, have an s3 bucket on http://localhost:5000 and a dynamodb instance on http://localhost:8000. So you'll need these ports free.
 
 ### Run locally
@@ -109,6 +114,11 @@ Next you might want to checkout the [fotopia-serverless-client](https://github.c
 
 - `yarn lint`
 - `yarn test` - unit tests
+- `yarn test-watch` - unit tests watcher
+- Run single unit test, `npx tape -r ts-node/register -r babel-register './fotos/delete__test__.ts' | npx tap-spec` (need to globally install npx)
+
+Careful use of a reset script (cleans out any data from functional tests)
+- `STAGE=alpha npx tape -r ts-node/register -r babel-register './test/functional.remoteReset.ts' | npx tap-spec` (need to globally install npx)
 
 
 ## Troubleshooting

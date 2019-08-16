@@ -4,29 +4,40 @@ import { safeLength } from "./create";
 import dynamodb from "./lib/dynamodb";
 import logger from "./lib/logger";
 import {
+  IImage,
   ILoggerBaseParams,
+  IPathParameters,
   ITraceMeta,
 } from "./types";
 
-export function validateRequest(pathParameters) {
-  return pathParameters;
-}
+import {
+  DocumentClient as DocClient,
+} from "aws-sdk/lib/dynamodb/document_client.d";
+import {
+  AWSError,
+} from "aws-sdk/lib/error";
+import {
+  PromiseResult,
+} from "aws-sdk/lib/request";
 
-export function getDynamoDbParams(request) {
+export function getDynamoDbParams(request): DocClient.GetItemInput {
   return {
     Key: {
       id: request.id,
       username: request.username,
     },
-    TableName: process.env.DYNAMODB_TABLE,
+    TableName: process.env.DYNAMODB_TABLE!,
   };
 }
 
-export function getResponseBody(ddbResponse, request) {
-  return ddbResponse.Item || `No item found for ${request.username} & ${request.id}`;
+export function getResponseBody(ddbResponse): IImage {
+  const item: IImage = ddbResponse.Item as IImage;
+  return item;
 }
 
-export function getImageRecord(ddbParams) {
+export function getImageRecord(
+  ddbParams: DocClient.GetItemInput,
+): Promise<PromiseResult<DocClient.GetItemOutput, AWSError>> {
   return dynamodb.get(ddbParams).promise();
 }
 
@@ -61,10 +72,10 @@ export async function getItem(event, context, callback) {
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {
-    const request = validateRequest(event.pathParameters);
+    const request: IPathParameters = event.pathParameters;
     const ddbParams = getDynamoDbParams(request);
     const ddbResponse = await getImageRecord(ddbParams);
-    const responseBody = getResponseBody(ddbResponse, request);
+    const responseBody = getResponseBody(ddbResponse);
     logger(context, loggerBaseParams, getLogFields(request, responseBody));
     return callback(null, success(responseBody));
   } catch (err) {

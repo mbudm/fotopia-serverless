@@ -1,5 +1,15 @@
 import * as uuid from "uuid";
 
+import {
+  DocumentClient as DocClient,
+} from "aws-sdk/lib/dynamodb/document_client.d";
+import {
+  AWSError,
+} from "aws-sdk/lib/error";
+import {
+  PromiseResult,
+} from "aws-sdk/lib/request";
+
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
 import dynamodb from "./lib/dynamodb";
@@ -7,6 +17,7 @@ import logger from "./lib/logger";
 import {
   ILoggerBaseParams,
   IQueryBody,
+  IQueryResponse,
 } from "./types";
 
 export const getUserDynamoDbParams = (data: IQueryBody) => {
@@ -22,7 +33,7 @@ export const getUserDynamoDbParams = (data: IQueryBody) => {
     },
     IndexName: "UsernameBirthtimeIndex",
     KeyConditionExpression: "#username = :username AND #birthtime BETWEEN :from AND :to",
-    ProjectionExpression: "id, meta, people, tags, img_location, img_key, img_thumb_key",
+    ProjectionExpression: "#birthtime, #username, id, meta, people, tags, img_location, img_key, img_thumb_key",
     TableName: process.env.DYNAMODB_TABLE,
   };
   return params;
@@ -58,22 +69,25 @@ export const hasCriteria = (criteria = {}) =>
   Object.keys(criteria).every((key) => Array.isArray(criteria[key])) &&
   Object.keys(criteria).some((key) => criteria[key].length > 0);
 
-export const filterByCriteria = (item, criteriaKey, criteriaData) =>
+export const filterByCriteria = (item: IQueryResponse, criteriaKey, criteriaData): boolean =>
   criteriaData.some((criteriaDataItem) => item[criteriaKey].includes(criteriaDataItem));
 
-export const filterItemsByCriteria = (items, data: IQueryBody) =>
-  (hasCriteria(data.criteria) ?
+export const filterItemsByCriteria = (items: IQueryResponse[], data: IQueryBody): IQueryResponse[] =>
+  (hasCriteria(data.criteria) && items ?
     items.filter((item) => item &&
       Object.keys(data!.criteria || {}).some((criteriaKey) =>
         filterByCriteria(item, criteriaKey, data!.criteria![criteriaKey]))) :
-    items);
+    items || []);
 
-export function getResponseBody(ddbResponse, data: IQueryBody) {
-  const filteredItems = filterItemsByCriteria(ddbResponse.Items, data);
+export function getResponseBody(ddbResponse: DocClient.QueryOutput, data: IQueryBody): IQueryResponse[] | string {
+  const items: IQueryResponse[] = ddbResponse.Items ?
+    ddbResponse.Items as IQueryResponse[] :
+    [];
+  const filteredItems: IQueryResponse[] = filterItemsByCriteria(items, data) ;
   return filteredItems.length > 0 ? filteredItems : "No items found that match your criteria";
 }
 
-export function queryDatabase(ddbParams) {
+export function queryDatabase(ddbParams): Promise<PromiseResult<DocClient.QueryOutput, AWSError>> {
   return dynamodb.query(ddbParams).promise();
 }
 
@@ -101,7 +115,7 @@ export async function queryItems(event, context, callback) {
   };
   try {
     const ddbParams = getDynamoDbParams(data);
-    const ddbResponse = await queryDatabase(ddbParams);
+    const ddbResponse: DocClient.QueryOutput = await queryDatabase(ddbParams);
     const responseBody = getResponseBody(ddbResponse, data);
     logger(context, loggerBaseParams, getLogFields(data, ddbResponse, responseBody));
     return callback(null, success(responseBody));

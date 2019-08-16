@@ -2,16 +2,11 @@ import * as uuid from "uuid";
 
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
-import { validateRequest } from "./get";
 import dynamodb from "./lib/dynamodb";
 import logger from "./lib/logger";
 import {
-  ILoggerBaseParams,
+  ILoggerBaseParams, IPathParameters,
 } from "./types";
-
-export function validateBody(data) {
-  return data;
-}
 
 export function getDynamoDbParams(pathParams, body) {
   const timestamp = new Date().getTime();
@@ -75,7 +70,9 @@ export async function updateItem(event, context, callback) {
   const startTime = Date.now();
   const data = event.body ? JSON.parse(event.body) : null;
   const traceMeta = data!.traceMeta;
-  const pathParams = event.pathParameters;
+  const requestBody = data;
+  const requestParams: IPathParameters = event.pathParameters;
+
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "updateItem",
@@ -84,14 +81,12 @@ export async function updateItem(event, context, callback) {
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {
-    const requestBody = validateBody(data);
-    const requestParams = validateRequest(pathParams);
     const ddbParams = getDynamoDbParams(requestParams, requestBody);
     const ddbResponse = await updateImageRecord(ddbParams);
-    logger(context, loggerBaseParams, getLogFields(pathParams, data, ddbResponse));
+    logger(context, loggerBaseParams, getLogFields(requestParams, data, ddbResponse));
     return callback(null, success(ddbResponse.Attributes));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(pathParams, data, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(requestParams, data, null) });
     return callback(null, failure(err));
   }
 }
