@@ -117,13 +117,13 @@ export default function deleteTests(setupData, api) {
       .then((responseBody: IIndex) => {
         const nonZeroTags = Object.keys(responseBody.tags).filter((tag) => responseBody.tags[tag] !== 0);
         t.equal(
-          nonZeroTags,
+          nonZeroTags.length,
           0,
           "all tags are 0 counts",
         );
         const nonZeroPeople = Object.keys(responseBody.people).filter((p) => responseBody.people[p] !== 0);
         t.equal(
-          nonZeroPeople,
+          nonZeroPeople.length,
           0,
           "all ppl are 0 counts",
         );

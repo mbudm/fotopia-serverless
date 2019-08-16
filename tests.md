@@ -18,6 +18,9 @@ aws dynamodb put-item --table-name fotopia-web-app-dev --item file:///Users/stev
 
 aws dynamodb describe-table --table-name fotopia-web-app-prod --endpoint-url http://localhost:8000
 
+The rekognition CLI seems to default to your local region, so if you are using say us-east-1 you need to flag it:
+`aws rekognition list-collections --region us-east-1`
+
 
 ## killing the dynamodb local
 
