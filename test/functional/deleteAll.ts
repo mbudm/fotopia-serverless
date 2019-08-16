@@ -1,5 +1,6 @@
 import * as test from "tape";
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
+import { createIndexAdjustment } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 
@@ -29,6 +30,29 @@ export default function deleteAllTests(setupData, api) {
           images = [];
           t.end();
         }
+      })
+      .catch(formatError);
+  });
+  let existingIndexes: IIndex;
+  test("get existing indexes", (t) => {
+    api
+      .get(setupData.apiUrl, "/indexes")
+      .then((responseBody: IIndex) => {
+        t.ok(responseBody, "Indexes retrieved");
+        existingIndexes = responseBody;
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  let existingPeople: IPerson[];
+  test("get existing people", (t) => {
+    api
+      .get(setupData.apiUrl, "/people")
+      .then((responseBody: IPerson[]) => {
+        t.ok(responseBody, "Existing people retrieved");
+        existingPeople = responseBody;
+        t.end();
       })
       .catch(formatError);
   });
@@ -71,35 +95,51 @@ export default function deleteAllTests(setupData, api) {
   });
 
   test("get people should return no results with the deleted image ids", (t) => {
+    // const peopleToCheck = images.reduce((accum, img) =>
+    //   Array.isArray(img.people) ? accum.concat(img.people) : accum,
+    // [] as string[]);
+    const imageIds =  images.map((img) => img.id);
     api
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
+        const peopleWithDeletedImageIds = responseBody.filter((p) => {
+          return p.faces.filter((f) => f.ExternalImageId &&
+            imageIds.includes(f.ExternalImageId));
+        });
         t.equal(
-          responseBody.length,
+          peopleWithDeletedImageIds.length,
           0,
-          "all people have been removed",
+          "all deleted images have been removed from people",
         );
         t.end();
       })
       .catch(formatError);
   });
 
-  test("get indexes should return an index object with 0 counts for ppl and tags matching test data", (t) => {
+  test("get indexes should return an index object with adjusted counts matching deleted images", (t) => {
+    const testImagesPeople = images.reduce((accum, img) => accum.concat(img.people!), [] as string[]);
+    const testImagesTags = images.reduce((accum, img) => accum.concat(img.tags!), [] as string[]);
 
+    const indexAdjustments = {
+      people: createIndexAdjustment(testImagesPeople),
+      tags: createIndexAdjustment(testImagesTags),
+    };
     api
       .get(setupData.apiUrl, "/indexes")
       .then((responseBody: IIndex) => {
-        const nonZeroTags = Object.keys(responseBody.tags).filter((tag) => responseBody.tags[tag] !== 0);
+        const incorrectAdjustmentTags = Object.keys(indexAdjustments.tags)
+          .filter((tag) => responseBody.tags[tag] !==  existingIndexes.tags[tag] + indexAdjustments.tags[tag]);
         t.equal(
-          nonZeroTags.length,
+          incorrectAdjustmentTags.length,
           0,
-          "all tags are 0 counts",
+          `all tags adjustments are correct. Checked ${Object.keys(indexAdjustments.tags).length} adjustments`,
         );
-        const nonZeroPeople = Object.keys(responseBody.people).filter((p) => responseBody.people[p] !== 0);
+        const incorrectAdjustmentPeople = Object.keys(indexAdjustments.people)
+          .filter((p) => responseBody.people[p] !==  existingIndexes.people[p] + indexAdjustments.people[p]);
         t.equal(
-          nonZeroPeople.length,
+          incorrectAdjustmentPeople.length,
           0,
-          "all ppl are 0 counts",
+          `all people adjustments are correct. Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
         );
         t.end();
       })
