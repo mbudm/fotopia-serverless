@@ -103,16 +103,10 @@ export function expandAndSqareUpDims(dims, person, correctedImageDimensions) {
   };
 }
 
-export function guessOrientation(imageDims) {
-  return imageDims.width < imageDims.height ?
-    EXIF_ORIENT.TOP_LEFT :
-    EXIF_ORIENT.LEFT_TOP;
-}
-
 export function getCorrectImageDimension(imageDimensions, metadata) {
   const validImageDims = hasValidDimensions(metadata) && metadata ||
     hasValidDimensions(imageDimensions) && imageDimensions;
-  const orientation = metadata.orientation || guessOrientation(validImageDims);
+  const orientation = (metadata && metadata.orientation) || EXIF_ORIENT.TOP_LEFT;
   return orientation === EXIF_ORIENT.TOP_LEFT ||
   orientation === EXIF_ORIENT.TOP_RIGHT ||
   orientation === EXIF_ORIENT.BOTTOM_LEFT ||

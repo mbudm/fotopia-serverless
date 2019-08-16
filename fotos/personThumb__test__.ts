@@ -265,29 +265,104 @@ const imageFourPeopleRaw: IImage = {
   username: "yah",
 };
 
-const fourPeople: IPerson[] = imageFourPeopleRaw.faces!.map((face) => ({
-  boundingBox: {
-    ...face.Face!.BoundingBox!,
+const rawLogs = [{
+    Timestamp: "2019-08-16T11:04:27.678Z",
+    errorMessage: "extract_area: bad extract area\n",
+    imageHeight: 654,
+    imageKey: "tester/four_people.jpg",
+    imageWidth: 1359,
+    personBoundsHeight: 0.2512778639793396,
+    personBoundsLeft: 0.236151784658432,
+    personBoundsTop: 0.37818941473960876,
+    personBoundsWidth: 0.09541566669940948,
+    personThumbHeight: 388,
+    personThumbLeft: 0,
+    personThumbTop: 526,
+    personThumbWidth: 388,
   },
-  faces: [] as IFace[],
-  id: face.Face!.FaceId!,
-  imageDimensions: {
-    ...imageFourPeopleRaw.meta,
+  {
+    Timestamp: "2019-08-16T11:04:27.676Z",
+    errorMessage: "",
+    imageHeight: 654,
+    imageKey: "tester/four_people.jpg",
+    imageWidth: 1359,
+    personBoundsHeight: 0.16665689647197723,
+    personBoundsLeft: 0.6325252056121826,
+    personBoundsTop: 0.2243027687072754,
+    personBoundsWidth: 0.05986156687140465,
+    personThumbHeight: 240,
+    personThumbLeft: 316,
+    personThumbTop: 323,
+    personThumbWidth: 240,
   },
-  img_key: "doesntmatter.png",
-  name: "",
-  thumbnail: "doesntmatter.jpg",
-  userIdentityId: "some-id",
-}));
+  {
+    Timestamp: "2019-08-16T11:04:27.672Z",
+    errorMessage: "",
+    imageHeight: 654,
+    imageKey: "tester/four_people.jpg",
+    imageWidth: 1359,
+    personBoundsHeight: 0.22832465171813965,
+    personBoundsLeft: 0.4967665672302246,
+    personBoundsTop: 0.17889449000358582,
+    personBoundsWidth: 0.06599054485559464,
+    personThumbHeight: 284,
+    personThumbLeft: 209,
+    personThumbTop: 282,
+    personThumbWidth: 284,
+  },
+  {
+    Timestamp: "2019-08-16T11:04:26.927Z",
+    errorMessage: "",
+    imageHeight: 654,
+    imageKey: "tester/four_people.jpg",
+    imageWidth: 1359,
+    personBoundsHeight: 0.22840560972690582,
+    personBoundsLeft: 0.3702377676963806,
+    personBoundsTop: 0.2149808704853058,
+    personBoundsWidth: 0.07928548008203506,
+    personThumbHeight: 297,
+    personThumbLeft: 125,
+    personThumbTop: 322,
+    personThumbWidth: 297,
+  },
+  {
+    Timestamp: "2019-08-16T11:04:23.473Z",
+    errorMessage: "",
+    imageHeight: 683,
+    imageKey: "tester/one.jpg",
+    imageWidth: 1024,
+    personBoundsHeight: 0.19988493621349335,
+    personBoundsLeft: 0.4723116159439087,
+    personBoundsTop: 0.1443825215101242,
+    personBoundsWidth: 0.10848712921142578,
+    personThumbHeight: 245,
+    personThumbLeft: 240,
+    personThumbTop: 144,
+    personThumbWidth: 245,
+  },
+];
 
-test("getDims - image with four people", (t) => {
-  fourPeople.forEach((p) => {
-    const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.TOP_LEFT });
-    // t.equal(result.width, 560, `width ${p.id}`);
-    // t.equal(result.height, 720, `height ${p.id}`);
-    // t.equal(result.left, 240, `left ${p.id}`);
-    // t.equal(result.top, 120, `top ${p.id}`);
-    t.ok(result, `ok ${p.id}`);
-  });
+test("getDims - landscape image with no orientation value", (t) => {
+  const personInTestImage: IPerson = {
+    boundingBox: {
+      Height: 0.2512778639793396,
+      Left: 0.236151784658432,
+      Top: 0.37818941473960876,
+      Width: 0.09541566669940948,
+    },
+    faces: [] as IFace[],
+    id: "test image id",
+    imageDimensions: {
+      height: 654,
+      width: 1359,
+    },
+    img_key: "tester/four_people.jpg",
+    name: "",
+    thumbnail: "tester/four_people.jpg",
+    userIdentityId: "some-id",
+  };
+
+  const result = personThumb.getDims(personInTestImage, undefined);
+  t.deepEqual(result, { height: 164, left: 304, top: 248, width: 164 }, "dims for test person");
   t.end();
 });
