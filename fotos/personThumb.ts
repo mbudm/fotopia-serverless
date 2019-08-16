@@ -205,6 +205,8 @@ export async function createThumb(event, context, callback) {
   try {
     const s3Object = await getObject(person);
     const metadata = await getMetadata(s3Object);
+    // tslint:disable-next-line:no-console
+    console.log("metadata", metadata); // metadata logging as '1' which is weird. like orientation is being returned
     const dims = getDims(person, metadata);
     await cropAndUpload(person, dims, s3Object);
     logger(context, loggerBaseParams, getLogFields(person, dims, metadata));
