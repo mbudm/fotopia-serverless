@@ -111,19 +111,21 @@ export default function deleteTests(setupData, api) {
       .catch(formatError);
   });
 
-  test("get indexes should return an empty index object", (t) => {
-    const emptyIndex: IIndex = {
-      people: {},
-      tags: {},
-    };
-
+  test("get indexes should return an index object with 0 counts for ppl and tags matching test data", (t) => {
     api
       .get(setupData.apiUrl, "/indexes")
       .then((responseBody: IIndex) => {
-        t.deepEqual(
-          responseBody,
-          emptyIndex,
-          "all tags and people are removed",
+        const nonZeroTags = Object.keys(responseBody.tags).filter((tag) => responseBody.tags[tag] !== 0);
+        t.equal(
+          nonZeroTags,
+          0,
+          "all tags are 0 counts",
+        );
+        const nonZeroPeople = Object.keys(responseBody.people).filter((p) => responseBody.people[p] !== 0);
+        t.equal(
+          nonZeroPeople,
+          0,
+          "all ppl are 0 counts",
         );
         t.end();
       })

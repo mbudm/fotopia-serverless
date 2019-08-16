@@ -117,6 +117,9 @@ Next you might want to checkout the [fotopia-serverless-client](https://github.c
 - `yarn test-watch` - unit tests watcher
 - Run single unit test, `npx tape -r ts-node/register -r babel-register './fotos/delete__test__.ts' | npx tap-spec` (need to globally install npx)
 
+Careful use of a reset script (cleans out any data from functional tests)
+- `STAGE=alpha npx tape -r ts-node/register -r babel-register './test/functional.remoteReset.ts' | npx tap-spec` (need to globally install npx)
+
 
 ## Troubleshooting
 

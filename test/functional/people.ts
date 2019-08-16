@@ -112,11 +112,6 @@ export default function peopleTests(setupData, api) {
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
         t.equal(responseBody.length, people.length - 1, "one less person");
-        t.deepEqual(
-          responseBody,
-          people,
-          `compare updated people with people - img4: ${imageWithFourPeople!.people!.toString()}`,
-        );
         t.ok(responseBody.find(
           (person) => person.id === imageWithFourPeople!.people![0],
         ), "person 0 is still in the people object");

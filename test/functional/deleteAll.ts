@@ -19,10 +19,16 @@ export default function deleteAllTests(setupData, api) {
       body: query,
     })
       .then((responseBody: IImage[]) => {
-        t.ok(Array.isArray(responseBody), "query response is an array");
-        t.ok(responseBody, `queried all and found ${responseBody.length} images`);
-        images = responseBody;
-        t.end();
+        if (Array.isArray(responseBody)) {
+          t.ok(Array.isArray(responseBody), "query response is an array");
+          t.ok(responseBody, `queried all and found ${responseBody.length} images`);
+          images = responseBody;
+          t.end();
+        } else {
+          t.notOk(Array.isArray(responseBody), "query response is a string - no results");
+          images = [];
+          t.end();
+        }
       })
       .catch(formatError);
   });
@@ -64,7 +70,7 @@ export default function deleteAllTests(setupData, api) {
       .catch(formatError);
   });
 
-  test("get people should return no results", (t) => {
+  test("get people should return no results with the deleted image ids", (t) => {
     api
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
@@ -78,19 +84,22 @@ export default function deleteAllTests(setupData, api) {
       .catch(formatError);
   });
 
-  test("get indexes should return an empty index object", (t) => {
-    const emptyIndex: IIndex = {
-      people: {},
-      tags: {},
-    };
+  test("get indexes should return an index object with 0 counts for ppl and tags matching test data", (t) => {
 
     api
       .get(setupData.apiUrl, "/indexes")
       .then((responseBody: IIndex) => {
-        t.deepEqual(
-          responseBody,
-          emptyIndex,
-          "all tags and people are removed",
+        const nonZeroTags = Object.keys(responseBody.tags).filter((tag) => responseBody.tags[tag] !== 0);
+        t.equal(
+          nonZeroTags.length,
+          0,
+          "all tags are 0 counts",
+        );
+        const nonZeroPeople = Object.keys(responseBody.people).filter((p) => responseBody.people[p] !== 0);
+        t.equal(
+          nonZeroPeople.length,
+          0,
+          "all ppl are 0 counts",
         );
         t.end();
       })
