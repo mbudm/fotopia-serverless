@@ -1,6 +1,5 @@
 yarn lint
-sls dynamodb install
-sls offline start --exec "yarn functional-local"
+yarn test
 sls deploy -s dev
 sls s3sync -s dev
 cd ./logging
