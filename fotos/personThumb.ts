@@ -168,11 +168,16 @@ export function getLogFields(data: IPerson, dims, metadata) {
       data.imageDimensions.height :
       metadata && metadata.height,
     imageKey: data && data.img_key,
+    imageMetaDataRaw: metadata && JSON.stringify(metadata),
     imageOrientation: metadata && metadata.orientation,
     imageUserIdentityId: data && data.userIdentityId,
     imageWidth: data!.imageDimensions!.width ?
       data.imageDimensions.width :
       metadata && metadata.width,
+    personBoundsHeight: data && data.boundingBox && data.boundingBox.Height,
+    personBoundsLeft: data && data.boundingBox && data.boundingBox.Left,
+    personBoundsTop: data && data.boundingBox && data.boundingBox.Top,
+    personBoundsWidth: data && data.boundingBox && data.boundingBox.Width,
     personFacesCount: data && safeLength(data.faces),
     personId: data && data.id,
     personName: data && data.name,
