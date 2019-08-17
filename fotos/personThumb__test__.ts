@@ -2,14 +2,16 @@ import * as test from "tape";
 import * as personThumb from "./personThumb";
 
 import { EXIF_ORIENT } from "./lib/constants";
+import { IFace, IImage, IPerson } from "./types";
 
-const person = {
+const person: IPerson = {
   boundingBox: {
     Height: 0.3,
     Left: 0.55,
     Top: 0.2,
     Width: 0.4,
   },
+  faces: [],
   id: "c8ba6df0-9a12-11e8-a9e0-cb0dc753a59b",
   imageDimensions: {
     height: 1200,
@@ -189,5 +191,30 @@ test("orientation 5 - LEFT_TOP", (t) => {
   t.equal(result.height, 200, "height");
   t.equal(result.left, 100, "left");
   t.equal(result.top, 20, "top");
+  t.end();
+});
+
+test("getDims - landscape image with no orientation value", (t) => {
+  const personInTestImage: IPerson = {
+    boundingBox: {
+      Height: 0.2512778639793396,
+      Left: 0.236151784658432,
+      Top: 0.37818941473960876,
+      Width: 0.09541566669940948,
+    },
+    faces: [] as IFace[],
+    id: "test image id",
+    imageDimensions: {
+      height: 654,
+      width: 1359,
+    },
+    img_key: "tester/four_people.jpg",
+    name: "",
+    thumbnail: "tester/four_people.jpg",
+    userIdentityId: "some-id",
+  };
+
+  const result = personThumb.getDims(personInTestImage, undefined);
+  t.deepEqual(result, { height: 164, left: 304, top: 248, width: 164 }, "dims for test person");
   t.end();
 });

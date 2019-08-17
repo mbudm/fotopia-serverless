@@ -1,4 +1,4 @@
-import { BoundingBox } from "aws-sdk/clients/rekognition";
+import { BoundingBox, Landmark } from "aws-sdk/clients/rekognition";
 import { IFace } from "./faces";
 import { IImage, IImageDimensions } from "./images";
 
@@ -8,6 +8,7 @@ export interface IPerson {
   boundingBox?: BoundingBox;
   imageDimensions: IImageDimensions;
   img_key: string;
+  landMarks?: Landmark[];
   name: string;
   thumbnail: string;
   userIdentityId: string;
