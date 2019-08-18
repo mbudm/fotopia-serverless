@@ -1,9 +1,12 @@
 import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import { FaceMatch, FaceMatchList } from "aws-sdk/clients/rekognition";
-import { PutObjectOutput } from "aws-sdk/clients/s3";
+import { SearchFacesRequest } from "aws-sdk/clients/rekognition";
 import * as uuid from "uuid";
-
+import invokeGetPeople from "./common/invokeGetPeople";
+import invokeUpdatePeople from "./common/invokePutPeople";
+import { failure, success } from "./common/responses";
+import { safeLength } from "./create";
 import {
   EXIF_ORIENT,
   INVOCATION_EVENT,
@@ -15,7 +18,6 @@ import logger from "./lib/logger";
 import rekognition from "./lib/rekognition";
 import createS3Client from "./lib/s3";
 import { getDims } from "./personThumb";
-
 import {
   IFace,
   IFaceMatcherCallback,
@@ -29,13 +31,6 @@ import {
   IPersonMatch,
   IUpdateBody,
 } from "./types";
-
-import { failure, success } from "./common/responses";
-
-import { SearchFacesRequest } from "aws-sdk/clients/rekognition";
-import { getExistingPeople } from "./common/getExistingPeople";
-import { putPeople } from "./common/putPeople";
-import { safeLength } from "./create";
 
 const MATCH_THRESHOLD = 80;
 const PERSON_THUMB_SUFFIX = "-face-";
@@ -282,7 +277,7 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
     traceId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.traceId,
   };
   try {
-    const existingPeople: IPerson[] = await getExistingPeople(s3, bucket, key);
+    const existingPeople: IPerson[] = await invokeGetPeople();
     const facesWithPeople: IFaceWithPeople[] = await getPeopleForFaces(newImage, existingPeople, getFaceMatch);
     const newPeopleInThisImage: IPerson[] = getNewPeople(facesWithPeople);
     const newPeopleThatAreOkSize: IPerson[] = filterNewPeopleThatAreTooSmall(newPeopleInThisImage);
@@ -290,7 +285,7 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
       invokePeopleThumbEvents(newPeopleThatAreOkSize, logBaseParams);
     }
     const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleThatAreOkSize);
-    const putPeoplePromise: Promise<PutObjectOutput> = putPeople(s3, updatedPeople, bucket, key);
+    await invokeUpdatePeople(updatedPeople);
     const pathParameters: IPathParameters = getUpdatePathParameters(newImage);
     const updateBody: IUpdateBody = getUpdateBody(facesWithPeople, newPeopleThatAreOkSize);
     const updateParams: InvocationRequest = getInvokeUpdateParams(pathParameters, updateBody);
@@ -304,7 +299,6 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
       updateBody,
       updatedPeople,
     };
-    await putPeoplePromise;
     logger(context, logBaseParams, getLogFields(logMetaParams));
     return callback(null, success({ logMetaParams }));
   } catch (err) {

@@ -1,17 +1,14 @@
-
 import * as uuid from "uuid";
-import { getExistingPeople } from "./common/getExistingPeople";
-import { putPeople } from "./common/putPeople";
+import invokeGetPeople from "./common/invokeGetPeople";
+import invokePutPeople from "./common/invokePutPeople";
 import { failure, success } from "./common/responses";
 import { getTraceMeta, safeLength } from "./create";
 import {
   INVOCATION_EVENT,
   INVOCATION_REQUEST_RESPONSE,
-  PEOPLE_KEY,
 } from "./lib/constants";
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
-import createS3Client from "./lib/s3";
 import {
   ILoggerBaseParams, IPerson,
 } from "./types";
@@ -147,9 +144,6 @@ export function getLogFields({
 
 export async function mergePeople(event, context, callback) {
   const startTime = Date.now();
-  const s3 = createS3Client();
-  const bucket = process.env.S3_BUCKET;
-  const key = PEOPLE_KEY;
   const data = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
@@ -159,13 +153,13 @@ export async function mergePeople(event, context, callback) {
     traceId: uuid.v1(),
   };
   try {
-    const existingPeople = await getExistingPeople(s3, bucket, key);
+    const existingPeople = await invokeGetPeople();
     const mergedPerson = mergePeopleObjects(data, existingPeople);
     const deletePeople = getDeletePeople(data, mergedPerson, existingPeople);
     const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams);
     await updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams);
     const updatedPeople = getUpdatedPeople(existingPeople, mergedPerson, deletePeople);
-    putPeople(s3, updatedPeople, bucket, key);
+    invokePutPeople(updatedPeople);
     logger(context, loggerBaseParams, getLogFields({
       data,
       deletePeople,

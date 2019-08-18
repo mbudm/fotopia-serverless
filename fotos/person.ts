@@ -1,6 +1,6 @@
 import * as uuid from "uuid";
-import { getExistingPeople } from "./common/getExistingPeople";
-import { putPeople } from "./common/putPeople";
+import invokeGetPeople from "./common/invokeGetPeople";
+import invokeUpdatePeople from "./common/invokePutPeople";
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
 import { PEOPLE_KEY } from "./lib/constants";
@@ -49,9 +49,9 @@ export async function updatePerson(event, context, callback) {
     traceId: uuid.v1(),
   };
   try {
-    const existingPeople = await getExistingPeople(s3, bucket, key);
+    const existingPeople = await invokeGetPeople();
     const updatedPeople = getUpdatedPeople(existingPeople, data, pathParams);
-    const putPeopleResponse = await putPeople(s3, updatedPeople, bucket, key);
+    const putPeopleResponse = await invokeUpdatePeople(updatedPeople);
     logger(context, loggerBaseParams, getLogFields(existingPeople, updatedPeople, pathParams));
     return callback(null, success({ putPeopleResponse, updatedPeople }));
   } catch (err) {
