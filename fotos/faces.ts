@@ -3,6 +3,7 @@ import { InvocationRequest } from "aws-sdk/clients/lambda";
 import { FaceMatch, FaceMatchList } from "aws-sdk/clients/rekognition";
 import { SearchFacesRequest } from "aws-sdk/clients/rekognition";
 import * as uuid from "uuid";
+import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
 import invokeUpdatePeople from "./common/invokePutPeople";
 import { failure, success } from "./common/responses";
@@ -285,7 +286,7 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
       invokePeopleThumbEvents(newPeopleThatAreOkSize, logBaseParams);
     }
     const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, facesWithPeople, newPeopleThatAreOkSize);
-    await invokeUpdatePeople(updatedPeople);
+    await invokeUpdatePeople(updatedPeople, getTraceMeta(logBaseParams));
     const pathParameters: IPathParameters = getUpdatePathParameters(newImage);
     const updateBody: IUpdateBody = getUpdateBody(facesWithPeople, newPeopleThatAreOkSize);
     const updateParams: InvocationRequest = getInvokeUpdateParams(pathParameters, updateBody);

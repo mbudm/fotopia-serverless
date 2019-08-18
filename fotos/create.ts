@@ -1,6 +1,7 @@
 
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
+import { getTraceMeta } from "./common/getTraceMeta";
 import { failure, success } from "./common/responses";
 import { IndexFacesError } from "./errors/indexFaces";
 import { INVOCATION_EVENT, INVOCATION_REQUEST_RESPONSE } from "./lib/constants";
@@ -12,7 +13,6 @@ import {
   ICreateBody,
   ILoggerBaseParams,
   ILoggerCreateParams,
-  ITraceMeta,
 } from "./types";
 
 const fotopiaGroup = process.env.FOTOPIA_GROUP || "";
@@ -33,13 +33,6 @@ export function getTagsFromRekognitionLabels(labels) {
     labels.Labels.map((label) => label.Name) :
     [];
 }
-export function getTraceMeta(loggerBaseParams: ILoggerBaseParams): ITraceMeta {
-  return {
-    parentId: loggerBaseParams.id,
-    traceId: loggerBaseParams.traceId,
-  };
-}
-
 export function getLogFields(request, dbItem, faces, labels): ILoggerCreateParams {
   return {
     createIdentifiedFacesCount: safeLength(faces),

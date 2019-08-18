@@ -1,8 +1,9 @@
 import * as uuid from "uuid";
+import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
 import invokePutPeople from "./common/invokePutPeople";
 import { failure, success } from "./common/responses";
-import { getTraceMeta, safeLength } from "./create";
+import { safeLength } from "./create";
 import {
   INVOCATION_EVENT,
   INVOCATION_REQUEST_RESPONSE,
@@ -159,7 +160,7 @@ export async function mergePeople(event, context, callback) {
     const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams);
     await updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams);
     const updatedPeople = getUpdatedPeople(existingPeople, mergedPerson, deletePeople);
-    invokePutPeople(updatedPeople);
+    invokePutPeople(updatedPeople, getTraceMeta(loggerBaseParams));
     logger(context, loggerBaseParams, getLogFields({
       data,
       deletePeople,

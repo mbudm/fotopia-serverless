@@ -3,25 +3,28 @@ import {
   InvocationResponse,
 } from "aws-sdk/clients/lambda";
 import { JSONParseError } from "../errors/jsonParse";
-import { INVOCATION_REQUEST_RESPONSE } from "../lib/constants";
+import { INVOCATION_EVENT } from "../lib/constants";
 import lambda from "../lib/lambda";
 import {
   IPerson,
 } from "../types";
 
-export function getInvokeUpdateParams(body): InvocationRequest {
+export function getInvokeUpdateParams(body, traceMeta): InvocationRequest {
   return {
     FunctionName: process.env.IS_OFFLINE ? "peopleUpdate" : `${process.env.LAMBDA_PREFIX}peopleUpdate`,
-    InvocationType: INVOCATION_REQUEST_RESPONSE,
+    InvocationType: INVOCATION_EVENT,
     LogType: "Tail",
     Payload: JSON.stringify({
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        ...body,
+        traceMeta,
+      }),
     }),
   };
 }
 
-export default function invokePutPeople(body) {
-  const params = getInvokeUpdateParams(body);
+export default function invokePutPeople(body, traceMeta) {
+  const params = getInvokeUpdateParams(body, traceMeta);
   return lambda.invoke(params).promise()
     .then((invocationResponse: InvocationResponse) => {
       try {

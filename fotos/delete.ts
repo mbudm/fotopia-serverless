@@ -8,9 +8,10 @@ import {
   DeleteFacesResponse,
 } from "aws-sdk/clients/rekognition";
 import * as uuid from "uuid";
+import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
 import { failure, success } from "./common/responses";
-import { getTraceMeta, replicateAuthKey, safeLength } from "./create";
+import { replicateAuthKey, safeLength } from "./create";
 import { DeleteObjectError } from "./errors/deleteObject";
 import { DeleteRecordError } from "./errors/deleteRecord";
 import { JSONParseError } from "./errors/jsonParse";
@@ -216,7 +217,6 @@ export function getLogFields(pathParams, imageRecord) {
 export async function deleteItem(event, context, callback) {
   const startTime = Date.now();
   const s3 = createS3Client();
-  const bucket = process.env.S3_BUCKET;
   const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),

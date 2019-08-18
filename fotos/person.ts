@@ -1,4 +1,5 @@
 import * as uuid from "uuid";
+import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
 import invokeUpdatePeople from "./common/invokePutPeople";
 import { failure, success } from "./common/responses";
@@ -51,7 +52,7 @@ export async function updatePerson(event, context, callback) {
   try {
     const existingPeople = await invokeGetPeople();
     const updatedPeople = getUpdatedPeople(existingPeople, data, pathParams);
-    const putPeopleResponse = await invokeUpdatePeople(updatedPeople);
+    const putPeopleResponse = invokeUpdatePeople(updatedPeople, getTraceMeta(loggerBaseParams));
     logger(context, loggerBaseParams, getLogFields(existingPeople, updatedPeople, pathParams));
     return callback(null, success({ putPeopleResponse, updatedPeople }));
   } catch (err) {
