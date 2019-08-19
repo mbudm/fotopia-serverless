@@ -23,7 +23,7 @@ export default function invokeGetPeople() {
     .then((invocationResponse: InvocationResponse) => {
       try {
         const payload = JSON.parse(invocationResponse.Payload as string);
-        const peopleObject: IPerson[] = payload ? JSON.parse(payload.body) : [];
+        const peopleObject: IPerson[] = typeof payload === "object" ? JSON.parse(payload.body) : [];
         return peopleObject;
       } catch (e) {
         // tslint:disable-next-line:max-line-length
