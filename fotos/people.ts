@@ -94,8 +94,8 @@ export async function putItem(event, context, callback) {
   };
 
   try {
-    logger(context, loggerBaseParams, getLogFields(requestBody));
     const putPeopleObject: PutObjectOutput = await putPeople(s3, requestBody.people, bucket, key);
+    logger(context, loggerBaseParams, getLogFields(requestBody.people));
     return callback(null, success(requestBody));
   } catch (err) {
     logger(context, loggerBaseParams, { err, ...getLogFields(requestBody.people)});
