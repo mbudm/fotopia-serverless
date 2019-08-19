@@ -14,14 +14,14 @@ export function getInvokeUpdateParams(body: IPerson[], traceMeta): InvocationReq
     LogType: "Tail",
     Payload: JSON.stringify({
       body: JSON.stringify({
-        ...body,
+        people: body,
         traceMeta,
       }),
     }),
   };
 }
 
-export default function invokePutPeople(body, traceMeta) {
+export default function invokePutPeople(body: IPerson[], traceMeta) {
   const params = getInvokeUpdateParams(body, traceMeta);
   return lambda.invoke(params).promise();
 }
