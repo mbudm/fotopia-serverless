@@ -48,9 +48,9 @@ export function getExistingPeople(s3, Bucket, Key): Promise<IPerson[]> {
     });
 }
 
-export function getLogFields(existingPeople) {
+export function getLogFields(people: IPerson[]) {
   return {
-    peopleCount: safeLength(existingPeople),
+    peopleCount: safeLength(people),
   };
 }
 export async function getItem(event, context, callback) {
@@ -98,7 +98,7 @@ export async function putItem(event, context, callback) {
     const putPeopleObject: PutObjectOutput = await putPeople(s3, requestBody.people, bucket, key);
     return callback(null, success(requestBody));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(requestBody)});
+    logger(context, loggerBaseParams, { err, ...getLogFields(requestBody.people)});
     return callback(null, failure(err));
   }
 }
