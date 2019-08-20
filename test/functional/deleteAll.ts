@@ -120,7 +120,7 @@ export default function deleteAllTests(setupData, api) {
         t.equal(
           peopleWithDeletedImageIds.length,
           0,
-          "all deleted images have been removed from people",
+          `all deleted images have been removed from people ${peopleWithDeletedImageIds.toString()}`,
         );
         t.end();
       })

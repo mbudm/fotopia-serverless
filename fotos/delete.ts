@@ -10,13 +10,14 @@ import {
 import * as uuid from "uuid";
 import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
+import invokePutPeople from "./common/invokePutPeople";
 import { failure, success } from "./common/responses";
 import { replicateAuthKey, safeLength } from "./create";
 import { DeleteObjectError } from "./errors/deleteObject";
 import { DeleteRecordError } from "./errors/deleteRecord";
 import { JSONParseError } from "./errors/jsonParse";
 import { getDynamoDbParams } from "./get";
-import { INVOCATION_REQUEST_RESPONSE, PEOPLE_KEY } from "./lib/constants";
+import { INVOCATION_REQUEST_RESPONSE } from "./lib/constants";
 import dynamodb from "./lib/dynamodb";
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
@@ -163,31 +164,6 @@ export function getDeletePeople(peopleImages: IPersonWithImages[]): string[] {
   }, []);
 }
 
-export function getInvokeUpdatePeopleParams(body: IPerson[], logBaseParams: ILoggerBaseParams): InvocationRequest {
-  return {
-    FunctionName: process.env.IS_OFFLINE ? "peopleUpdate" : `${process.env.LAMBDA_PREFIX}peopleUpdate`,
-    InvocationType: INVOCATION_REQUEST_RESPONSE,
-    LogType: "Tail",
-    Payload: JSON.stringify({
-      body: JSON.stringify(body),
-      traceMeta: {
-        parentId: logBaseParams.parentId,
-        traceId: logBaseParams.traceId,
-      },
-    }),
-  };
-}
-
-export function deletePeopleUniqueToImage(
-  existingPeople: IPerson[],
-  imagesForPeople: IPersonWithImages[],
-  logBaseParams: ILoggerBaseParams,
-) {
-  const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, imagesForPeople);
-  const updateParams: InvocationRequest = getInvokeUpdatePeopleParams(updatedPeople, logBaseParams);
-  return lambda.invoke(updateParams).promise();
-}
-
 export function getUpdatedPeople(existingPeople: IPerson[], imagesForPeople: IPersonWithImages[]) {
   const deletePeople = getDeletePeople(imagesForPeople);
   return existingPeople.filter((p) => !deletePeople.find((dp) => dp === p.id));
@@ -236,8 +212,9 @@ export async function deleteItem(event, context, callback) {
     const deleteImageRecordPromise = deleteImageRecord(ddbParams);
     const deleteFacesInImagePromise = deleteFacesInImage(imageRecord);
     const imagesForPeople: IPersonWithImages[] = await queryImagesByPeople(imageRecord, loggerBaseParams);
+    const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, imagesForPeople);
+    const putPeopleResponse = invokePutPeople(updatedPeople, getTraceMeta(loggerBaseParams));
     await Promise.all([
-      deletePeopleUniqueToImage(existingPeople, imagesForPeople, loggerBaseParams),
       deleteFacesInImagePromise,
       deleteImageRecordPromise,
       deleteS3ObjectPromise,
