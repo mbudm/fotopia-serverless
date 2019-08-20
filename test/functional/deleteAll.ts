@@ -56,15 +56,19 @@ export default function deleteAllTests(setupData, api) {
       })
       .catch(formatError);
   });
+  let deleteImages: IImage[];
+  test("delete all test images", (t) => {
+    deleteImages = Array.isArray(images) ? images.filter((img) => {
+      return setupData.records.includes((rec) => rec.img_key === img.img_key);
+    }) : [] ;
 
-  test("delete all images", (t) => {
-    if (Array.isArray(images) && images.length > 0) {
-      Promise.all(images.map((img) => {
+    if (deleteImages.length > 0) {
+      Promise.all(deleteImages.map((img) => {
         const apiPath = getEndpointPath(img);
         return api.del(setupData.apiUrl, apiPath);
       }))
         .then((responseBodies) => {
-          t.equal(responseBodies.length, images.length, "resolved promises same length as images");
+          t.equal(responseBodies.length, deleteImages.length, "resolved promises same length as images");
           t.end();
         })
         .catch(formatError);
@@ -73,7 +77,7 @@ export default function deleteAllTests(setupData, api) {
     }
   });
 
-  test("query all should return no results", (t) => {
+  test("query all should return no results matching test data", (t) => {
     const query: IQueryBody = {
       criteria: {
         people: [],
@@ -87,18 +91,25 @@ export default function deleteAllTests(setupData, api) {
       body: query,
     })
       .then((responseBody) => {
-        const resultAsString = Array.isArray(responseBody) ? "" : responseBody;
-        t.ok(resultAsString.includes("No items found"));
+        if (Array.isArray(responseBody)) {
+          const matchingResults = responseBody.filter((img) => {
+            return setupData.records.includes((rec) => rec.img_key === img.img_key);
+          });
+          t.equal(matchingResults.length, 0, "No results match test images");
+        } else {
+          const resultAsString = Array.isArray(responseBody) ? "" : responseBody;
+          t.ok(resultAsString.includes("No items found"));
+        }
         t.end();
       })
       .catch(formatError);
   });
 
-  test("get people should return no results with the deleted image ids", (t) => {
+  test("get people should return no results with the deleted test image ids", (t) => {
     // const peopleToCheck = images.reduce((accum, img) =>
     //   Array.isArray(img.people) ? accum.concat(img.people) : accum,
     // [] as string[]);
-    const imageIds =  images.map((img) => img.id);
+    const imageIds =  deleteImages.map((img) => img.id);
     api
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
@@ -116,9 +127,9 @@ export default function deleteAllTests(setupData, api) {
       .catch(formatError);
   });
 
-  test("get indexes should return an index object with adjusted counts matching deleted images", (t) => {
-    const testImagesPeople = images.reduce((accum, img) => accum.concat(img.people!), [] as string[]);
-    const testImagesTags = images.reduce((accum, img) => accum.concat(img.tags!), [] as string[]);
+  test("get indexes should return an index object with adjusted counts matching deleted test images", (t) => {
+    const testImagesPeople = deleteImages.reduce((accum, img) => accum.concat(img.people!), [] as string[]);
+    const testImagesTags = deleteImages.reduce((accum, img) => accum.concat(img.tags!), [] as string[]);
 
     const indexAdjustments = {
       people: createIndexAdjustment(testImagesPeople),
