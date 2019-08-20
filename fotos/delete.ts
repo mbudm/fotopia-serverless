@@ -150,7 +150,7 @@ export function parseQueryResponse(invocationResponse: InvocationResponse, image
     const queriedImages: IImage[] = JSON.parse(payload.body);
     return image && image.people && Array.isArray(queriedImages) ?
       getPeopleWithImages(image, queriedImages) :
-      [];
+      getPeopleWithImages(image, []);
   } catch (e) {
     throw new JSONParseError(e, `parseQueryResponse: ${JSON.stringify(invocationResponse)}`);
   }
