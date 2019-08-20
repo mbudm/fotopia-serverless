@@ -58,8 +58,9 @@ export default function deleteAllTests(setupData, api) {
   });
   let deleteImages: IImage[];
   test("delete all test images", (t) => {
+    const setupDataImgKeys = setupData.records.map((rec) => rec.img_key);
     deleteImages = Array.isArray(images) ? images.filter((img) => {
-      return setupData.records.includes((rec) => rec.img_key === img.img_key);
+      return setupDataImgKeys.includes(img.img_key);
     }) : [] ;
 
     if (deleteImages.length > 0) {
@@ -68,7 +69,10 @@ export default function deleteAllTests(setupData, api) {
         return api.del(setupData.apiUrl, apiPath);
       }))
         .then((responseBodies) => {
-          t.equal(responseBodies.length, deleteImages.length, "resolved promises same length as images");
+          t.equal(
+            responseBodies.length,
+            deleteImages.length,
+            `resolved promises same length as delete images (${deleteImages.length})`);
           t.end();
         })
         .catch(formatError);
@@ -114,13 +118,19 @@ export default function deleteAllTests(setupData, api) {
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
         const peopleWithDeletedImageIds = responseBody.filter((p) => {
-          return p.faces.filter((f) => f.ExternalImageId &&
-            imageIds.includes(f.ExternalImageId));
+          const facesWithDeletedImageId = p.faces.filter(
+            (f) => f.ExternalImageId && imageIds.includes(f.ExternalImageId),
+          );
+          return facesWithDeletedImageId.length > 0;
         });
         t.equal(
           peopleWithDeletedImageIds.length,
           0,
-          `all deleted images have been removed from people ${peopleWithDeletedImageIds.toString()}`,
+          `all deleted images (${
+            imageIds.toString()
+          }) have been removed from people ${
+            peopleWithDeletedImageIds.map((p) => p.id).toString()
+          }`,
         );
         t.end();
       })
