@@ -1,6 +1,7 @@
 
 import * as uuid from "uuid";
 import { failure, success } from "./common/responses";
+import { JSONParseError } from "./errors/jsonParse";
 import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
@@ -22,7 +23,33 @@ export function getZeroCount(indexObj) {
 }
 
 export function getObject(s3, s3Params) {
-  return s3.getObject(s3Params).promise();
+  return s3.getObject(s3Params)
+    .promise()
+    .then((s3Object) => {
+      try {
+        if (s3Object.Body) {
+          const bodyString = s3Object.Body.toString();
+          return bodyString ? JSON.parse(bodyString) : [];
+        } else {
+          return [];
+        }
+      } catch (e) {
+        throw new JSONParseError(e, `get indexes ${s3Object.Body.toString()}`);
+      }
+    })
+    .catch((e) => {
+      if (e.code === "NoSuchKey" || e.code === "AccessDenied") {
+        // tslint:disable-next-line:no-console
+        console.log("No object found / AccessDenied - assuming empty indexes");
+        return {
+          people: [],
+          tags: [],
+        };
+      }
+      // tslint:disable-next-line:no-console
+      console.log("Another error with get indexes object", e);
+      throw e;
+    });
 }
 
 export function getLogFields(indexesObj) {
@@ -46,8 +73,7 @@ export async function getItem(event, context, callback) {
     traceId: uuid.v1(),
   };
   try {
-    const s3Object = await getObject(s3, s3Params);
-    const indexesObject = JSON.parse(s3Object.Body.toString());
+    const indexesObject = await getObject(s3, s3Params);
     logger(context, loggerBaseParams, getLogFields(indexesObject));
     return callback(null, success(indexesObject));
   } catch (err) {
