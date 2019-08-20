@@ -169,7 +169,7 @@ export function getUpdatedPeople(existingPeople: IPerson[], imagesForPeople: IPe
   return existingPeople.filter((p) => !deletePeople.find((dp) => dp === p.id));
 }
 
-export function getLogFields(pathParams, imageRecord) {
+export function getLogFields(pathParams, imageRecord, existingPeople, updatedPeople) {
   return {
     imageBirthtime: imageRecord && imageRecord.birthtime,
     imageCreatedAt: imageRecord && imageRecord.createdAt,
@@ -187,6 +187,8 @@ export function getLogFields(pathParams, imageRecord) {
     imageWidth: imageRecord && imageRecord.meta.width,
     paramId: pathParams.id,
     paramUsername: pathParams.username,
+    peopleCount: safeLength(existingPeople),
+    updatedPeopleCount: safeLength(updatedPeople),
   };
 }
 
@@ -219,10 +221,10 @@ export async function deleteItem(event, context, callback) {
       deleteImageRecordPromise,
       deleteS3ObjectPromise,
     ]);
-    logger(context, loggerBaseParams, getLogFields(request, imageRecord));
+    logger(context, loggerBaseParams, getLogFields(request, imageRecord, existingPeople, updatedPeople));
     return callback(null, success(ddbParams.Key));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(event.pathParameters, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(event.pathParameters, null, null, null)});
     return callback(null, failure(err));
   }
 }
