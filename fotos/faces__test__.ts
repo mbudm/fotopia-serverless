@@ -1,8 +1,6 @@
 import { BoundingBox, FaceMatch, FaceMatchList, FaceRecord } from "aws-sdk/clients/rekognition";
 import * as test from "tape";
 import * as uuid from "uuid";
-
-import * as getExistingPeople from "./common/getExistingPeople";
 import * as faces from "./faces";
 
 import {
@@ -114,25 +112,6 @@ const mockFaceMatcher = (originalId: string): Promise<IFaceMatcherCallbackRespon
     SearchedFaceId: originalId,
   }));
 };
-
-test("getExistingPeople", (t) => {
-  const s3 = {
-    getObject: () => ({
-      promise: () => new Promise((res) => res({
-        Body: JSON.stringify(existingPeople),
-      })),
-    }),
-  };
-  try {
-    getExistingPeople.getExistingPeople(s3, "bucket", "key")
-      .then((result) => {
-        t.deepEqual(result, existingPeople, "passes joi validation for peopleSchema");
-        t.end();
-      });
-  } catch (e) {
-    t.fail(e);
-  }
-});
 
 test("getNewImageRecords", (t) => {
   const result = faces.getNewImage(JSON.stringify(newImage));

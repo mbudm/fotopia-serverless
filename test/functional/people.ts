@@ -68,27 +68,14 @@ export default function peopleTests(setupData, api) {
     name: "Jacinta Dias",
   };
 
+  // purposely checking this later (see last test) to allow for latency
   test("updatePerson in image 1", (t) => {
     api
       .put(setupData.apiUrl, `/person/${imageWithOnePerson!.people![0]}`, {
         body: updatedPerson,
       })
       .then((responseBody) => {
-        t.ok(responseBody, "update person in image one ok");
-        t.end();
-      })
-      .catch(formatError);
-  });
-
-  test("getPeople - check updated name", (t) => {
-    api
-      .get(setupData.apiUrl, "/people")
-      .then((responseBody) => {
-        people = responseBody;
-        const personInResponse = responseBody.find(
-          (person) => person.id === imageWithOnePerson!.people![0],
-        );
-        t.equal(personInResponse.name, updatedPerson.name, "updated name in people");
+        t.ok(responseBody, `update person in image one ${imageWithOnePerson!.people![0]} ok`);
         t.end();
       })
       .catch(formatError);
@@ -123,6 +110,13 @@ export default function peopleTests(setupData, api) {
       .catch(formatError);
   });
 
+  test("wait for 3 seconds", (t) => {
+    setTimeout(() => {
+      t.comment("Waited for 3 secs");
+      t.end();
+    }, 3000);
+  });
+
   test("after merge image that had person 1 now has person 0", (t) => {
     const apiPath = getEndpointPath(imageWithFourPeople);
     api
@@ -148,6 +142,26 @@ export default function peopleTests(setupData, api) {
           responseBody.people!.includes(imageWithFourPeople!.people![0]),
           true,
           "image has person 0",
+        );
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  // purposely doing this after name update to allow for latency
+  test("getPeople - check updated name", (t) => {
+    api
+      .get(setupData.apiUrl, "/people")
+      .then((responseBody) => {
+        people = responseBody;
+        const personInResponse = responseBody.find(
+          (person) => person.id === imageWithOnePerson!.people![0],
+        );
+        t.ok(personInResponse, `image one found in people ${imageWithOnePerson!.people![0]} ok`);
+        t.equal(
+          personInResponse.name,
+          updatedPerson.name,
+          `updated name for person 1 ${imageWithOnePerson!.people![0]} in people`,
         );
         t.end();
       })

@@ -1,10 +1,20 @@
 import { Rekognition } from "aws-sdk";
+import {
+  InvocationRequest,
+  InvocationResponse,
+} from "aws-sdk/clients/lambda";
+import {
+  DeleteFacesRequest,
+  DeleteFacesResponse,
+} from "aws-sdk/clients/rekognition";
 import * as uuid from "uuid";
-
-import { getExistingPeople } from "./common/getExistingPeople";
-import { putPeople } from "./common/putPeople";
+import { getTraceMeta } from "./common/getTraceMeta";
+import invokeGetPeople from "./common/invokeGetPeople";
 import { failure, success } from "./common/responses";
-import { getTraceMeta, replicateAuthKey, safeLength } from "./create";
+import { replicateAuthKey, safeLength } from "./create";
+import { DeleteObjectError } from "./errors/deleteObject";
+import { DeleteRecordError } from "./errors/deleteRecord";
+import { JSONParseError } from "./errors/jsonParse";
 import { getDynamoDbParams } from "./get";
 import { INVOCATION_REQUEST_RESPONSE, PEOPLE_KEY } from "./lib/constants";
 import dynamodb from "./lib/dynamodb";
@@ -20,19 +30,6 @@ import {
   IQueryBody,
   ITraceMeta,
 } from "./types";
-
-import {
-  DeleteFacesRequest,
-  DeleteFacesResponse,
-} from "aws-sdk/clients/rekognition";
-
-import {
-  InvocationRequest,
-  InvocationResponse,
-} from "aws-sdk/clients/lambda";
-import { DeleteObjectError } from "./errors/deleteObject";
-import { DeleteRecordError } from "./errors/deleteRecord";
-import { JSONParseError } from "./errors/jsonParse";
 
 export function getS3Params(imageRecord: IImage) {
   if (imageRecord && imageRecord.img_key) {
@@ -220,7 +217,6 @@ export function getLogFields(pathParams, imageRecord) {
 export async function deleteItem(event, context, callback) {
   const startTime = Date.now();
   const s3 = createS3Client();
-  const bucket = process.env.S3_BUCKET;
   const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
@@ -233,7 +229,7 @@ export async function deleteItem(event, context, callback) {
     const request: IPathParameters = event.pathParameters;
     const params = getInvokeGetParams(request);
     const imageRecord: IImage = await invokeGetImageRecord(params);
-    const existingPeople: IPerson[] = await getExistingPeople(s3, bucket, PEOPLE_KEY);
+    const existingPeople: IPerson[] = await invokeGetPeople();
     const s3Params = getS3Params(imageRecord);
     const deleteS3ObjectPromise = deleteObject(s3, s3Params);
     const ddbParams = getDynamoDbParams(request);

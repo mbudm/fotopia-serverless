@@ -110,6 +110,7 @@ functions:
   create:
     handler: fotos/create.createItem
     memorySize: 128
+    timeout: 10
     events:
       - http:
           path: create
@@ -155,6 +156,7 @@ functions:
   delete:
     handler: fotos/delete.deleteItem
     memorySize: 128
+    timeout: 20
     events:
       - http:
           path: foto/{username}/{id}
