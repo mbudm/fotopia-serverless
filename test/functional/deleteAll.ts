@@ -56,6 +56,7 @@ export default function deleteAllTests(setupData, api) {
       })
       .catch(formatError);
   });
+
   let deleteImages: IImage[];
   test("delete all test images", (t) => {
     const setupDataImgKeys = setupData.records.map((rec) => rec.img_key);
