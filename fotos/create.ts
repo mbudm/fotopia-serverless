@@ -1,6 +1,20 @@
 
+import { APIGatewayProxyEvent, Callback , Context } from "aws-lambda";
+import { AWSError } from "aws-sdk";
+import { InvocationRequest } from "aws-sdk/clients/lambda";
+import {
+  DetectLabelsRequest,
+  DetectLabelsResponse,
+  FaceRecord,
+  IndexFacesRequest,
+  IndexFacesResponse,
+} from "aws-sdk/clients/rekognition";
+import {
+  DocumentClient as DocClient,
+} from "aws-sdk/lib/dynamodb/document_client.d";
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
+import getTableName from "./common/getTableName";
 import { getTraceMeta } from "./common/getTraceMeta";
 import { failure, success } from "./common/responses";
 import { IndexFacesError } from "./errors/indexFaces";
@@ -15,28 +29,28 @@ import {
   ILoggerCreateParams,
 } from "./types";
 
-const fotopiaGroup = process.env.FOTOPIA_GROUP || "";
+const fotopiaGroup: string = process.env.FOTOPIA_GROUP || "";
 export const THUMB_SUFFIX = "-thumbnail";
 
-export function replicateAuthKey(imgKey, userIdentityId) {
+export function replicateAuthKey(imgKey: string, userIdentityId: string): string {
   return process.env.IS_OFFLINE ?
     imgKey :
     `protected/${userIdentityId}/${imgKey}`;
 }
 
-export function safeLength(arr) {
+export function safeLength(arr: any[]): number {
   return Array.isArray(arr) ? arr.length : 0;
 }
 
-export function getTagsFromRekognitionLabels(labels) {
+export function getTagsFromRekognitionLabels(labels: DetectLabelsResponse): string[] {
   return labels && labels.Labels && Array.isArray(labels.Labels) ?
-    labels.Labels.map((label) => label.Name) :
+    labels.Labels.filter((label) => label.Name).map((label) => label.Name!) :
     [];
 }
-export function getLogFields(request, dbItem, faces, labels): ILoggerCreateParams {
+export function getLogFields(request, dbItem?, faces?, labels?: DetectLabelsResponse): ILoggerCreateParams {
   return {
     createIdentifiedFacesCount: safeLength(faces),
-    createIdentifiedLabelsCount: safeLength(getTagsFromRekognitionLabels(labels)),
+    createIdentifiedLabelsCount: labels ? safeLength(getTagsFromRekognitionLabels(labels)) : 0,
     createPayloadTagCount: safeLength(request.tags),
     imageBirthtime: dbItem && dbItem.birthtime || request.birthtime,
     imageCreatedAt: dbItem && dbItem.createdAt,
@@ -54,17 +68,13 @@ export function getLogFields(request, dbItem, faces, labels): ILoggerCreateParam
   };
 }
 
-export function validateRequest(data) {
-  return data;
-}
-
-export function createThumbKey(key) {
+export function createThumbKey(key: string): string {
   const keySplit = key.split(".");
   const ext = keySplit[keySplit.length - 1];
   return `${key.substr(0, key.lastIndexOf(ext) - 1)}${THUMB_SUFFIX}.${ext}`;
 }
 
-export function getInvokeThumbnailsParams(data, loggerBaseParams: ILoggerBaseParams) {
+export function getInvokeThumbnailsParams(data: ICreateBody, loggerBaseParams: ILoggerBaseParams): InvocationRequest {
   const authKey = replicateAuthKey(data.img_key, data.userIdentityId);
   return {
     FunctionName: process.env.IS_OFFLINE ? "thumbs" : `${process.env.LAMBDA_PREFIX}thumbs`,
@@ -81,38 +91,42 @@ export function getInvokeThumbnailsParams(data, loggerBaseParams: ILoggerBasePar
     }),
   };
 }
-export function getPeopleFromRekognitionFaces(faces) {
-  return faces && faces.FaceRecords && Array.isArray(faces.FaceRecords) ?
-    faces.FaceRecords.map((faceRecord) => faceRecord.Face.FaceId) :
-    [];
-}
 
-export function getDynamoDbParams(data, id, group, faces, labels) {
-  const timestamp = new Date().getTime();
-
-  const tags = [...data.tags, ...getTagsFromRekognitionLabels(labels)];
-
+export function getDynamoDbParams(
+  data: ICreateBody,
+  id: string,
+  group: string,
+  faces: FaceRecord[],
+  labels: DetectLabelsResponse,
+): DocClient.PutItemInput {
+  const timestamp: number = new Date().getTime();
+  const tags: string[] = [...data.tags, ...getTagsFromRekognitionLabels(labels)];
   return {
     Item: {
       birthtime: new Date(data.birthtime).getTime(),
       createdAt: timestamp,
-      faces: (faces || []), // prob null from rekognition error, hack for now
+      faces, // prob null from rekognition error, hack for now
       group,
       id,
       img_key: data.img_key, // s3 object key
       img_thumb_key: createThumbKey(data.img_key),
       meta: data.meta, // whatever metadata we've got for this item
-      people: [],
+      people: new Array<string>(),
       tags,
       updatedAt: timestamp,
       userIdentityId: data.userIdentityId,
       username: data.username,
     },
-    TableName: process.env.DYNAMODB_TABLE || "",
+    TableName: getTableName(),
   };
 }
 
-export function logRekognitionError(e, data, id, indexFacesParams, context, loggerBaseParams) {
+export function parseRekognitionError(
+  e: AWSError,
+  data: ICreateBody,
+  id: string,
+  indexFacesParams: IndexFacesRequest,
+): Promise<FaceRecord[]> {
   if (e.code && e.code === "ResourceNotFoundException") {
     const params = {
       CollectionId: fotopiaGroup,
@@ -120,15 +134,17 @@ export function logRekognitionError(e, data, id, indexFacesParams, context, logg
     return rekognition.createCollection(params)
       .promise()
       // eslint-disable-next-line
-      .then(() => getRekognitionFaceData(data, id, context, loggerBaseParams));
+      .then(() => getRekognitionFaceData(data, id));
+  } else {
+    throw new IndexFacesError(e, indexFacesParams);
   }
-  const err =  new IndexFacesError(e, indexFacesParams);
-  logger(context, {...loggerBaseParams, name: "logRekognitionError" }, { err, ...getLogFields(data, { id }, [], []) });
-  return null;
 }
 
-export function getRekognitionFaceData(data, id, context, loggerBaseParams: ILoggerBaseParams) {
-  const params = {
+export function getRekognitionFaceData(
+  data: ICreateBody,
+  id: string,
+): Promise<FaceRecord[]> {
+  const params: IndexFacesRequest = {
     CollectionId: fotopiaGroup,
     DetectionAttributes: [
     ],
@@ -140,19 +156,16 @@ export function getRekognitionFaceData(data, id, context, loggerBaseParams: ILog
       },
     },
   };
-  return rekognition ?
-    rekognition.indexFaces(params)
-      .promise()
-      .then((response) => response.FaceRecords)
-      .catch((e) => logRekognitionError(e, data, id, params, context, loggerBaseParams)) :
-    [];
-  // sometimes getting a object not found error - img
-  // should be avail as create happens after upload is complete
-  // perhaps everything should be evented?
+  return rekognition.indexFaces(params)
+    .promise()
+    .then((response: IndexFacesResponse) => response.FaceRecords || Array<FaceRecord>())
+    .catch((e) => {
+      return parseRekognitionError(e, data, id, params);
+    });
 }
 
-export function getRekognitionLabelData(data) {
-  const params = {
+export function getRekognitionLabelData(data): Promise<DetectLabelsResponse> {
+  const params: DetectLabelsRequest = {
     Image: {
       S3Object: {
         Bucket: process.env.S3_BUCKET,
@@ -162,13 +175,14 @@ export function getRekognitionLabelData(data) {
     MaxLabels: 30,
     MinConfidence: 80,
   };
-  return rekognition ?
-    rekognition.detectLabels(params)
-      .promise() :
-    [];
+  return rekognition.detectLabels(params)
+    .promise();
 }
 
-export function getInvokeFacesParams(ddbParams, loggerBaseParams: ILoggerBaseParams) {
+export function getInvokeFacesParams(
+  ddbParams: DocClient.PutItemInput,
+  loggerBaseParams: ILoggerBaseParams,
+): InvocationRequest {
   return {
     FunctionName: process.env.IS_OFFLINE ? "faces" : `${process.env.LAMBDA_PREFIX}faces`,
     InvocationType: INVOCATION_EVENT,
@@ -182,35 +196,10 @@ export function getInvokeFacesParams(ddbParams, loggerBaseParams: ILoggerBasePar
   };
 }
 
-export function getInvokeStreamParams(ddbParams) {
-  return {
-    FunctionName: "stream",
-    InvocationType: INVOCATION_REQUEST_RESPONSE,
-    LogType: "Tail",
-    Payload: JSON.stringify({
-      Records: [
-        {
-          dynamodb: {
-            Keys: {
-              id: {
-                S: ddbParams.Item.id,
-              },
-              username: {
-                S: ddbParams.Item.username,
-              },
-            },
-            NewImage: ddbAttVals.wrap(ddbParams.Item),
-          },
-        },
-      ],
-    }),
-  };
-}
-
-export async function createItem(event, context, callback) {
+export async function createItem(event: APIGatewayProxyEvent, context: Context, callback: Callback) {
   const startTime = Date.now();
   const id = uuid.v1();
-  const data: ICreateBody = JSON.parse(event.body);
+  const data: ICreateBody = event.body ? JSON.parse(event.body) : undefined;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "createItem",
@@ -221,28 +210,23 @@ export async function createItem(event, context, callback) {
   try {
     const invokeParams = getInvokeThumbnailsParams(data, loggerBaseParams);
     const thumbPromise = lambda.invoke(invokeParams).promise();
-    const facesPromise = getRekognitionFaceData(data, id, context, loggerBaseParams);
+    const facesPromise = getRekognitionFaceData(data, id);
     const labelsPromise = getRekognitionLabelData(data);
 
-    await thumbPromise;
-    const faces = await facesPromise;
-    const labels = await labelsPromise;
+    await thumbPromise; // do we need to wait for this? could probably change this to an event invoke
+    const faces: FaceRecord[] = await facesPromise;
+    const labels: DetectLabelsResponse = await labelsPromise;
 
-    const ddbParams = getDynamoDbParams(data, id, fotopiaGroup, faces, labels);
+    const ddbParams: DocClient.PutItemInput = getDynamoDbParams(data, id, fotopiaGroup, faces, labels);
     await dynamodb.put(ddbParams).promise();
 
     const facesParams = getInvokeFacesParams(ddbParams, loggerBaseParams);
     lambda.invoke(facesParams).promise();
 
-    if (process.env.IS_OFFLINE) {
-      const streamParams = getInvokeStreamParams(ddbParams);
-      const streamPromise = lambda.invoke(streamParams).promise();
-      await streamPromise;
-    }
     logger(context, loggerBaseParams, getLogFields(data, ddbParams.Item, faces, labels));
     return callback(null, success(ddbParams.Item));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(data, { id }, [], []) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(data, { id }) });
     return callback(null, failure(err));
   }
 }

@@ -1,14 +1,19 @@
+import { DetectLabelsResponse, FaceRecord } from "aws-sdk/clients/rekognition";
 import * as test from "tape";
 import * as uuid from "uuid";
 import * as create from "./create";
+import { ICreateBody } from "./types";
 
 const username = "jethro";
 
-const requestBody = {
+const requestBody: ICreateBody = {
   birthtime: 123,
   img_key: `${username}/me.jpg`,
-  people: ["Bob"],
-  tags: [],
+  meta: {
+    height: 200,
+    width: 100,
+  },
+  tags: ["blue"],
   userIdentityId: username,
   username,
 };
@@ -16,16 +21,6 @@ const requestBody = {
 const recordId = uuid.v1();
 
 const fotopiaGroup = "my-group";
-
-test("validateRequest", (t) => {
-  try {
-    const result = create.validateRequest(requestBody);
-    t.deepEqual(result, requestBody);
-    t.end();
-  } catch (e) {
-    t.fail(e);
-  }
-});
 
 test("createThumbKey - safe filename", (t) => {
   const key = "username/somefile.jpg";
@@ -53,35 +48,17 @@ test("createThumbKey - filename with space", (t) => {
 
 test("getDynamoDbParams", (t) => {
   process.env.DYNAMODB_TABLE = "TABLE";
+  const faces: FaceRecord[] = [];
+  const labels: DetectLabelsResponse = {
+    Labels: [],
+  };
   try {
-    const params = create.getDynamoDbParams(requestBody, recordId, fotopiaGroup, [], []);
+    const params = create.getDynamoDbParams(requestBody, recordId, fotopiaGroup, faces, labels);
     t.deepEqual(params.Item.username, requestBody.username);
     t.end();
   } catch (e) {
     t.fail(e);
   }
-});
-
-test("getPeopleFromRekognitionFaces", (t) => {
-  const faces = {
-    FaceModelVersion: "3.0",
-    FaceRecords: [
-      {
-        Face: {
-          FaceId: "f81bb045-9d24-4d0b-a928-b0267cbbd7c6",
-        },
-      },
-      {
-        Face: {
-          FaceId: "8b637e73-da25-4a2e-8e21-2cea38217fd6",
-        },
-      },
-    ],
-  };
-  const result = create.getPeopleFromRekognitionFaces(faces);
-  t.equal(result.length, 2);
-  t.equal(result[0], faces.FaceRecords[0].Face.FaceId);
-  t.end();
 });
 
 test("getTagsFromRekognitionLabels", (t) => {
@@ -115,14 +92,11 @@ test("getTagsFromRekognitionLabels", (t) => {
   t.end();
 });
 
-test("getPeopleFromRekognitionFaces  null arg", (t) => {
-  const result = create.getPeopleFromRekognitionFaces([]);
-  t.deepEqual(result, []);
-  t.end();
-});
-
 test("getTagsFromRekognitionLabels null arg", (t) => {
-  const result = create.getTagsFromRekognitionLabels([]);
+  const labels: DetectLabelsResponse = {
+    Labels: [],
+  };
+  const result = create.getTagsFromRekognitionLabels(labels);
   t.deepEqual(result, []);
   t.end();
 });
