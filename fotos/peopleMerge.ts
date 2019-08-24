@@ -79,7 +79,7 @@ export function getInvokeQueryParams(
     to: Date.now(),
   };
   return {
-    FunctionName: process.env.IS_OFFLINE ? "query" : `${process.env.LAMBDA_PREFIX}query`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}query`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
@@ -115,7 +115,7 @@ export function getInvokeUpdateParams(
   loggerBaseParams: ILoggerBaseParams,
 ): InvocationRequest {
   return {
-    FunctionName: process.env.IS_OFFLINE ? "update" : `${process.env.LAMBDA_PREFIX}update`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}update`,
     InvocationType: INVOCATION_EVENT,
     LogType: "Tail",
     Payload: JSON.stringify({

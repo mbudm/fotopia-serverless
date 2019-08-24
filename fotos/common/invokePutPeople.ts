@@ -9,7 +9,7 @@ import {
 
 export function getInvokeUpdateParams(body: IPerson[], traceMeta): InvocationRequest {
   return {
-    FunctionName: process.env.IS_OFFLINE ? "peopleUpdate" : `${process.env.LAMBDA_PREFIX}peopleUpdate`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}peopleUpdate`,
     InvocationType: INVOCATION_EVENT,
     LogType: "Tail",
     Payload: JSON.stringify({

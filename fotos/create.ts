@@ -33,9 +33,7 @@ const fotopiaGroup: string = process.env.FOTOPIA_GROUP || "";
 export const THUMB_SUFFIX = "-thumbnail";
 
 export function replicateAuthKey(imgKey: string, userIdentityId: string): string {
-  return process.env.IS_OFFLINE ?
-    imgKey :
-    `protected/${userIdentityId}/${imgKey}`;
+  return `protected/${userIdentityId}/${imgKey}`;
 }
 
 export function safeLength(arr?: any[]): number {
@@ -77,7 +75,7 @@ export function createThumbKey(key: string): string {
 export function getInvokeThumbnailsParams(data: ICreateBody, loggerBaseParams: ILoggerBaseParams): InvocationRequest {
   const authKey = replicateAuthKey(data.img_key, data.userIdentityId);
   return {
-    FunctionName: process.env.IS_OFFLINE ? "thumbs" : `${process.env.LAMBDA_PREFIX}thumbs`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}thumbs`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
@@ -184,7 +182,7 @@ export function getInvokeFacesParams(
   loggerBaseParams: ILoggerBaseParams,
 ): InvocationRequest {
   return {
-    FunctionName: process.env.IS_OFFLINE ? "faces" : `${process.env.LAMBDA_PREFIX}faces`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}faces`,
     InvocationType: INVOCATION_EVENT,
     LogType: "Tail",
     Payload: JSON.stringify({
