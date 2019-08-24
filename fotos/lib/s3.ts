@@ -1,6 +1,6 @@
 import { config, Endpoint, S3 } from "aws-sdk";
 
-export default function createS3Client() {
+export default function createS3Client(): S3 {
   let options = {};
 
   // connect to local s3 if running offline

@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import { FaceMatch, FaceMatchList } from "aws-sdk/clients/rekognition";
 import { SearchFacesRequest } from "aws-sdk/clients/rekognition";
+import * as Sharp from "sharp";
 import * as uuid from "uuid";
 import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
@@ -12,15 +13,14 @@ import {
   EXIF_ORIENT,
   INVOCATION_EVENT,
   INVOCATION_REQUEST_RESPONSE,
-  PEOPLE_KEY,
 } from "./lib/constants";
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import rekognition from "./lib/rekognition";
-import createS3Client from "./lib/s3";
 import { getDims } from "./personThumb";
 import {
   IFace,
+  IFaceDimensions,
   IFaceMatcherCallback,
   IFaceMatcherCallbackResponse,
   IFaceWithPeople,
@@ -86,7 +86,8 @@ export function getNewImage(body: string): IImage {
 export function getPeopleForFaces(
   newImage: IImage,
   existingPeople: IPerson[],
-  faceMatcher: IFaceMatcherCallback): Promise<IFaceWithPeople[]> {
+  faceMatcher: IFaceMatcherCallback,
+): Promise<IFaceWithPeople[]> {
   return Promise.all(newImage.faces!
     .map((face) => faceMatcher(face.Face!.FaceId || "")
       .then(({ FaceMatches, SearchedFaceId }) => {
@@ -132,9 +133,13 @@ export function createPersonThumbKey(newFace: IFaceWithPeople): string {
   return `${key}${PERSON_THUMB_SUFFIX}-${newFace.FaceId}.${ext}`;
 }
 
-export function filterNewPeopleThatAreTooSmall(newPeople) {
+export function filterNewPeopleThatAreTooSmall(newPeople: IPerson[]): IPerson[] {
   return newPeople.filter((person) => {
-    const dims = getDims(person, EXIF_ORIENT.TOP_LEFT);
+    const mockSharpMeta: Sharp.Metadata = {
+      chromaSubsampling: "4:2:0",
+      orientation: EXIF_ORIENT.TOP_LEFT,
+    };
+    const dims: IFaceDimensions = getDims(person, mockSharpMeta);
     return dims.width >= PERSON_THUMB_MIN;
   });
 }
@@ -159,9 +164,9 @@ export function getNewPeople(facesWithPeople: IFaceWithPeople[]): IPerson[] {
 }
 
 export function getInvokePersonThumbParams(
-    personInThisImage: IPerson,
-    logBaseParams: ILoggerBaseParams,
-  ): InvocationRequest {
+  personInThisImage: IPerson,
+  logBaseParams: ILoggerBaseParams,
+): InvocationRequest {
   return {
     FunctionName: process.env.IS_OFFLINE ? "personThumb" : `${process.env.LAMBDA_PREFIX}personThumb`,
     InvocationType: INVOCATION_EVENT,
@@ -178,7 +183,7 @@ export function getInvokePersonThumbParams(
   };
 }
 
-export function invokePeopleThumbEvents(newPeopleInThisImage: IPerson[], logBaseParams: ILoggerBaseParams) {
+export function invokePeopleThumbEvents(newPeopleInThisImage: IPerson[], logBaseParams: ILoggerBaseParams): void {
   newPeopleInThisImage.forEach((person) => {
     const newPersonThumbParams: InvocationRequest = getInvokePersonThumbParams(person, logBaseParams);
     lambda.invoke(newPersonThumbParams).promise();
@@ -197,17 +202,17 @@ export function getUpdatedPeople(
 }
 
 export function getUpdateBody(peopleForTheseFaces: IFaceWithPeople[], updatedPeople: IPerson[]): IUpdateBody {
-  const existingPeople = peopleForTheseFaces.map((face) => face.People
+  const existingPeopleIds: string[] = peopleForTheseFaces.map((face) => face.People
     .filter((person) => person.Match >= MATCH_THRESHOLD)
     .map((person) => person.Person))
     .filter((peopleForFace) => peopleForFace.length > 0)
     .reduce((allPeopleForFaces, peopleForFace) => allPeopleForFaces.concat(peopleForFace), []);
 
-  const combinedPeople: string[] = existingPeople.concat(updatedPeople.map((newPerson) => newPerson.id));
-  const uniquePeople: string[] = [...new Set(combinedPeople)];
+  const combinedPeopleIds: string[] = existingPeopleIds.concat(updatedPeople.map((newPerson) => newPerson.id));
+  const uniquePeopleIds: string[] = [...new Set(combinedPeopleIds)];
   return {
     faceMatches: peopleForTheseFaces,
-    people: uniquePeople,
+    people: uniquePeopleIds,
   };
 }
 export function getUpdatePathParameters(newImage: IImage): IPathParameters {
@@ -217,7 +222,7 @@ export function getUpdatePathParameters(newImage: IImage): IPathParameters {
   };
 }
 
-export function getInvokeUpdateParams(pathParameters, body): InvocationRequest {
+export function getInvokeUpdateParams(pathParameters: IPathParameters, body: IUpdateBody): InvocationRequest {
   return {
     FunctionName: process.env.IS_OFFLINE ? "update" : `${process.env.LAMBDA_PREFIX}update`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
@@ -266,10 +271,7 @@ export function getLogFields({
 export async function addToPerson(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime: number = Date.now();
   const eventBodyObj = event.body ? JSON.parse(event.body) : null;
-  const newImage = eventBodyObj.image;
-  const s3 = createS3Client();
-  const bucket: string | undefined = process.env.S3_BUCKET;
-  const key: string | undefined = PEOPLE_KEY;
+  const newImage: IImage = eventBodyObj.image;
   const logBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "addToPerson",
@@ -291,7 +293,7 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
     const updateBody: IUpdateBody = getUpdateBody(facesWithPeople, newPeopleThatAreOkSize);
     const updateParams: InvocationRequest = getInvokeUpdateParams(pathParameters, updateBody);
     await lambda.invoke(updateParams).promise();
-    const logMetaParams = {
+    const logMetaParams: ILoggerFacesParams = {
       existingPeople,
       facesWithPeople,
       newImage,

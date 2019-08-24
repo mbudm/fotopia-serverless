@@ -3,9 +3,8 @@ import {
   Context,
   DynamoDBRecord,
   DynamoDBStreamEvent,
-  StreamRecord,
 } from "aws-lambda";
-import { GetObjectOutput } from "aws-sdk/clients/s3";
+import { GetObjectRequest, PutObjectOutput } from "aws-sdk/clients/s3";
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 
@@ -16,30 +15,45 @@ import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 
+import { S3 } from "aws-sdk";
+import getS3Bucket from "./common/getS3Bucket";
 import { safeLength } from "./create";
+import { JSONParseError } from "./errors/jsonParse";
 import { getZeroCount } from "./indexes";
 import {
-  ILoggerBaseParams,
+  IIndex, IIndexFields, ILoggerBaseParams,
 } from "./types";
 
-let s3;
+let s3: S3;
 
-export function getExistingIndex(): Promise<GetObjectOutput> {
-  const s3Params = getS3Params(process.env.S3_BUCKET, INDEXES_KEY);
+export function getExistingIndex(): Promise<IIndex> {
+  const bucket = getS3Bucket();
+  const s3Params: GetObjectRequest = getS3Params(bucket, INDEXES_KEY);
   return s3.getObject(s3Params).promise()
-    .then((s3Object) => JSON.parse(s3Object.Body.toString()))
+    .then((s3Object) => {
+      try {
+        if (s3Object.Body) {
+          const parsed: IIndex = JSON.parse(s3Object.Body.toString());
+          return parsed;
+        } else {
+          return { tags: {}, people: {} };
+        }
+      } catch (e) {
+        throw new JSONParseError(e, `getExistingIndex ${s3Object.Body && s3Object.Body.toString()}`);
+      }
+    })
     .catch((error) => ({ error, tags: {}, people: {} }));
 }
 
-export function normaliseArrayFields(record: DynamoDBRecord) {
-  const arrayFields = {
+export function normaliseArrayFields(record: DynamoDBRecord): IIndexFields {
+  const arrayFields: IIndexFields = {
     people: {
-      new: new Array<any>(),
-      old: new Array<any>(),
+      new: [],
+      old: [],
     },
     tags: {
-      new: new Array<any>(),
-      old: new Array<any>(),
+      new: [],
+      old: [],
     },
   };
   if (record && record.dynamodb) {
@@ -57,7 +71,7 @@ export function normaliseArrayFields(record: DynamoDBRecord) {
   return arrayFields;
 }
 
-export function parseIndexes(records) {
+export function parseIndexes(records: DynamoDBRecord[]): IIndex {
   return records.reduce((indexes, record) => {
     const updatedIndexes = { ...indexes };
     const arrayFields = normaliseArrayFields(record);
@@ -89,8 +103,11 @@ for another taxoniomy if we adds one
 could also make tags have an array of images to make for more accuarte counts (and easier auditing)
 */
 
-export function updateCounts(existing, newUpdates) {
-  const updated = {};
+export function updateCounts(existing: IIndex, newUpdates: IIndex) {
+  const updated: IIndex = {
+    people: {},
+    tags: {},
+  };
   ["tags", "people"].forEach((key) => {
     updated[key] = { ...existing[key] };
     Object.keys(newUpdates[key]).forEach((item) => {
@@ -102,18 +119,18 @@ export function updateCounts(existing, newUpdates) {
   return updated;
 }
 
-export function getUpdatedIndexes(existing, newRecords) {
-  const updates = parseIndexes(newRecords);
+export function getUpdatedIndexes(existing: IIndex, newRecords: DynamoDBRecord[]): IIndex {
+  const updates: IIndex = parseIndexes(newRecords);
   return updateCounts(existing, updates);
 }
 
-export function putIndex(index) {
-  const s3PutParams = getS3PutParams(index, process.env.S3_BUCKET, INDEXES_KEY);
+export function putIndex(index: IIndex): Promise<PutObjectOutput> {
+  const s3PutParams = getS3PutParams(index, INDEXES_KEY);
   return s3.putObject(s3PutParams).promise();
 }
 
-export function getLogFields(records, existingIndex, updatedIndexes) {
-  const firstRecord = ddbAttVals.unwrap(records[0].dynamodb.NewImage);
+export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, updatedIndexes?: IIndex) {
+  const firstRecord = ddbAttVals.unwrap(records[0].dynamodb!.NewImage);
   return {
     ddbEventRecordsCount: safeLength(records),
     ddbEventRecordsRaw: records,
@@ -153,13 +170,13 @@ export async function indexRecords(event: DynamoDBStreamEvent, context: Context,
     traceId: uuid.v1(),
   };
   try {
-    const existingIndex = await getExistingIndex();
-    const updatedIndexes = getUpdatedIndexes(existingIndex, event.Records);
-    const response = await putIndex(updatedIndexes);
+    const existingIndex: IIndex = await getExistingIndex();
+    const updatedIndexes: IIndex = getUpdatedIndexes(existingIndex, event.Records);
+    const response: PutObjectOutput = await putIndex(updatedIndexes);
     logger(context, loggerBaseParams, getLogFields(event.Records, existingIndex, updatedIndexes));
     return callback(null, success(response));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(event.Records, null, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(event.Records) });
     return callback(null, failure(err));
   }
 }

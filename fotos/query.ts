@@ -10,6 +10,9 @@ import {
   PromiseResult,
 } from "aws-sdk/lib/request";
 
+import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import { Context } from "vm";
+import getTableName from "./common/getTableName";
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
 import dynamodb from "./lib/dynamodb";
@@ -17,10 +20,12 @@ import logger from "./lib/logger";
 import {
   ILoggerBaseParams,
   IQueryBody,
+  IQueryBodyCriteria,
   IQueryResponse,
+  ITraceMeta,
 } from "./types";
 
-export const getUserDynamoDbParams = (data: IQueryBody) => {
+export const getUserDynamoDbParams = (data: IQueryBody): DocClient.QueryInput => {
   const params = {
     ExpressionAttributeNames: {
       "#birthtime": "birthtime",
@@ -34,12 +39,12 @@ export const getUserDynamoDbParams = (data: IQueryBody) => {
     IndexName: "UsernameBirthtimeIndex",
     KeyConditionExpression: "#username = :username AND #birthtime BETWEEN :from AND :to",
     ProjectionExpression: "#birthtime, #username, id, meta, people, tags, img_location, img_key, img_thumb_key",
-    TableName: process.env.DYNAMODB_TABLE,
+    TableName: getTableName(),
   };
   return params;
 };
 
-export const getGroupDynamoDbParams = (data: IQueryBody) => {
+export const getGroupDynamoDbParams = (data: IQueryBody): DocClient.QueryInput => {
   const params = {
     ExpressionAttributeNames: {
       "#birthtime": "birthtime",
@@ -54,22 +59,22 @@ export const getGroupDynamoDbParams = (data: IQueryBody) => {
     KeyConditionExpression: "#group = :group AND #birthtime BETWEEN :from AND :to",
     // tslint:disable-next-line:max-line-length
     ProjectionExpression: "#group, #birthtime, username, userIdentityId, id, meta, people, tags, img_key, img_thumb_key",
-    TableName: process.env.DYNAMODB_TABLE,
+    TableName: getTableName(),
   };
   return params;
 };
 
-export const getDynamoDbParams = (data: IQueryBody) => {
+export const getDynamoDbParams = (data: IQueryBody): DocClient.QueryInput => {
   if (data.username) {
     return getUserDynamoDbParams(data);
   }
   return getGroupDynamoDbParams(data);
 };
-export const hasCriteria = (criteria = {}) =>
+export const hasCriteria = (criteria?: IQueryBodyCriteria): boolean => criteria !== undefined &&
   Object.keys(criteria).every((key) => Array.isArray(criteria[key])) &&
   Object.keys(criteria).some((key) => criteria[key].length > 0);
 
-export const filterByCriteria = (item: IQueryResponse, criteriaKey, criteriaData): boolean =>
+export const filterByCriteria = (item: IQueryResponse, criteriaKey: string, criteriaData: string[]): boolean =>
   criteriaData.some((criteriaDataItem) => item[criteriaKey].includes(criteriaDataItem));
 
 export const filterItemsByCriteria = (items: IQueryResponse[], data: IQueryBody): IQueryResponse[] =>
@@ -91,9 +96,21 @@ export function queryDatabase(ddbParams): Promise<PromiseResult<DocClient.QueryO
   return dynamodb.query(ddbParams).promise();
 }
 
-export function getLogFields(data: IQueryBody, ddbResponse, responseBody) {
+export function validateQueryBody(data: IQueryBody) {
+  if (data.username && Number.isInteger(data.from) && Number.isInteger(data.to)) {
+    return data;
+  } else {
+    throw new Error(
+      `Query body is not valid, needs at least a username and a numeric from/to value: ${JSON.stringify(data)}`,
+    );
+  }
+}
+
+export function getLogFields(
+  data: IQueryBody, ddbResponse?: DocClient.QueryOutput, responseBody?: IQueryResponse[] | string,
+) {
   return {
-    queryFilteredCount: safeLength(responseBody),
+    queryFilteredCount: Array.isArray(responseBody) ? responseBody.length : 0,
     queryFiltersPeopleCount: data.criteria && safeLength(data.criteria.people),
     queryFiltersTagsCount: data.criteria && safeLength(data.criteria.tags),
     queryFromDate: data.from,
@@ -102,10 +119,10 @@ export function getLogFields(data: IQueryBody, ddbResponse, responseBody) {
   };
 }
 
-export async function queryItems(event, context, callback) {
-  const startTime = Date.now();
-  const data: IQueryBody = JSON.parse(event.body);
-  const traceMeta = data!.traceMeta;
+export async function queryItems(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
+  const startTime: number = Date.now();
+  const data: IQueryBody = event.body && JSON.parse(event.body);
+  const traceMeta: ITraceMeta | undefined = data!.traceMeta;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "queryItems",
@@ -114,13 +131,14 @@ export async function queryItems(event, context, callback) {
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {
-    const ddbParams = getDynamoDbParams(data);
+    const validatedQueryBody: IQueryBody = validateQueryBody(data);
+    const ddbParams: DocClient.QueryInput = getDynamoDbParams(validatedQueryBody);
     const ddbResponse: DocClient.QueryOutput = await queryDatabase(ddbParams);
-    const responseBody = getResponseBody(ddbResponse, data);
-    logger(context, loggerBaseParams, getLogFields(data, ddbResponse, responseBody));
+    const responseBody: IQueryResponse[] | string = getResponseBody(ddbResponse, validatedQueryBody);
+    logger(context, loggerBaseParams, getLogFields(validatedQueryBody, ddbResponse, responseBody));
     return callback(null, success(responseBody));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(data, null, null) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(data) });
     return callback(null, failure(err));
   }
 }

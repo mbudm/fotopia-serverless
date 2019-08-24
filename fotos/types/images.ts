@@ -1,9 +1,10 @@
-import { FaceRecord } from "aws-sdk/clients/rekognition";
+import { FaceMatch, FaceRecord } from "aws-sdk/clients/rekognition";
 
 export interface IImage {
   birthtime: number;
   createdAt?: number;
   faces?: FaceRecord[];
+  faceMatches?: FaceMatch[];
   group: string;
   meta: IImageMeta;
   id: string;

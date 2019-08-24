@@ -1,10 +1,12 @@
+
+import * as Sharp from "sharp";
 import * as test from "tape";
 import * as personThumb from "./personThumb";
 
 import { EXIF_ORIENT } from "./lib/constants";
-import { IFace, IImage, IPerson } from "./types";
+import { IFace, IFaceDimensions, IImageDimensions, IPerson } from "./types";
 
-const person: IPerson = {
+const personBase: IPerson = {
   boundingBox: {
     Height: 0.3,
     Left: 0.55,
@@ -51,7 +53,7 @@ const person: IPerson = {
 };
 
 test("getBounds", (t) => {
-  const result = personThumb.getBounds(person);
+  const result = personThumb.getBounds(personBase);
   t.equal(result.bottom, 0.5, "bottom");
   t.equal(result.left, 0.7, "left");
   t.equal(result.right, 0.8, "right");
@@ -66,13 +68,11 @@ test("getDimsFromBounds", (t) => {
     right: 0.5,
     top: 0.3,
   };
-  const p = {
-    imageDimensions: {
-      height: 100,
-      width: 200,
-    },
+  const imageDimensions: IImageDimensions = {
+    height: 100,
+    width: 200,
   };
-  const result = personThumb.getDimsFromBounds(bounds, p.imageDimensions);
+  const result = personThumb.getDimsFromBounds(bounds, imageDimensions);
   t.equal(result.height, 40, "height");
   t.equal(result.left, 20, "left");
   t.equal(result.width, 80, "width");
@@ -81,17 +81,20 @@ test("getDimsFromBounds", (t) => {
 });
 
 test("expandAndSqareUpDims", (t) => {
-  const dims = {
+  const dims: IFaceDimensions = {
     height: 100,
     left: 20,
     top: 20,
     width: 80,
   };
-  const p = {
+  const p: IPerson = {
+    ...personBase,
+    boundingBox: undefined,
     imageDimensions: {
       height: 150,
       width: 200,
     },
+    landMarks: undefined,
   };
   const result = personThumb.expandAndSqareUpDims(dims, p, p.imageDimensions);
   t.equal(result.width, 100, "width");
@@ -102,7 +105,11 @@ test("expandAndSqareUpDims", (t) => {
 });
 
 test("getDims", (t) => {
-  const result = personThumb.getDims(person, { orientation: EXIF_ORIENT.TOP_LEFT });
+  const sharpMeta: Sharp.Metadata = {
+    chromaSubsampling: "4:2:0",
+    orientation: EXIF_ORIENT.TOP_LEFT,
+  };
+  const result = personThumb.getDims(personBase, sharpMeta);
   t.equal(result.width, 560, "width"); // edge of image is 800
   t.equal(result.height, 720, "height");
   t.equal(result.left, 240, "left");
@@ -111,7 +118,8 @@ test("getDims", (t) => {
 });
 
 test("getDims - no landmarks", (t) => {
-  const p = {
+  const p: IPerson = {
+    ...personBase,
     boundingBox: {
       Height: 0.2, // 100
       Left: 0.2, // 200 - 25
@@ -122,8 +130,14 @@ test("getDims - no landmarks", (t) => {
       height: 500,
       width: 1000,
     },
+    landMarks: undefined,
   };
-  const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.TOP_LEFT });
+  const sharpMeta: Sharp.Metadata = {
+    chromaSubsampling: "4:2:0",
+    orientation: EXIF_ORIENT.TOP_LEFT,
+  };
+
+  const result = personThumb.getDims(p, sharpMeta);
   t.equal(result.width, 100, "width");
   t.equal(result.height, 100, "height");
   t.equal(result.left, 175, "left");
@@ -132,7 +146,8 @@ test("getDims - no landmarks", (t) => {
 });
 
 test("getDims - no landmarks, negative bounds", (t) => {
-  const p = {
+  const p: IPerson = {
+    ...personBase,
     boundingBox: {
       Height: 0.5, // 250
       Left: -0.2, // 0
@@ -143,17 +158,25 @@ test("getDims - no landmarks, negative bounds", (t) => {
       height: 500,
       width: 1000,
     },
+    landMarks: undefined,
   };
-  const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.TOP_LEFT });
-  t.equal(result.width, 250, "width");
-  t.equal(result.height, 250, "height");
-  t.equal(result.left, 0, "left");
-  t.equal(result.top, 100, "top");
+  const sharpMeta: Sharp.Metadata = {
+    chromaSubsampling: "4:2:0",
+    orientation: EXIF_ORIENT.TOP_LEFT,
+  };
+
+  const result = personThumb.getDims(p, sharpMeta);
+
+  t.equal(result.width, 250, "no landmarks, negative bounds width");
+  t.equal(result.height, 250, "no landmarks, negative bounds height");
+  t.equal(result.left, 0, "no landmarks, negative bounds left");
+  t.equal(result.top, 100, "no landmarks, negative bounds top");
   t.end();
 });
 
 test("orientation 2 - TOP_RIGHT", (t) => {
-  const p = {
+  const p: IPerson = {
+    ...personBase,
     boundingBox: {
       Height: 0.2,
       Left: 0.1,
@@ -164,17 +187,24 @@ test("orientation 2 - TOP_RIGHT", (t) => {
       height: 1000,
       width: 600,
     },
+    landMarks: undefined,
   };
-  const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.TOP_RIGHT });
-  t.equal(result.width, 200, "width");
-  t.equal(result.height, 200, "height");
-  t.equal(result.left, 20, "left");
-  t.equal(result.top, 100, "top");
+  const sharpMeta: Sharp.Metadata = {
+    chromaSubsampling: "4:2:0",
+    orientation: EXIF_ORIENT.TOP_RIGHT,
+  };
+
+  const result = personThumb.getDims(p, sharpMeta);
+  t.equal(result.width, 200, "TOP_RIGHT width");
+  t.equal(result.height, 200, "TOP_RIGHT height");
+  t.equal(result.left, 20, "TOP_RIGHT left");
+  t.equal(result.top, 100, "TOP_RIGHT top");
   t.end();
 });
 
 test("orientation 5 - LEFT_TOP", (t) => {
-  const p = {
+  const p: IPerson = {
+    ...personBase,
     boundingBox: {
       Height: 0.2,
       Left: 0.1,
@@ -185,12 +215,18 @@ test("orientation 5 - LEFT_TOP", (t) => {
       height: 1000,
       width: 600,
     },
+    landMarks: undefined,
   };
-  const result = personThumb.getDims(p, { orientation: EXIF_ORIENT.LEFT_TOP });
-  t.equal(result.width, 200, "width");
-  t.equal(result.height, 200, "height");
-  t.equal(result.left, 100, "left");
-  t.equal(result.top, 20, "top");
+  const sharpMeta: Sharp.Metadata = {
+    chromaSubsampling: "4:2:0",
+    orientation: EXIF_ORIENT.LEFT_TOP,
+  };
+
+  const result = personThumb.getDims(p, sharpMeta);
+  t.equal(result.width, 200, "LEFT_TOP width");
+  t.equal(result.height, 200, "LEFT_TOP height");
+  t.equal(result.left, 100, "LEFT_TOP left");
+  t.equal(result.top, 20, "LEFT_TOP top");
   t.end();
 });
 
@@ -213,8 +249,15 @@ test("getDims - landscape image with no orientation value", (t) => {
     thumbnail: "tester/four_people.jpg",
     userIdentityId: "some-id",
   };
+  const sharpMeta: Sharp.Metadata = {
+    chromaSubsampling: "4:2:0",
+  };
 
-  const result = personThumb.getDims(personInTestImage, undefined);
-  t.deepEqual(result, { height: 164, left: 304, top: 248, width: 164 }, "dims for test person");
+  const result = personThumb.getDims(personInTestImage, sharpMeta);
+  t.deepEqual(
+    result,
+    { height: 164, left: 304, top: 248, width: 164 },
+    "dims for landscape image with no orientation value",
+  );
   t.end();
 });

@@ -2,7 +2,7 @@ import { IFaceWithPeople } from "./faces";
 import {
   IImage,
 } from "./images";
-import { IPerson } from "./people";
+import { IPerson, IPersonWithImages } from "./people";
 import {
   IUpdateBody,
 } from "./update";
@@ -45,4 +45,13 @@ export interface ILoggerCreateParams extends ILoggerImageParams {
   createIdentifiedFacesCount: number;
   createIdentifiedLabelsCount: number;
   createPayloadTagCount: number;
+}
+
+export interface ILoggerPeopleMergeParams {
+  mergePeopleIds: string[];
+  existingPeople: IPerson[];
+  mergedPerson: IPerson;
+  deletePeople: IPerson[];
+  imagesWithAffectedPeople: IImage[];
+  updatedPeople: IPerson[];
 }

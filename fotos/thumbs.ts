@@ -2,12 +2,14 @@
 import * as Sharp from "sharp";
 import * as uuid from "uuid";
 
+import { PutObjectRequest } from "aws-sdk/clients/s3";
+import getS3Bucket from "./common/getS3Bucket";
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
-  ILoggerBaseParams,
+  ILoggerBaseParams, IPutObjectParams,
 } from "./types";
 
 let s3;
@@ -15,12 +17,12 @@ let s3;
 export const THUMB_WIDTH = 200;
 export const THUMB_HEIGHT = 200;
 
-export function validatePut({
+export function getPutObjectParams({
   buffer, key,
-}) {
+}: IPutObjectParams): PutObjectRequest {
   return {
     Body: buffer,
-    Bucket: process.env.S3_BUCKET,
+    Bucket: getS3Bucket(),
     ContentType: "image/jpg",
     Key: key,
   };
@@ -28,25 +30,24 @@ export function validatePut({
 
 export function getObject(Key) {
   return s3.getObject({
-    Bucket: process.env.S3_BUCKET,
+    Bucket: getS3Bucket(),
     Key,
   }).promise();
 }
 
-export function putObject(params) {
-  const data = validatePut(params);
+export function putObject(params: IPutObjectParams) {
+  const data = getPutObjectParams(params);
   return s3.putObject(data).promise();
 }
 
 export function resize({ data }) {
+  const options: Sharp.ResizeOptions = {
+    fit: Sharp.fit.cover,
+    position: Sharp.strategy.entropy,
+  };
   return Sharp(data.Body)
     .rotate()
-    .resize({
-      fit: Sharp.fit.cover,
-      height: THUMB_HEIGHT,
-      position: Sharp.strategy.entropy,
-      width: THUMB_WIDTH,
-    })
+    .resize(THUMB_WIDTH, THUMB_HEIGHT, options)
     .toFormat("png")
     .toBuffer();
 }

@@ -38,7 +38,7 @@ export function replicateAuthKey(imgKey: string, userIdentityId: string): string
     `protected/${userIdentityId}/${imgKey}`;
 }
 
-export function safeLength(arr: any[]): number {
+export function safeLength(arr?: any[]): number {
   return Array.isArray(arr) ? arr.length : 0;
 }
 

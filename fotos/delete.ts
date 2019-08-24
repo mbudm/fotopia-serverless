@@ -1,4 +1,4 @@
-import { Rekognition } from "aws-sdk";
+import { Rekognition, S3 } from "aws-sdk";
 import {
   InvocationRequest,
   InvocationResponse,
@@ -7,7 +7,12 @@ import {
   DeleteFacesRequest,
   DeleteFacesResponse,
 } from "aws-sdk/clients/rekognition";
+import { DeleteObjectOutput, DeleteObjectRequest, GetObjectRequest } from "aws-sdk/clients/s3";
+import {
+  DocumentClient as DocClient,
+} from "aws-sdk/lib/dynamodb/document_client.d";
 import * as uuid from "uuid";
+import getS3Bucket from "./common/getS3Bucket";
 import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
 import invokePutPeople from "./common/invokePutPeople";
@@ -32,10 +37,10 @@ import {
   ITraceMeta,
 } from "./types";
 
-export function getS3Params(imageRecord: IImage) {
+export function getS3Params(imageRecord: IImage): GetObjectRequest  {
   if (imageRecord && imageRecord.img_key) {
     return {
-      Bucket: process.env.S3_BUCKET,
+      Bucket: getS3Bucket(),
       Key: replicateAuthKey(imageRecord.img_key, imageRecord.userIdentityId),
     };
   } else {
@@ -72,19 +77,20 @@ export function invokeGetImageRecord(params): Promise<IImage> {
 
 }
 
-export function deleteObject(s3, s3Params) {
+export function deleteObject(s3: S3, s3Params: DeleteObjectRequest): Promise<DeleteObjectOutput> {
   return s3.deleteObject(s3Params).promise()
     .catch((e) => {
       throw new DeleteObjectError(e, s3Params.Key, s3Params.Bucket);
     });
 }
 
-export function deleteImageRecord(ddbParams) {
+export function deleteImageRecord(ddbParams: DocClient.DeleteItemInput ): Promise<DocClient.DeleteItemOutput> {
   return dynamodb.delete(ddbParams).promise()
     .catch((e) => {
       throw new DeleteRecordError(e, ddbParams);
     });
 }
+
 export function getFaceIds(image: IImage): string[] {
   return image && image.faces ?
     image.faces
@@ -93,7 +99,7 @@ export function getFaceIds(image: IImage): string[] {
     [];
 }
 
-export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> | DeleteFacesResponse {
+export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> {
   const faces = getFaceIds(image);
   if (faces.length > 0) {
     const rekognitionClient = new Rekognition();
@@ -103,13 +109,13 @@ export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> 
     };
     return rekognitionClient.deleteFaces(params).promise();
   } else {
-    return {
+    return Promise.resolve({
       DeletedFaces: [],
-    };
+    });
   }
 }
 
-export function getInvokeQueryParams(image: IImage, loggerBaseParams) {
+export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta): InvocationRequest {
   const request: IQueryBody = {
     criteria: {
       people: image.people!,
@@ -125,7 +131,7 @@ export function getInvokeQueryParams(image: IImage, loggerBaseParams) {
     Payload: JSON.stringify({
       body: JSON.stringify({
         ...request,
-        traceMeta: getTraceMeta(loggerBaseParams),
+        traceMeta,
       }),
     }),
   };
@@ -138,13 +144,13 @@ export function getPeopleWithImages(image: IImage, queriedImages: IImage[]): IPe
   }));
 }
 
-export function queryImagesByPeople(image: IImage, loggerBaseParams): Promise<IPersonWithImages[]> {
-  const params = getInvokeQueryParams(image, loggerBaseParams);
+export function queryImagesByPeople(image: IImage, traceMeta: ITraceMeta): Promise<IPersonWithImages[]> {
+  const params = getInvokeQueryParams(image, traceMeta);
   return lambda.invoke(params).promise()
   .then((invocationResponse: InvocationResponse) => parseQueryResponse(invocationResponse, image));
 }
 
-export function parseQueryResponse(invocationResponse: InvocationResponse, image: IImage) {
+export function parseQueryResponse(invocationResponse: InvocationResponse, image: IImage): IPersonWithImages[] {
   try {
     const payload = JSON.parse(invocationResponse.Payload as string);
     const queriedImages: IImage[] = JSON.parse(payload.body);
@@ -164,29 +170,29 @@ export function getDeletePeople(peopleImages: IPersonWithImages[]): string[] {
   }, []);
 }
 
-export function getUpdatedPeople(existingPeople: IPerson[], imagesForPeople: IPersonWithImages[]) {
+export function getUpdatedPeople(existingPeople: IPerson[], imagesForPeople: IPersonWithImages[]): IPerson[] {
   const deletePeople = getDeletePeople(imagesForPeople);
   return existingPeople.filter((p) => !deletePeople.find((dp) => dp === p.id));
 }
 
 export function getLogFields(
-  pathParams,
-  imageRecord,
-  existingPeople,
-  updatedPeople,
-  imagesForPeople,
+  pathParams: IPathParameters,
+  imageRecord?: IImage,
+  existingPeople?: IPerson[],
+  updatedPeople?: IPerson[],
+  imagesForPeople?: IPersonWithImages[],
   ) {
   return {
     imageBirthtime: imageRecord && imageRecord.birthtime,
     imageCreatedAt: imageRecord && imageRecord.createdAt,
-    imageFacesCount: imageRecord && safeLength(imageRecord.faces),
+    imageFacesCount: imageRecord && imageRecord.faces && safeLength(imageRecord.faces),
     imageFamilyGroup: imageRecord && imageRecord.group,
     imageHeight: imageRecord && imageRecord.meta.height,
     imageId: imageRecord && imageRecord.id,
     imageKey: imageRecord && imageRecord.img_key,
-    imagePeopleCount: imageRecord && safeLength(imageRecord.people),
+    imagePeopleCount: imageRecord && imageRecord.people && safeLength(imageRecord.people),
     imageRecordRaw: JSON.stringify(imageRecord),
-    imageTagCount: imageRecord && safeLength(imageRecord.tags),
+    imageTagCount: imageRecord && imageRecord.tags && safeLength(imageRecord.tags),
     imageUpdatedAt: imageRecord && imageRecord.updatedAt,
     imageUserIdentityId: imageRecord && imageRecord.userIdentityId,
     imageUsername: imageRecord && imageRecord.username,
@@ -200,8 +206,8 @@ export function getLogFields(
 }
 
 export async function deleteItem(event, context, callback) {
-  const startTime = Date.now();
-  const s3 = createS3Client();
+  const startTime: number = Date.now();
+  const s3: S3 = createS3Client();
   const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
@@ -212,17 +218,20 @@ export async function deleteItem(event, context, callback) {
   };
   try {
     const request: IPathParameters = event.pathParameters;
-    const params = getInvokeGetParams(request);
+    const params: InvocationRequest = getInvokeGetParams(request);
     const imageRecord: IImage = await invokeGetImageRecord(params);
     const existingPeople: IPerson[] = await invokeGetPeople();
-    const s3Params = getS3Params(imageRecord);
-    const deleteS3ObjectPromise = deleteObject(s3, s3Params);
-    const ddbParams = getDynamoDbParams(request);
-    const deleteImageRecordPromise = deleteImageRecord(ddbParams);
-    const deleteFacesInImagePromise = deleteFacesInImage(imageRecord);
-    const imagesForPeople: IPersonWithImages[] = await queryImagesByPeople(imageRecord, loggerBaseParams);
+    const s3Params: GetObjectRequest = getS3Params(imageRecord);
+    const deleteS3ObjectPromise: Promise<DeleteObjectOutput> = deleteObject(s3, s3Params);
+    const ddbParams: DocClient.GetItemInput = getDynamoDbParams(request);
+    const deleteImageRecordPromise: Promise<DocClient.DeleteItemOutput> = deleteImageRecord(ddbParams);
+    const deleteFacesInImagePromise: Promise<DeleteFacesResponse> = deleteFacesInImage(imageRecord);
+    const imagesForPeople: IPersonWithImages[] = await queryImagesByPeople(imageRecord, getTraceMeta(loggerBaseParams));
     const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, imagesForPeople);
-    const putPeopleResponse = invokePutPeople(updatedPeople, getTraceMeta(loggerBaseParams));
+    const putPeopleResponse: Promise<InvocationResponse> = invokePutPeople(
+      updatedPeople,
+      getTraceMeta(loggerBaseParams),
+    );
     await Promise.all([
       deleteFacesInImagePromise,
       deleteImageRecordPromise,
@@ -235,7 +244,7 @@ export async function deleteItem(event, context, callback) {
     );
     return callback(null, success(ddbParams.Key));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(event.pathParameters, null, null, null, null)});
+    logger(context, loggerBaseParams, { err, ...getLogFields(event.pathParameters)});
     return callback(null, failure(err));
   }
 }

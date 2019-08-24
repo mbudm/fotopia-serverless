@@ -33,3 +33,8 @@ export interface IFaceMatcherCallbackResponse {
 }
 
 export type IFaceMatcherCallback = (faceId: string) => Promise<IFaceMatcherCallbackResponse>;
+
+export interface IFaceDimensions extends IImageDimensions {
+  left: number;
+  top: number;
+}
