@@ -20,29 +20,45 @@ import {
 export function mergePeopleObjects(mergePeopleIds: string[], existingPeople: IPerson[]): IPerson {
   const mergedPeople: IPerson[] = existingPeople
     .filter((person) => mergePeopleIds.includes(person.id))
-    .map((person) => ({ ...person, faces: [...person.faces] }));
+    .map((person) => ({
+      ...person,
+      faces: (Array.isArray(person.faces) ? [...person.faces] : []),
+    }));
   const mainPerson: IPerson = getMergePerson(mergedPeople);
-  mainPerson.faces = combineFaces(mergedPeople);
-  return mainPerson;
+  if (mainPerson) {
+    mainPerson.faces = combineFaces(mergedPeople);
+    return mainPerson;
+  } else {
+    throw new Error(
+      `No main person identified from mergePeopleIds:
+      ${mergePeopleIds.toString()}, mergedPeople len:
+      ${mergedPeople.length}`,
+    );
+  }
 }
 
-export function combineFaces(mergedPeople: IPerson[]) {
+export function combineFaces(mergedPeople: IPerson[]): IFace[] {
   return mergedPeople
     .reduce((accum, person: IPerson) => {
-      const uniqFaces: IFace[] = person.faces.filter(
-        (face: IFace) => !accum.find((f) => f.FaceId === face.FaceId),
-      );
-      return accum.concat(uniqFaces);
+      const uniqFacesInPerson: IFace[] = Array.isArray(person.faces) ?
+        person.faces.filter(
+          (face: IFace) => !accum.find((f) => f.FaceId === face.FaceId),
+        ) :
+        [];
+      return accum.concat(uniqFacesInPerson);
     }, new Array<IFace>());
 }
 
 export function getMergePerson(mergedPeople: IPerson[]): IPerson {
+
   return mergedPeople
-    .reduce((accum, person) => (
-      accum.faces.length >= person.faces.length ?
-      accum :
-      person
-    ), mergedPeople[0]);
+    .reduce((accum, person) => {
+        const accumFacesLength = Array.isArray(accum.faces) ? accum.faces.length : 0;
+        const personFacesLength = Array.isArray(person.faces) ? person.faces.length : 0;
+        return accumFacesLength >= personFacesLength ?
+          accum :
+          person;
+      }, mergedPeople[0]);
 }
 
 export function getDeletePeople(mergePeopleIds: string[], mergedPerson: IPerson, existingPeople: IPerson[]): IPerson[] {
