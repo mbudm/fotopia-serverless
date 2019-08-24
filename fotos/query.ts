@@ -97,11 +97,11 @@ export function queryDatabase(ddbParams): Promise<PromiseResult<DocClient.QueryO
 }
 
 export function validateQueryBody(data: IQueryBody) {
-  if (data.username && Number.isInteger(data.from) && Number.isInteger(data.to)) {
+  if (Number.isInteger(data.from) && Number.isInteger(data.to)) {
     return data;
   } else {
     throw new Error(
-      `Query body is not valid, needs at least a username and a numeric from/to value: ${JSON.stringify(data)}`,
+      `Query body is not valid, needs at least a numeric from/to value: ${JSON.stringify(data)}`,
     );
   }
 }
