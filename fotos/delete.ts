@@ -140,7 +140,9 @@ export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta): Invo
 export function getPeopleWithImages(image: IImage, queriedImages: IImage[]): IPersonWithImages[] {
   return image.people!.map((personId): IPersonWithImages => ({
     id: personId,
-    imageIds: queriedImages.filter((qImg) => qImg.people!.includes(personId)).map((qImg) => qImg.id),
+    imageIds: queriedImages
+      .filter((qImg) => qImg.people!.includes(personId) && qImg.id !== image.id)
+      .map((qImg) => qImg.id),
   }));
 }
 
