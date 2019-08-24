@@ -96,9 +96,28 @@ export function queryDatabase(ddbParams): Promise<PromiseResult<DocClient.QueryO
   return dynamodb.query(ddbParams).promise();
 }
 
+export function validateDateTime(ts): number {
+  if (Number.isInteger(ts)) {
+    return ts;
+  } else {
+    try {
+      const d = new Date(ts);
+      return d.getTime();
+    } catch (e) {
+      throw new Error(`Could not get a valid timestamp from ${ts}`);
+    }
+  }
+}
+
 export function validateQueryBody(data: IQueryBody) {
-  if (Number.isInteger(data.from) && Number.isInteger(data.to)) {
-    return data;
+  const from = validateDateTime(data.from);
+  const to = validateDateTime(data.to);
+  if (Number.isInteger(from) && Number.isInteger(to)) {
+    return {
+      ...data,
+      from,
+      to,
+    };
   } else {
     throw new Error(
       `Query body is not valid, needs at least a numeric from/to value: ${JSON.stringify(data)}`,
