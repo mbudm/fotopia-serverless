@@ -1,14 +1,21 @@
 import * as uuid from "uuid";
 
+import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import {
+  DocumentClient as DocClient,
+} from "aws-sdk/lib/dynamodb/document_client.d";
+import { Context } from "vm";
+import getTableName from "./common/getTableName";
 import { failure, success } from "./common/responses";
+import validatePathParameters from "./common/validatePathParameters";
 import { safeLength } from "./create";
 import dynamodb from "./lib/dynamodb";
 import logger from "./lib/logger";
 import {
-  ILoggerBaseParams, IPathParameters,
+  ILoggerBaseParams, IPathParameters, ITraceMeta, IUpdateBody,
 } from "./types";
 
-export function getDynamoDbParams(pathParams, body) {
+export function getDynamoDbParams(pathParams: IPathParameters, body: IUpdateBody): DocClient.UpdateItemInput {
   const timestamp = new Date().getTime();
   const ExpressionAttributeNames = Object.keys(body).reduce((accum, key) => ({
     ...accum,
@@ -27,17 +34,19 @@ export function getDynamoDbParams(pathParams, body) {
     ExpressionAttributeValues,
     Key: pathParams,
     ReturnValues: "ALL_NEW",
-    TableName: process.env.DYNAMODB_TABLE,
+    TableName: getTableName(),
     UpdateExpression: `SET ${updateKeyValues}, updatedAt = :updatedAt`,
   };
 }
 
-export function updateImageRecord(ddbParams) {
+export function updateImageRecord(ddbParams: DocClient.UpdateItemInput): Promise<DocClient.UpdateItemOutput> {
   return dynamodb.update(ddbParams).promise();
 }
 
-export function getLogFields(pathParams, data, ddbResponse) {
-  const { Attributes } = ddbResponse;
+export function getLogFields(
+  data: IUpdateBody, pathParams?: IPathParameters, ddbResponse?: DocClient.UpdateItemOutput,
+) {
+  const Attributes = ddbResponse && ddbResponse.Attributes;
   return {
     dataRaw: data,
     imageBirthtime: Attributes && Attributes.birthtime,
@@ -58,20 +67,16 @@ export function getLogFields(pathParams, data, ddbResponse) {
     imageWidth: Attributes && Attributes.meta && Attributes.meta.width,
     paramId: pathParams && pathParams.id,
     paramUsername: pathParams && pathParams.username,
-    updateImageBirthtime: data.birthtime,
     updateImageFaceMatchCount: data && safeLength(data.faceMatches),
-    updateImageFacesCount: data && safeLength(data.faces),
     updateImagePeopleCount: data && safeLength(data.people),
-    updateImageTagCount: data && safeLength(data.tags),
   };
 }
 
-export async function updateItem(event, context, callback) {
-  const startTime = Date.now();
+export async function updateItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
+  const startTime: number = Date.now();
   const data = event.body ? JSON.parse(event.body) : null;
-  const traceMeta = data!.traceMeta;
-  const requestBody = data;
-  const requestParams: IPathParameters = event.pathParameters;
+  const traceMeta: ITraceMeta | undefined = data!.traceMeta;
+  const requestBody: IUpdateBody = data;
 
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
@@ -81,12 +86,17 @@ export async function updateItem(event, context, callback) {
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {
-    const ddbParams = getDynamoDbParams(requestParams, requestBody);
-    const ddbResponse = await updateImageRecord(ddbParams);
-    logger(context, loggerBaseParams, getLogFields(requestParams, data, ddbResponse));
+    const requestParams: IPathParameters = validatePathParameters(event.pathParameters);
+    const ddbParams: DocClient.UpdateItemInput = getDynamoDbParams(requestParams, requestBody);
+    const ddbResponse: DocClient.UpdateItemOutput  = await updateImageRecord(ddbParams);
+    logger(context, loggerBaseParams, getLogFields(data, requestParams, ddbResponse));
     return callback(null, success(ddbResponse.Attributes));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(requestParams, data, null) });
+    const logFields = event.pathParameters ? getLogFields(data, {
+      id: event.pathParameters.id,
+      username: event.pathParameters.username,
+    }) : getLogFields(data);
+    logger(context, loggerBaseParams, { err, logFields });
     return callback(null, failure(err));
   }
 }

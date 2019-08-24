@@ -1,3 +1,4 @@
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import * as uuid from "uuid";
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
@@ -19,18 +20,20 @@ import {
 import {
   PromiseResult,
 } from "aws-sdk/lib/request";
+import getTableName from "./common/getTableName";
+import validatePathParameters from "./common/validatePathParameters";
 
-export function getDynamoDbParams(request): DocClient.GetItemInput {
+export function getDynamoDbParams(request: IPathParameters): DocClient.GetItemInput {
   return {
     Key: {
       id: request.id,
       username: request.username,
     },
-    TableName: process.env.DYNAMODB_TABLE!,
+    TableName: getTableName(),
   };
 }
 
-export function getResponseBody(ddbResponse): IImage {
+export function getResponseBody(ddbResponse: DocClient.GetItemOutput): IImage {
   const item: IImage = ddbResponse.Item as IImage;
   return item;
 }
@@ -41,7 +44,7 @@ export function getImageRecord(
   return dynamodb.get(ddbParams).promise();
 }
 
-export function getLogFields(pathParams, responseBody) {
+export function getLogFields(pathParams?: IPathParameters, responseBody?: IImage) {
   return {
     imageBirthtime: responseBody && responseBody.birthtime,
     imageCreatedAt: responseBody && responseBody.createdAt,
@@ -61,8 +64,8 @@ export function getLogFields(pathParams, responseBody) {
     paramUsername: pathParams && pathParams.username,
   };
 }
-export async function getItem(event, context, callback) {
-  const startTime = Date.now();
+export async function getItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
+  const startTime: number = Date.now();
   const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
@@ -72,14 +75,18 @@ export async function getItem(event, context, callback) {
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {
-    const request: IPathParameters = event.pathParameters;
-    const ddbParams = getDynamoDbParams(request);
-    const ddbResponse = await getImageRecord(ddbParams);
-    const responseBody = getResponseBody(ddbResponse);
+    const request: IPathParameters = validatePathParameters(event.pathParameters);
+    const ddbParams: DocClient.GetItemInput = getDynamoDbParams(request);
+    const ddbResponse: DocClient.GetItemOutput = await getImageRecord(ddbParams);
+    const responseBody: IImage = getResponseBody(ddbResponse);
     logger(context, loggerBaseParams, getLogFields(request, responseBody));
     return callback(null, success(responseBody));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(event.pathParameters, null) });
+    const logFields = event.pathParameters ? getLogFields({
+      id: event.pathParameters.id,
+      username: event.pathParameters.username,
+    }) : getLogFields();
+    logger(context, loggerBaseParams, { err, ...logFields });
     return callback(null, failure(err));
   }
 }

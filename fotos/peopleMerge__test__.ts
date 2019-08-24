@@ -1,9 +1,9 @@
 import * as test from "tape";
-// import { AttributeValue as ddbAttVals } from 'dynamodb-data-types';
 
+import { InvocationRequest } from "aws-sdk/clients/lambda";
 import * as peopleMerge from "./peopleMerge";
 import {
-  ILoggerBaseParams,
+  IImage, ILoggerBaseParams, IPerson,
 } from "./types";
 
 const existingPeople = [
@@ -71,13 +71,13 @@ test("combineFaces - faces from people with unique faces", (t) => {
 });
 
 test("combineFaces - faces from several people with shared faces", (t) => {
-  const data = [{...existingPeople[0]}, {...existingPeople[1]}];
-  data[1].faces = data[1].faces.concat([data[0].faces[0]]);
+  const mergePeopleIds = [{...existingPeople[0]}, {...existingPeople[1]}];
+  mergePeopleIds[1].faces = mergePeopleIds[1].faces.concat([mergePeopleIds[0].faces[0]]);
 
   const result = peopleMerge.combineFaces(existingPeople);
 
   t.equals(result.length, 5, "is still sum of people with diff faces");
-  t.equals(result.filter((f) => f.FaceId === data[0].faces[0].FaceId).length, 1, "copied face is not duped");
+  t.equals(result.filter((f) => f.FaceId === mergePeopleIds[0].faces[0].FaceId).length, 1, "copied face is not duped");
   t.end();
 });
 
@@ -105,8 +105,8 @@ test("getMergePerson - chooses first person for people have the same number of f
 });
 
 test("mergePeopleObjects", (t) => {
-  const data = [existingPeople[0].id, existingPeople[1].id];
-  const result = peopleMerge.mergePeopleObjects(data, existingPeople);
+  const mergePeopleIds = [existingPeople[0].id, existingPeople[1].id];
+  const result = peopleMerge.mergePeopleObjects(mergePeopleIds, existingPeople);
   t.equal(result.id, existingPeople[0].id, "id");
   t.equal(result.name, existingPeople[0].name, "name");
   t.equal(result.faces.length, 5, "faces length");
@@ -116,8 +116,8 @@ test("mergePeopleObjects", (t) => {
 });
 
 test("mergePeopleObjects - argument order doesnt matter, merged person is most faces", (t) => {
-  const data = [existingPeople[1].id, existingPeople[0].id];
-  const result = peopleMerge.mergePeopleObjects(data, existingPeople);
+  const mergePeopleIds = [existingPeople[1].id, existingPeople[0].id];
+  const result = peopleMerge.mergePeopleObjects(mergePeopleIds, existingPeople);
   t.equal(result.id, existingPeople[0].id, "id");
   t.equal(result.name, existingPeople[0].name, "name");
   t.equal(result.faces.length, 5, "faces length");
@@ -125,7 +125,7 @@ test("mergePeopleObjects - argument order doesnt matter, merged person is most f
 });
 
 test("mergePeopleObjects - if face counts even then first person is target merge", (t) => {
-  const data = [existingPeople[1].id, existingPeople[0].id];
+  const mergePeopleIds = [existingPeople[1].id, existingPeople[0].id];
   const evenExistingPeople = [{
     ...existingPeople[1],
     faces: existingPeople[1].faces.slice(0, 1),
@@ -135,7 +135,7 @@ test("mergePeopleObjects - if face counts even then first person is target merge
     faces: existingPeople[0].faces.slice(0, 1),
   }];
 
-  const result = peopleMerge.mergePeopleObjects(data, evenExistingPeople);
+  const result = peopleMerge.mergePeopleObjects(mergePeopleIds, evenExistingPeople);
 
   t.equal(result.id, existingPeople[1].id, "id");
   t.equal(result.name, existingPeople[1].name, "name");
@@ -144,21 +144,21 @@ test("mergePeopleObjects - if face counts even then first person is target merge
 });
 
 test("getDeletePeople", (t) => {
-  const data = [existingPeople[1].id, existingPeople[0].id];
+  const mergePeopleIds = [existingPeople[1].id, existingPeople[0].id];
   const mergedPerson = {
-    id: existingPeople[0].id,
+    ...existingPeople[0],
   };
-  const result = peopleMerge.getDeletePeople(data, mergedPerson, existingPeople);
+  const result = peopleMerge.getDeletePeople(mergePeopleIds, mergedPerson, existingPeople);
   t.equal(result.length, 1);
   t.equal(result[0].id, existingPeople[1].id);
   t.end();
 });
 
 test("getUpdatedPeople", (t) => {
-  const data = [existingPeople[1].id, existingPeople[0].id];
-  const mergedPerson = peopleMerge.mergePeopleObjects(data, existingPeople);
-  const deletePeople = peopleMerge.getDeletePeople(data, mergedPerson, existingPeople);
-  const result = peopleMerge.getUpdatedPeople(
+  const mergePeopleIds: string[] = [existingPeople[1].id, existingPeople[0].id];
+  const mergedPerson: IPerson = peopleMerge.mergePeopleObjects(mergePeopleIds, existingPeople);
+  const deletePeople: IPerson[] = peopleMerge.getDeletePeople(mergePeopleIds, mergedPerson, existingPeople);
+  const result: IPerson[] = peopleMerge.getUpdatedPeople(
     existingPeople,
     mergedPerson,
     deletePeople,
@@ -170,16 +170,31 @@ test("getUpdatedPeople", (t) => {
   t.end();
 });
 
+const imageBase: IImage = {
+  birthtime: 234,
+  group: "gang-of-four",
+  id: "someid",
+  img_key: "my.png",
+  meta: {
+    height: 200,
+    width: 300,
+  },
+  userIdentityId: "uid",
+  username: "fred",
+};
+
 test("getAllInvokeUpdateParams", (t) => {
-  const data = [existingPeople[1].id, existingPeople[0].id];
-  const mergedPerson = peopleMerge.mergePeopleObjects(data, existingPeople);
-  const deletePeople = peopleMerge.getDeletePeople(data, mergedPerson, existingPeople);
-  const imagesWithAffectedPeople = [{
+  const mergePeopleIds = [existingPeople[1].id, existingPeople[0].id];
+  const mergedPerson = peopleMerge.mergePeopleObjects(mergePeopleIds, existingPeople);
+  const deletePeople = peopleMerge.getDeletePeople(mergePeopleIds, mergedPerson, existingPeople);
+  const imagesWithAffectedPeople: IImage[] = [{
+    ...imageBase,
     people: [mergedPerson.id],
   }, {
+    ...imageBase,
     people: ["some-unaffected-person-id", deletePeople[0].id],
   }];
-  const result = peopleMerge.getAllInvokeUpdateParams(
+  const result: InvocationRequest[] = peopleMerge.getAllInvokeUpdateParams(
     imagesWithAffectedPeople,
     mergedPerson,
     deletePeople,
@@ -188,14 +203,14 @@ test("getAllInvokeUpdateParams", (t) => {
   t.ok(result, "result ok");
   t.equal(result.length, 2, "length");
   try {
-    const firstBodyParam = JSON.parse(JSON.parse(result[0].Payload).body);
+    const firstBodyParam = JSON.parse(JSON.parse(result[0].Payload as string).body);
     t.equal(firstBodyParam.people[0], mergedPerson.id, "first retains the mergedPerson");
   } catch (e) {
     t.fail();
   }
   try {
-    const secondBodyParam = JSON.parse(JSON.parse(result[1].Payload).body);
-    t.equal(secondBodyParam.people[0], imagesWithAffectedPeople[1].people[0], "unaffected person id is unchanged");
+    const secondBodyParam = JSON.parse(JSON.parse(result[1].Payload as string).body);
+    t.equal(secondBodyParam.people[0], imagesWithAffectedPeople[1].people![0], "unaffected person id is unchanged");
     t.equal(
       secondBodyParam.people[1],
       mergedPerson.id,
@@ -208,7 +223,7 @@ test("getAllInvokeUpdateParams", (t) => {
 
 test("getAllInvokeUpdateParams - simpler mocks", (t) => {
   const data = ["person1id", "person2id", "person3-mostfaces-id"];
-  const simpleExisting = [{
+  const simpleExisting: IPerson[] = [{
     ...existingPeople[0],
     faces: [{ FaceId: "face1" }],
     id: data[0],
@@ -221,11 +236,13 @@ test("getAllInvokeUpdateParams - simpler mocks", (t) => {
     faces: [{ FaceId: "face1" }, { FaceId: "face2" }],
     id: data[2],
   }];
-  const mergedPerson = peopleMerge.mergePeopleObjects(data, simpleExisting);
-  const deletePeople = peopleMerge.getDeletePeople(data, mergedPerson, simpleExisting);
-  const imagesWithAffectedPeople = [{
+  const mergedPerson: IPerson = peopleMerge.mergePeopleObjects(data, simpleExisting);
+  const deletePeople: IPerson[] = peopleMerge.getDeletePeople(data, mergedPerson, simpleExisting);
+  const imagesWithAffectedPeople: IImage[] = [{
+    ...imageBase,
     people: [mergedPerson.id],
   }, {
+    ...imageBase,
     people: ["some-unaffected-person-id", deletePeople[0].id],
   }];
   const result = peopleMerge.getAllInvokeUpdateParams(
@@ -236,14 +253,14 @@ test("getAllInvokeUpdateParams - simpler mocks", (t) => {
   );
   t.equal(result.length, 2, "length");
   try {
-    const firstBodyParam = JSON.parse(JSON.parse(result[0].Payload).body);
+    const firstBodyParam = JSON.parse(JSON.parse(result[0].Payload as string).body);
     t.equal(firstBodyParam.people[0], mergedPerson.id, "first retains the mergedPerson");
   } catch (e) {
     t.fail();
   }
   try {
-    const secondBodyParam = JSON.parse(JSON.parse(result[1].Payload).body);
-    t.equal(secondBodyParam.people[0], imagesWithAffectedPeople[1].people[0], "unaffected person id is unchanged");
+    const secondBodyParam = JSON.parse(JSON.parse(result[1].Payload as string).body);
+    t.equal(secondBodyParam.people[0], imagesWithAffectedPeople[1].people![0], "unaffected person id is unchanged");
     t.equal(
       secondBodyParam.people[1],
       mergedPerson.id,

@@ -1,6 +1,8 @@
 import { Rekognition } from "aws-sdk";
 import {
+  CreateCollectionRequest,
   CreateCollectionResponse,
+  DeleteCollectionRequest,
   DeleteCollectionResponse,
 } from "aws-sdk/clients/rekognition";
 import * as uuid from "uuid";
@@ -33,10 +35,10 @@ export async function createCollection(event, context, callback) {
   };
   try {
     const rekognitionClient = new Rekognition();
-    const params = {
+    const params: CreateCollectionRequest = {
       CollectionId: fotopiaGroup,
     };
-    const rekResponse = await rekognitionClient
+    const rekResponse: CreateCollectionResponse = await rekognitionClient
       .createCollection(params)
       .promise();
     logger(
@@ -72,10 +74,10 @@ export async function deleteCollection(event, context, callback) {
   };
   try {
     const rekognitionClient = new Rekognition();
-    const params = {
+    const params: DeleteCollectionRequest = {
       CollectionId: fotopiaGroup,
     };
-    const rekResponse = await rekognitionClient
+    const rekResponse: DeleteCollectionResponse = await rekognitionClient
       .deleteCollection(params)
       .promise();
     logger(

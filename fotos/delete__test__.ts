@@ -14,6 +14,7 @@ const request = {
 };
 
 test("getS3Params parses the invocation response", (t) => {
+  process.env.S3_BUCKET = "mybucket";
   const img: IImage = {
     ...request,
     birthtime: 123,
@@ -65,8 +66,11 @@ test("getInvokeQueryParams, adds the people from image into the request body", (
       "p-3",
     ],
   };
-  const result = deleteFns.getInvokeQueryParams(imageWithThreepeople, {});
-  const payloadParsed = JSON.parse(result.Payload);
+  const result = deleteFns.getInvokeQueryParams(imageWithThreepeople, {
+    parentId: "blah",
+    traceId: "123",
+  });
+  const payloadParsed = JSON.parse(result.Payload! as string);
   const bodyParsed = JSON.parse(payloadParsed.body);
   t.deepEqual(bodyParsed.criteria.people,  imageWithThreepeople.people);
   t.end();

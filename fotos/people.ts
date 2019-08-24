@@ -1,5 +1,9 @@
-import { PutObjectOutput } from "aws-sdk/clients/s3";
+import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import { S3 } from "aws-sdk/clients/all";
+import { GetObjectRequest, PutObjectOutput, PutObjectRequest } from "aws-sdk/clients/s3";
 import * as uuid from "uuid";
+import { Context } from "vm";
+import getS3Bucket from "./common/getS3Bucket";
 import { getS3Params } from "./common/getS3Params";
 import { getS3PutParams } from "./common/getS3PutParams";
 import { failure, success } from "./common/responses";
@@ -9,11 +13,12 @@ import { PEOPLE_KEY } from "./lib/constants";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
-  ILoggerBaseParams, IPerson,
+  ILoggerBaseParams, IPerson, IPutPeopleRequest,
 } from "./types";
 
-export function putPeople(s3, people, Bucket, Key): Promise<PutObjectOutput> {
-  const s3PutParams = getS3PutParams(people, Bucket, Key);
+export function putPeople(s3: S3, people: IPerson[]): Promise<PutObjectOutput> {
+  const key: string = PEOPLE_KEY;
+  const s3PutParams: PutObjectRequest = getS3PutParams(people, key);
   return s3.putObject(s3PutParams).promise()
     .catch((e) => {
       const logitall = { e, people };
@@ -21,8 +26,10 @@ export function putPeople(s3, people, Bucket, Key): Promise<PutObjectOutput> {
     });
 }
 
-export function getExistingPeople(s3, Bucket, Key): Promise<IPerson[]> {
-  const s3Params = getS3Params(Bucket, Key);
+export function getExistingPeople(s3: S3): Promise<IPerson[]> {
+  const bucket = getS3Bucket();
+  const key = PEOPLE_KEY;
+  const s3Params: GetObjectRequest = getS3Params(bucket, key);
   return s3.getObject(s3Params).promise()
     .then((s3Object) => {
       try {
@@ -33,7 +40,7 @@ export function getExistingPeople(s3, Bucket, Key): Promise<IPerson[]> {
           return [];
         }
       } catch (e) {
-        throw new JSONParseError(e, `getExistingPeople ${s3Object.Body.toString()}`);
+        throw new JSONParseError(e, `getExistingPeople ${s3Object.Body && s3Object.Body.toString()}`);
       }
     })
     .catch((e) => {
@@ -53,11 +60,9 @@ export function getLogFields(people: IPerson[]) {
     peopleCount: safeLength(people),
   };
 }
-export async function getItem(event, context, callback) {
+export async function getItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime = Date.now();
   const s3 = createS3Client();
-  const bucket = process.env.S3_BUCKET;
-  const key = PEOPLE_KEY;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
@@ -66,7 +71,7 @@ export async function getItem(event, context, callback) {
     traceId: uuid.v1(),
   };
   try {
-    const existingPeople = await getExistingPeople(s3, bucket, key);
+    const existingPeople = await getExistingPeople(s3);
     logger(context, loggerBaseParams, getLogFields(existingPeople));
     return callback(null, success(existingPeople));
   } catch (err) {
@@ -75,15 +80,13 @@ export async function getItem(event, context, callback) {
   }
 }
 
-export async function putItem(event, context, callback) {
-  const startTime = Date.now();
+export async function putItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
+  const startTime: number = Date.now();
 
-  const requestBody = event.body ? JSON.parse(event.body) : { people: []};
+  const requestBody: IPutPeopleRequest = event.body ? JSON.parse(event.body) : { people: []};
   const traceMeta = requestBody!.traceMeta;
 
-  const s3 = createS3Client();
-  const bucket = process.env.S3_BUCKET;
-  const key = PEOPLE_KEY;
+  const s3: S3 = createS3Client();
 
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
@@ -94,7 +97,7 @@ export async function putItem(event, context, callback) {
   };
 
   try {
-    const putPeopleObject: PutObjectOutput = await putPeople(s3, requestBody.people, bucket, key);
+    const putPeopleObject: PutObjectOutput = await putPeople(s3, requestBody.people);
     logger(context, loggerBaseParams, getLogFields(requestBody.people));
     return callback(null, success(requestBody));
   } catch (err) {

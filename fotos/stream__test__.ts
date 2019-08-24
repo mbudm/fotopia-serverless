@@ -1,7 +1,9 @@
+import { DynamoDBRecord } from "aws-lambda";
 import * as test from "tape";
 import * as stream from "./stream";
+import { IIndex } from "./types";
 
-const records = [{
+const records: DynamoDBRecord[] = [{
   dynamodb: {
     NewImage: {
       people: {
@@ -175,7 +177,12 @@ test("updateCounts - negative values", (t) => {
 });
 
 test("getUpdatedIndexes - no existing index", (t) => {
-  const result = stream.getUpdatedIndexes({ error: true }, records);
+  const errorIndex: IIndex = {
+    error: true,
+    people: {},
+    tags: {},
+  };
+  const result = stream.getUpdatedIndexes(errorIndex, records);
   t.deepEqual(result, {
     people: {
       emma: 1,
@@ -192,7 +199,8 @@ test("getUpdatedIndexes - no existing index", (t) => {
 });
 
 test("getUpdatedIndexes - modifies existing index with just tags", (t) => {
-  const existing = {
+  const existing: IIndex = {
+    people: {},
     tags: {
       black: 4,
       green: 7,

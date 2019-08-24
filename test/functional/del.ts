@@ -111,19 +111,28 @@ export default function deleteTests(setupData, api) {
       .catch(formatError);
   });
 
+  test("wait for 3 seconds", (t) => {
+    setTimeout(() => {
+      t.comment("Waited for 3 secs");
+      t.end();
+    }, 3000);
+  });
+
   test("get people should return no results with the test image ids", (t) => {
     const imageIds = [imageOne.id].concat(imagesWithFourPeople.map((i) => i.id));
     api
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
         const peopleWithDeletedImageIds = responseBody.filter((p) => {
-          return p.faces.filter((f) => f.ExternalImageId &&
-            imageIds.includes(f.ExternalImageId));
+          const facesWithDeletedImageId = p.faces.filter(
+            (f) => f.ExternalImageId && imageIds.includes(f.ExternalImageId),
+          );
+          return facesWithDeletedImageId.length > 0;
         });
         t.equal(
           peopleWithDeletedImageIds.length,
           0,
-          "all deleted images have been removed from people",
+          `all deleted images (${imageIds.toString()}) have been removed from people`,
         );
         t.end();
       })

@@ -7,6 +7,9 @@ import {
   ILoggerBaseParams,
 } from "./types";
 
+// Skipping Typescript strictness sweep for this modules as this to
+// be deprecated once the client is updated to grab the config values at build time.
+
 export function getS3Params() {
   const Bucket: string | undefined = process.env.S3_OUTPUT_BUCKET;
   const Key: string | undefined = process.env.S3_OUTPUT_FILENAME;

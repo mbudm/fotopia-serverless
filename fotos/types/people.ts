@@ -1,4 +1,5 @@
 import { BoundingBox, Landmark } from "aws-sdk/clients/rekognition";
+import { ITraceMeta } from "./common";
 import { IFace } from "./faces";
 import { IImage, IImageDimensions } from "./images";
 
@@ -23,9 +24,25 @@ export interface IPersonUpdateBody {
   name: string;
 }
 
+export interface IPersonPathParameters {
+  id: string;
+}
+
 export type IPersonMergeBody = string[];
 
 export interface IPersonWithImages {
   id: string;
   imageIds: string[];
+}
+
+export interface IPutPeopleRequest {
+  people: IPerson[];
+  traceMeta: ITraceMeta;
+}
+
+export interface IBounds {
+  bottom: number;
+  left: number;
+  right: number;
+  top: number;
 }

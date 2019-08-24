@@ -8,3 +8,4 @@ export * from "./query";
 export * from "./stream";
 export * from "./update";
 export * from "./common";
+export * from "./s3";

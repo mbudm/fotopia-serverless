@@ -22,6 +22,7 @@
     "test"
   ],
   "dependencies": {
+    "@types/sharp": "^0.22.2",
     "babel-runtime": "^6.26.0",
     "bunyan": "^1.8.12",
     "dotenv": "^8.0.0",

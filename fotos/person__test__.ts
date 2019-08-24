@@ -1,8 +1,9 @@
 import * as test from "tape";
 import * as person from "./person";
+import { IPerson } from "./types";
 
 test("getUpdatedPeople", (t) => {
-  const existingPeople = [
+  const existingPeople: IPerson[] = [
     {
       faces: [
         {
@@ -11,6 +12,10 @@ test("getUpdatedPeople", (t) => {
         },
       ],
       id: "c8523640-9a12-11e8-a9e0-cb0dc753a59b",
+      imageDimensions: {
+        height: 200,
+        width: 300,
+      },
       img_key: "tester/one.jpg",
       name: "",
       thumbnail: "tester/one-suffix.jpg",
@@ -24,6 +29,10 @@ test("getUpdatedPeople", (t) => {
         },
       ],
       id: "c8ba6df0-9a12-11e8-a9e0-cb0dc753a59b",
+      imageDimensions: {
+        height: 200,
+        width: 300,
+      },
       img_key: "tester/two.jpg",
       name: "",
       thumbnail: "tester/two-suffix.jpg",

@@ -1,4 +1,7 @@
+import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import { InvocationRequest, InvocationResponse } from "aws-sdk/clients/lambda";
 import * as uuid from "uuid";
+import { Context } from "vm";
 import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
 import invokePutPeople from "./common/invokePutPeople";
@@ -11,41 +14,63 @@ import {
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import {
-  ILoggerBaseParams, IPerson,
+  IFace, IImage, ILoggerBaseParams, ILoggerPeopleMergeParams, IPathParameters, IPerson, IUpdateBody,
 } from "./types";
 
-export function mergePeopleObjects(data: string[], existingPeople: IPerson[]) {
-  const mergedPeople = existingPeople
-    .filter((person) => data.includes(person.id))
-    .map((person) => ({ ...person, faces: [...person.faces] }));
-  const mainPerson = getMergePerson(mergedPeople);
-  mainPerson.faces = combineFaces(mergedPeople);
-  return mainPerson;
+export function mergePeopleObjects(mergePeopleIds: string[], existingPeople: IPerson[]): IPerson {
+  const mergedPeople: IPerson[] = existingPeople
+    .filter((person) => mergePeopleIds.includes(person.id))
+    .map((person) => ({
+      ...person,
+      faces: (Array.isArray(person.faces) ? [...person.faces] : []),
+    }));
+  const mainPerson: IPerson = getMergePerson(mergedPeople);
+  if (mainPerson) {
+    mainPerson.faces = combineFaces(mergedPeople);
+    return mainPerson;
+  } else {
+    throw new Error(
+      `No main person identified from mergePeopleIds:
+      ${mergePeopleIds.toString()}, mergedPeople len:
+      ${mergedPeople.length}`,
+    );
+  }
 }
 
-export function combineFaces(mergedPeople: any) {
+export function combineFaces(mergedPeople: IPerson[]): IFace[] {
+  return mergedPeople
+    .reduce((accum, person: IPerson) => {
+      const uniqFacesInPerson: IFace[] = Array.isArray(person.faces) ?
+        person.faces.filter(
+          (face: IFace) => !accum.find((f) => f.FaceId === face.FaceId),
+        ) :
+        [];
+      return accum.concat(uniqFacesInPerson);
+    }, new Array<IFace>());
+}
+
+export function getMergePerson(mergedPeople: IPerson[]): IPerson {
+
   return mergedPeople
     .reduce((accum, person) => {
-      const uniqFaces = person.faces.filter((face) => !accum.find((f) => f.FaceId === face.FaceId));
-      return accum.concat(uniqFaces);
-    }, []);
+        const accumFacesLength = Array.isArray(accum.faces) ? accum.faces.length : 0;
+        const personFacesLength = Array.isArray(person.faces) ? person.faces.length : 0;
+        return accumFacesLength >= personFacesLength ?
+          accum :
+          person;
+      }, mergedPeople[0]);
 }
 
-export function getMergePerson(mergedPeople: IPerson[]) {
-  return mergedPeople
-    .reduce((accum, person) => (
-      accum.faces.length >= person.faces.length ?
-      accum :
-      person
-    ), mergedPeople[0]);
+export function getDeletePeople(mergePeopleIds: string[], mergedPerson: IPerson, existingPeople: IPerson[]): IPerson[] {
+  return mergePeopleIds.filter((pid) => pid !== mergedPerson.id)
+    .map((pid2) => existingPeople.find((p) => pid2 === p.id)) as IPerson[];
 }
 
-export function getDeletePeople(data, mergedPerson, existingPeople) {
-  return data.filter((pid) => pid !== mergedPerson.id)
-    .map((pid2) => existingPeople.find((p) => pid2 === p.id));
-}
-
-export function getInvokeQueryParams(deletedPeople, mergedPerson, loggerBaseParams) {
+export function getInvokeQueryParams(
+  deletedPeople: IPerson[],
+  mergedPerson: IPerson,
+  loggerBaseParams: ILoggerBaseParams,
+): InvocationRequest {
   const body = {
     criteria: {
       people: deletedPeople.map((person) => person.id).concat(mergedPerson.id),
@@ -70,17 +95,25 @@ export function getInvokeQueryParams(deletedPeople, mergedPerson, loggerBasePara
 // or use aliases for people in all searches
 // first see how this goes
 // doing the updates as events so it might be fine
-export async function queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams) {
-  const params = getInvokeQueryParams(deletePeople, mergedPerson, loggerBaseParams);
+export async function queryImagesByPeople(
+  deletedPeople: IPerson[],
+  mergedPerson: IPerson,
+  loggerBaseParams: ILoggerBaseParams,
+): Promise<IImage[]> {
+  const params = getInvokeQueryParams(deletedPeople, mergedPerson, loggerBaseParams);
   return lambda.invoke(params).promise()
     .then((response) => {
       const payload = typeof response.Payload === "string" ? JSON.parse(response.Payload) : null ;
       const body = payload && JSON.parse(payload.body);
-      return Array.isArray(body) ? body : [];
+      return Array.isArray(body) ? body : new Array<IImage>();
     });
 }
 
-export function getInvokeUpdateParams(pathParameters, body, loggerBaseParams) {
+export function getInvokeUpdateParams(
+  pathParameters: IPathParameters,
+  body: IUpdateBody,
+  loggerBaseParams: ILoggerBaseParams,
+): InvocationRequest {
   return {
     FunctionName: process.env.IS_OFFLINE ? "update" : `${process.env.LAMBDA_PREFIX}update`,
     InvocationType: INVOCATION_EVENT,
@@ -95,28 +128,44 @@ export function getInvokeUpdateParams(pathParameters, body, loggerBaseParams) {
   };
 }
 
-export function getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams) {
+export function getAllInvokeUpdateParams(
+  imagesWithAffectedPeople: IImage[],
+  mergedPerson: IPerson,
+  deletePeople: IPerson[],
+  loggerBaseParams: ILoggerBaseParams,
+): InvocationRequest[] {
   return imagesWithAffectedPeople.map((image) => {
     const pathParameters = {
       id: image.id,
       username: image.username,
     };
     const body = {
-      people: image.people.filter((p) => !deletePeople.find((dp) => dp.id === p))
-        .concat((image.people.includes(mergedPerson.id) ? [] : [mergedPerson.id])),
+      people: image.people ?
+        image.people.filter((p) => !deletePeople.find((dp) => dp.id === p))
+          .concat((image.people.includes(mergedPerson.id) ? [] : [mergedPerson.id])) :
+        [] as string[],
     };
     return getInvokeUpdateParams(pathParameters, body, loggerBaseParams);
   });
 }
 
-export async function updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams) {
+export async function updatedImages(
+  imagesWithAffectedPeople: IImage[],
+  mergedPerson: IPerson,
+  deletePeople: IPerson[],
+  loggerBaseParams: ILoggerBaseParams,
+): Promise<InvocationResponse[]> {
   const allParams = Array.isArray(imagesWithAffectedPeople) ?
     getAllInvokeUpdateParams(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams) :
     [];
   return Promise.all(allParams.map((params) => lambda.invoke(params).promise()));
 }
 
-export function getUpdatedPeople(existingPeople, mergedPerson, deletePeople) {
+export function getUpdatedPeople(
+  existingPeople: IPerson[],
+  mergedPerson: IPerson,
+  deletePeople: IPerson[],
+): IPerson[] {
   return existingPeople.filter((p) => !deletePeople.find((dp) => dp.id === p.id))
     .map((person) => (mergedPerson.id === person.id ?
       mergedPerson :
@@ -124,28 +173,28 @@ export function getUpdatedPeople(existingPeople, mergedPerson, deletePeople) {
 }
 
 export function getLogFields({
-  data,
+  mergePeopleIds,
   existingPeople,
   mergedPerson,
   deletePeople,
   imagesWithAffectedPeople,
   updatedPeople,
-}) {
+}: ILoggerPeopleMergeParams) {
   return {
     mergeDeletePeopleCount: safeLength(deletePeople),
     mergeImagesWithAffectedPeopleCount: safeLength(imagesWithAffectedPeople),
     mergeImagesWithAffectedPeopleRaw: imagesWithAffectedPeople,
     mergePersonFacesCount: mergedPerson && safeLength(mergedPerson.faces),
     mergePersonId: mergedPerson && mergedPerson.id,
-    mergeRequestPeopleCount: safeLength(data),
+    mergeRequestPeopleCount: safeLength(mergePeopleIds),
     peopleCount: existingPeople && safeLength(existingPeople),
     updatedPeopleCount: safeLength(updatedPeople),
   };
 }
 
-export async function mergePeople(event, context, callback) {
+export async function mergePeople(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime = Date.now();
-  const data = event.body ? JSON.parse(event.body) : null;
+  const mergePeopleIds: string[] = event.body ? JSON.parse(event.body) : [];
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "mergePeople",
@@ -155,30 +204,23 @@ export async function mergePeople(event, context, callback) {
   };
   try {
     const existingPeople = await invokeGetPeople();
-    const mergedPerson = mergePeopleObjects(data, existingPeople);
-    const deletePeople = getDeletePeople(data, mergedPerson, existingPeople);
+    const mergedPerson = mergePeopleObjects(mergePeopleIds, existingPeople);
+    const deletePeople = getDeletePeople(mergePeopleIds, mergedPerson, existingPeople);
     const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams);
     await updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams);
     const updatedPeople = getUpdatedPeople(existingPeople, mergedPerson, deletePeople);
     invokePutPeople(updatedPeople, getTraceMeta(loggerBaseParams));
     logger(context, loggerBaseParams, getLogFields({
-      data,
       deletePeople,
       existingPeople,
       imagesWithAffectedPeople,
+      mergePeopleIds,
       mergedPerson,
       updatedPeople,
     }));
     return callback(null, success(existingPeople));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields({
-      data,
-      deletePeople: null,
-      existingPeople: null,
-      imagesWithAffectedPeople: null,
-      mergedPerson: null,
-      updatedPeople: null,
-    }) });
+    logger(context, loggerBaseParams, { err, ...getLogFields({} as ILoggerPeopleMergeParams) });
     return callback(null, failure(err));
   }
 }

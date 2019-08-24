@@ -18,15 +18,15 @@ test("hasCriteria - no arg", (t) => {
   t.end();
 });
 
-test("hasCriteria - no arrays", (t) => {
-  const result = query.hasCriteria({});
+test("hasCriteria - undefined", (t) => {
+  const result = query.hasCriteria(undefined);
   t.equal(result, false);
   t.end();
 });
 
 test("hasCriteria - empty arrays", (t) => {
   const result = query.hasCriteria({
-    someOtherCriteria: [],
+    people: [],
     tags: [],
   });
   t.equal(result, false);
@@ -36,7 +36,6 @@ test("hasCriteria - empty arrays", (t) => {
 test("hasCriteria - one empty array", (t) => {
   const result = query.hasCriteria({
     people: [],
-    someOtherCriteria: [],
     tags: ["a tag"],
   });
   t.equal(result, true);
@@ -46,7 +45,6 @@ test("hasCriteria - one empty array", (t) => {
 test("hasCriteria - no empty arrays", (t) => {
   const result = query.hasCriteria({
     people: ["some geezer"],
-    someOtherCriteria: ["a thing", "another thing"],
     tags: ["a tag"],
   });
   t.equal(result, true);
@@ -181,7 +179,7 @@ test("getDynamoDbParams", (t) => {
   process.env.DYNAMODB_TABLE = "TABLE";
   try {
     const params = query.getDynamoDbParams(requestBody);
-    t.equal(params.ExpressionAttributeValues[":username"], requestBody.username);
+    t.equal(params.ExpressionAttributeValues![":username"], requestBody.username);
     t.end();
   } catch (e) {
     t.fail(e);

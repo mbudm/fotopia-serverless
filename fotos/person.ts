@@ -1,32 +1,43 @@
+import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import { InvocationResponse } from "aws-sdk/clients/lambda";
 import * as uuid from "uuid";
+import { Context } from "vm";
 import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
-import invokeUpdatePeople from "./common/invokePutPeople";
+import invokePutPeople from "./common/invokePutPeople";
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
-import { PEOPLE_KEY } from "./lib/constants";
 import logger from "./lib/logger";
-import createS3Client from "./lib/s3";
 import {
+  IFace,
   ILoggerBaseParams,
   IPerson,
+  IPersonPathParameters,
+  IPersonUpdateBody,
 } from "./types";
 
-export function getUpdatedPeople(existingPeople, data, pathParams) {
+export function getUpdatedPeople(
+  existingPeople: IPerson[],
+  requestBody: IPersonUpdateBody,
+  pathParams: IPersonPathParameters,
+): IPerson[] {
   const updatedPeople = existingPeople.map((person) => ({
     ...person,
-    name: pathParams.id === person.id ? data.name : person.name,
+    name: pathParams.id === person.id ? requestBody.name : person.name,
   }));
-
   return updatedPeople;
 }
 
-export function getPersonFaces(people, personId) {
+export function getPersonFaces(people: IPerson[], personId: string): IFace[] {
   const person = people.find((p) => p.id === personId);
-  return person && person.faces;
+  return person ? person.faces : [] as IFace[];
 }
 
-export function getLogFields(existingPeople: IPerson[], updatedPeople: IPerson[], pathParams) {
+export function getLogFields(
+  existingPeople: IPerson[],
+  updatedPeople: IPerson[],
+  pathParams: IPersonPathParameters,
+) {
   return {
     peopleCount: safeLength(existingPeople),
     personFacesCount: safeLength(getPersonFaces(updatedPeople, pathParams.id)),
@@ -35,13 +46,12 @@ export function getLogFields(existingPeople: IPerson[], updatedPeople: IPerson[]
   };
 }
 
-export async function updatePerson(event, context, callback) {
-  const startTime = Date.now();
-  const s3 = createS3Client();
-  const bucket = process.env.S3_BUCKET;
-  const key = PEOPLE_KEY;
-  const data = event.body ? JSON.parse(event.body) : null;
-  const pathParams = event.pathParameters;
+export async function updatePerson(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
+  const startTime: number = Date.now();
+  const requestBody: IPersonUpdateBody = event.body ? JSON.parse(event.body) : null;
+  const pathParams: IPersonPathParameters = {
+    id: event && event.pathParameters && event!.pathParameters!.id! || "",
+  };
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "updatePerson",
@@ -50,9 +60,12 @@ export async function updatePerson(event, context, callback) {
     traceId: uuid.v1(),
   };
   try {
-    const existingPeople = await invokeGetPeople();
-    const updatedPeople = getUpdatedPeople(existingPeople, data, pathParams);
-    const putPeopleResponse = invokeUpdatePeople(updatedPeople, getTraceMeta(loggerBaseParams));
+    const existingPeople: IPerson[] = await invokeGetPeople();
+    const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, requestBody, pathParams);
+    const putPeopleResponse: Promise<InvocationResponse> = invokePutPeople(
+      updatedPeople,
+      getTraceMeta(loggerBaseParams),
+    );
     logger(context, loggerBaseParams, getLogFields(existingPeople, updatedPeople, pathParams));
     return callback(null, success({ putPeopleResponse, updatedPeople }));
   } catch (err) {

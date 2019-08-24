@@ -1,15 +1,20 @@
 
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
+import { S3 } from "aws-sdk/clients/all";
+import { GetObjectRequest } from "aws-sdk/clients/s3";
 import * as uuid from "uuid";
+import getS3Bucket from "./common/getS3Bucket";
 import { failure, success } from "./common/responses";
+import { JSONParseError } from "./errors/jsonParse";
 import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
-  ILoggerBaseParams,
+  IIndex, IIndexDictionary, ILoggerBaseParams,
 } from "./types";
 
-export function getS3Params() {
-  const Bucket = process.env.S3_BUCKET;
+export function getS3Params(): GetObjectRequest {
+  const Bucket = getS3Bucket();
   const Key = INDEXES_KEY;
   return {
     Bucket,
@@ -17,15 +22,44 @@ export function getS3Params() {
   };
 }
 
-export function getZeroCount(indexObj) {
+export function getZeroCount(indexObj: IIndexDictionary): number {
   return Object.keys(indexObj).filter((item) => +item <= 0).length;
 }
 
-export function getObject(s3, s3Params) {
-  return s3.getObject(s3Params).promise();
+export function getObject(s3: S3, s3Params: GetObjectRequest): Promise<IIndex> {
+  return s3.getObject(s3Params)
+    .promise()
+    .then((s3Object) => {
+      try {
+        if (s3Object.Body) {
+          const bodyString = s3Object.Body.toString();
+          return bodyString ? JSON.parse(bodyString) : [];
+        } else {
+          return {
+            people: [],
+            tags: [],
+          };
+        }
+      } catch (e) {
+        throw new JSONParseError(e, `get indexes ${s3Object.Body && s3Object.Body.toString()}`);
+      }
+    })
+    .catch((e) => {
+      if (e.code === "NoSuchKey" || e.code === "AccessDenied") {
+        // tslint:disable-next-line:no-console
+        console.log("No object found / AccessDenied - assuming empty indexes");
+        return {
+          people: [],
+          tags: [],
+        };
+      }
+      // tslint:disable-next-line:no-console
+      console.log("Another error with get indexes object", e);
+      throw e;
+    });
 }
 
-export function getLogFields(indexesObj) {
+export function getLogFields(indexesObj: IIndex) {
   return {
     indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
     indexesTagCount: indexesObj && Object.keys(indexesObj.tags).length,
@@ -34,10 +68,10 @@ export function getLogFields(indexesObj) {
   };
 }
 
-export async function getItem(event, context, callback) {
-  const startTime = Date.now();
-  const s3 = createS3Client();
-  const s3Params = getS3Params();
+export async function getItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
+  const startTime: number = Date.now();
+  const s3: S3 = createS3Client();
+  const s3Params: GetObjectRequest = getS3Params();
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
@@ -46,8 +80,7 @@ export async function getItem(event, context, callback) {
     traceId: uuid.v1(),
   };
   try {
-    const s3Object = await getObject(s3, s3Params);
-    const indexesObject = JSON.parse(s3Object.Body.toString());
+    const indexesObject: IIndex = await getObject(s3, s3Params);
     logger(context, loggerBaseParams, getLogFields(indexesObject));
     return callback(null, success(indexesObject));
   } catch (err) {
