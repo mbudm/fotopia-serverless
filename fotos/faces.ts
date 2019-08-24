@@ -168,7 +168,7 @@ export function getInvokePersonThumbParams(
   logBaseParams: ILoggerBaseParams,
 ): InvocationRequest {
   return {
-    FunctionName: process.env.IS_OFFLINE ? "personThumb" : `${process.env.LAMBDA_PREFIX}personThumb`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}personThumb`,
     InvocationType: INVOCATION_EVENT,
     LogType: "None",
     Payload: JSON.stringify({
@@ -224,7 +224,7 @@ export function getUpdatePathParameters(newImage: IImage): IPathParameters {
 
 export function getInvokeUpdateParams(pathParameters: IPathParameters, body: IUpdateBody): InvocationRequest {
   return {
-    FunctionName: process.env.IS_OFFLINE ? "update" : `${process.env.LAMBDA_PREFIX}update`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}update`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({

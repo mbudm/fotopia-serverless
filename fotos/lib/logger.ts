@@ -58,19 +58,11 @@ export default function logger(context, base: ILoggerBaseParams, fields) {
     });
   }
 
-  if (process.env.IS_OFFLINE) {
-    logObj = {
-      ...context,
-      ...logObj,
-      isOffline: true,
-    };
-  } else {
-    logObj = {
-      requestId: context!.awsRequestId,
-      ...logObj,
-      ...context,
-    };
-  }
+  logObj = {
+    requestId: context!.awsRequestId,
+    ...logObj,
+    ...context,
+  };
 
   log.info(logObj);
 }

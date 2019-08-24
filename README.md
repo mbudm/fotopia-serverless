@@ -23,7 +23,6 @@ Currently the fotopia serverless project includes:
 - yarn (or npm)
 - serverless framework `yarn global add serverless`
 - AWS account with credentials (https://serverless.com/framework/docs/providers/aws/guide/credentials/)
-- Java Runtime Engine (JRE) version 6.x or newer (for running dynamodb locally with `serverless-dynamodb-local` plugin)
 
 ## Deploy
 
@@ -32,17 +31,15 @@ You can deploy from your computer using the serverless CLI. However I recommend 
 - `yarn`
 - `sls deploy`
 
-I'm currently having an issue with deploying from one of dev machines. Even when I use the exact Lambda node version - 8.10.0 - the Sharp module doesn't build correctly and the thumbs lambdas fail. When deploying via CI/CD which uses ubuntu, there is no issue.
+I'm currently having an issue with deploying from dev machines. Even when I use the exact Lambda node version - 8.10.0 - the Sharp module doesn't build correctly and the thumbs lambdas fail. When deploying via CI/CD which uses ubuntu, there is no issue.
 
 ## CI/CD
 
 For proper deploying - it's best to use CI/CD as you're certain to use the right settings (eg node version) every time. The `.travis.yml` file does the following steps on commit:
 
-- `node serverless.env.js` create env vars for serverless.yml
 - `yarn lint`
+- `yarn test`
 - `npm install -g serverless`
-- `sls dynamodb install`
-- `sls offline start --exec "yarn functional-local"` Run functional tests against an offline stack
 - `sls deploy -s dev` Deploy to dev stage environment
 - `yarn functional-dev` Run functional tests against the dev stage stack
 - `sls deploy -s prod` Deploy to prod stage environment
@@ -52,7 +49,7 @@ Sometimes you need to remove your stack and start again. If you are using the `t
 
 `travis.yml` uses conditionals to pick up branch and commit info and decide what build to run. I use an alpha branch to try out experimental stuff.
 
-### Required environment vars for deployting or removing via CI/CD
+### Required environment vars for deploying or removing via CI/CD
 
 ```sh
 NAME_SPACE=identifier-to-make-s3-buckets-unique # eg my-identifier which becomes fotopia-web-app-my-identifier-prod
@@ -63,8 +60,6 @@ CUSTOM_DOMAIN_PROD=api.yourdomain.com # optional if you don't want to use the se
 TEST_EXISTING_USER=YourTestUserName
 TEST_EXISTING_USER_PWD=Y0urTestP*ssword
 FOTOPIA_GROUP=my-group # a string used as dynamodb global index key to allow queries across all users photos. in future this will allow for a simple way to have separate groups in one fotopia instance
-LOCAL_TEST_DOMAIN='http://localhost:3000' # for the local functional tests
-LOCAL_TEST_BUCKET=fotopia-web-app-<your-name-space>-dev # for the local functional tests
 ```
 
 If you are setting up a test user for a new stack or a new user each time then, remove `TEST_EXISTING_USER` and use:
@@ -78,37 +73,7 @@ TEST_USER_PWD=PermPwd456!
 
 ## Local development
 
-*WARNING:* local mocking of AWS services is fraught. I've stopped doing it as the upkeep is not worth the value I get. I prefer to deploy straight to cloud after thorough TDD locally.
-
-*The following instructions may not work, and I may move all local dev setup from this repo soon.*
-
-To run the app locally, you'll be running an API on http://localhost:3000, have an s3 bucket on http://localhost:5000 and a dynamodb instance on http://localhost:8000. So you'll need these ports free.
-
-### Run locally
-To get an api running at http://localhost:3000 these setup items are compulsory:
-
-- yarn (or npm)
-- serverless framework `yarn global add serverless`
-- Java Runtime Engine (JRE) version 6.x or newer (for running dynamodb locally with `serverless-dynamodb-local` plugin)
-
-To run the functional tests, you need to have AWS credentials added (serverless framework CLI expects them, even for offline plugins). However, if you want to try this out project quickly, create a `.env` file with some fake AWS creds as environemnt vars:
-```sh
-AWS_ACCESS_KEY_ID='12121' # add some fake creds if you want to try it out before setting up your AWS credentials
-AWS_SECRET_ACCESS_KEY='sdsd'
-```
-Or just do the add credentials step (takes 10 mins):
-- AWS account with credentials (https://serverless.com/framework/docs/providers/aws/guide/credentials/)
-
-Then run the following commands:
-
-- `yarn`
-- `sls dynamodb install`
-- `sls offline start`
-
-Then in a new terminal you can run the functional test to ensure the API is working. You'll see the server logs in the terminal window you used to run `sls offline start`
-- `yarn functional-local` to run functional (api) tests against local
-
-Next you might want to checkout the [fotopia-serverless-client](https://github.com/mbudm/fotopia-serverless-client) app, which can also be run locally and use your local API.
+Local mocking of AWS services is fraught. I've stopped doing it as the upkeep is not worth the value I get. I prefer to deploy straight to cloud after thorough TDD locally.
 
 ## Dev commands
 
@@ -136,20 +101,6 @@ Things will go wrong - with AWS services pretty much everything can be configure
 ### Use the AWS Lambda node version
 
 Some modules (Sharp I'm looking at you) don't work in AWS Lambdas unless installed via the exact same Node version. So make sure you are always on v8.10.0 or always rely on your CI tool to deploy.
-
-### Local cleanup
-
-Serverless offline is a mock environment, which sometimes needs a bit of cleaning up.
-
-- remove s3 'bucket', not crucial just avoids the CLI message: `error: [S3rver] Error creating bucket. Bucket "fotopia-web-app-[namespace]-dev" already exists`. To avoid this do these two remove cmds
-  `rm -R /tmp/s3Bucket/fotopia-web-app-[namespace]-dev/ && rm -R /tmp/s3Bucket/fotopia-web-app-[namespace]-dev-output/`
-- kill node server `killall node` (warning: kills all node scripts)
-- kill dynamodb local `lsof -i:8000` then `kill [PID]`
-- - or use [kill-port](https://www.npmjs.com/package/kill-port) npm package to simply do `kill-port 8000` (recommended)
-
-### No Java runtime present (OSX High Sierra)
-
-Java is needed by the `serverless-dynamodb-local` plugin. I was getting this message whenever doing `java -version` and no matter how many attempts at updating my .bash_profile nothing worked except for installing the Java JDK.
 
 # Contributing
 

@@ -11,7 +11,7 @@ import {
 
 export function getInvokeGetPeopleParams(): InvocationRequest {
   return {
-    FunctionName: process.env.IS_OFFLINE ? "people" : `${process.env.LAMBDA_PREFIX}people`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}people`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
   };

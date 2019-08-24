@@ -4,7 +4,7 @@ import { createIndexAdjustment } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 
-export default function deleteAllTests(setupData, api) {
+export default function deleteAllNotJustTestData(setupData, api) {
   let images: IImage[];
   test("query all to get all images", (t) => {
     const query: IQueryBody = {
@@ -58,11 +58,8 @@ export default function deleteAllTests(setupData, api) {
   });
 
   let deleteImages: IImage[];
-  test("delete all test images", (t) => {
-    const setupDataImgKeys = setupData.records.map((rec) => rec.img_key);
-    deleteImages = Array.isArray(images) ? images.filter((img) => {
-      return setupDataImgKeys.includes(img.img_key);
-    }) : [] ;
+  test("delete all images in the env!!!", (t) => {
+    deleteImages = images;
 
     if (deleteImages.length > 0) {
       Promise.all(deleteImages.map((img) => {

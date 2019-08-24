@@ -28,25 +28,19 @@ export function readOutputConfig() {
 
 export default function getConfig() {
   return new Promise((res, rej) => {
-    if (process.env.IS_OFFLINE) {
-      res({
-        ServiceEndpoint: "http://localhost:3000",
-      });
+    const stage = process.env.STAGE || "dev";
+    const useCustomDomain = process.env[`USE_CUSTOM_DOMAIN_${stage.toUpperCase()}`];
+    // tslint:disable-next-line:no-console
+    console.log(stage, useCustomDomain);
+    const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
+    if (useCustomDomain === "true" && customDomain) {
+      fetchConfig(customDomain)
+        .then(res)
+        .catch(rej);
     } else {
-      const stage = process.env.STAGE || "dev";
-      const useCustomDomain = process.env[`USE_CUSTOM_DOMAIN_${stage.toUpperCase()}`];
-      // tslint:disable-next-line:no-console
-      console.log(stage, useCustomDomain);
-      const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
-      if (useCustomDomain === "true" && customDomain) {
-        fetchConfig(customDomain)
-          .then(res)
-          .catch(rej);
-      } else {
-        readOutputConfig()
-          .then(res)
-          .catch(rej);
-      }
+      readOutputConfig()
+        .then(res)
+        .catch(rej);
     }
   });
 }

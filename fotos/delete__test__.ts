@@ -161,6 +161,41 @@ test("getPeopleWithImages converts an IImage[] to IPersonWithImages[]", (t) => {
   t.end();
 });
 
+test("getPeopleWithImages excludes the image being deleted", (t) => {
+  const image: IImage = {
+    ...imageBase,
+    id: "i-0",
+    people: ["p-1", "p-3"],
+  };
+  const images: IImage[] = [
+    {
+      ...imageBase,
+      id: "i-0",
+      people: [
+        "p-1", "p-2",
+      ],
+    },
+    {
+      ...imageBase,
+      id: "i-2",
+      people: [
+        "p-1",
+      ],
+    },
+  ];
+
+  const result = deleteFns.getPeopleWithImages(image, images);
+
+  t.equal(result.length, 2, "2 people idenitified");
+  const p1: IPersonWithImages | undefined = result.find((p) => p.id === "p-1");
+  t.deepEqual(p1!.imageIds, ["i-2"], "p-1 is in both other images but i-0 is excluded");
+  const p2: IPersonWithImages | undefined = result.find((p) => p.id === "p-2");
+  t.notOk(p2, "p-2 is not in the result, as it's not in the source image");
+  const p3: IPersonWithImages | undefined = result.find((p) => p.id === "p-3");
+  t.deepEqual(p3!.imageIds, [], "p-0 doesn't appear in any other images");
+  t.end();
+});
+
 test("getPeopleWithImages converts an empty IImage[] to IPersonWithImages[]", (t) => {
   const image: IImage = {
     ...imageBase,

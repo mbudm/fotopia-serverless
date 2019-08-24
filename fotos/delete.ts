@@ -50,7 +50,7 @@ export function getS3Params(imageRecord: IImage): GetObjectRequest  {
 
 export function getInvokeGetParams(request: IPathParameters): InvocationRequest {
   return {
-    FunctionName: process.env.IS_OFFLINE ? "get" : `${process.env.LAMBDA_PREFIX}get`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}get`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
@@ -125,7 +125,7 @@ export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta): Invo
     to: Date.now(),
   };
   return {
-    FunctionName: process.env.IS_OFFLINE ? "query" : `${process.env.LAMBDA_PREFIX}query`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}query`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
@@ -140,7 +140,9 @@ export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta): Invo
 export function getPeopleWithImages(image: IImage, queriedImages: IImage[]): IPersonWithImages[] {
   return image.people!.map((personId): IPersonWithImages => ({
     id: personId,
-    imageIds: queriedImages.filter((qImg) => qImg.people!.includes(personId)).map((qImg) => qImg.id),
+    imageIds: queriedImages
+      .filter((qImg) => qImg.people!.includes(personId) && qImg.id !== image.id)
+      .map((qImg) => qImg.id),
   }));
 }
 
