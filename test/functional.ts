@@ -16,6 +16,9 @@ config();
 export default function(auth: any, api: any, upload: any) {
   setup(auth)
     .then((setupData: any) => {
+      // to check - there may be a prob when I delete the
+      // index and people objects, this adds time and so
+      // tests that check for people dont pass...?
       deleteAllTestData(setupData, api);
       uploadTests(setupData, upload);
       createTests(setupData, api);

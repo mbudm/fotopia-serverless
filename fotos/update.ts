@@ -76,7 +76,10 @@ export async function updateItem(event: APIGatewayProxyEvent, context: Context, 
   const startTime: number = Date.now();
   const data = event.body ? JSON.parse(event.body) : null;
   const traceMeta: ITraceMeta | undefined = data!.traceMeta;
-  const requestBody: IUpdateBody = data;
+  const requestBody: IUpdateBody = {
+    faceMatches: data.faceMatches,
+    people: data.people,
+  };
 
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),

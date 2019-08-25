@@ -14,10 +14,27 @@ export default function peopleTests(setupData, api) {
   let imageWithFourPeople: IImage | undefined;
   let imageWithOnePerson: IImage | undefined;
 
+  const retryStrategy = [500, 1000, 2000, 5000];
+
   test("get all people, should have at least 5 test image people", (t) => {
-    api
-      .get(setupData.apiUrl, "/people")
-      .then((responseBody: IPerson[]) => {
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/people"],
+      fn: api.get,
+    };
+    const retryableTestThen = (responseBody: IPerson[]) => {
+      if (responseBody.length <= 5) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed to get more than 5 people after ${retryCount} retries`);
+          t.end();
+        }
+      } else {
         people = responseBody;
         t.equal(
           responseBody.length >= 5,
@@ -25,8 +42,15 @@ export default function peopleTests(setupData, api) {
           `length of ${responseBody.length} - at least each person from image one and image with 4 people`,
         );
         t.end();
-      })
-      .catch(formatError);
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
   });
 
   test("query all to get the test image records", (t) => {
@@ -146,7 +170,7 @@ export default function peopleTests(setupData, api) {
         t.end();
       })
       .catch(formatError);
-  });
+    });
 
   // purposely doing this after name update to allow for latency
   test("getPeople - check updated name", (t) => {
