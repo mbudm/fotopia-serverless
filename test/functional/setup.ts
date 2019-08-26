@@ -17,6 +17,7 @@ export default function setupTests(auth: any) {
   return getConfig()
     .then((config: any) => {
       setupData.apiUrl = config.ServiceEndpoint;
+      setupData.region = config.Region;
       return auth(config);
     })
     .then((signedIn) => {

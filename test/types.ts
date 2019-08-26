@@ -5,6 +5,7 @@ export interface ISetupData {
   collectionId: string;
   images: ITestImage[];
   records: ICreateBody[];
+  region?: string;
   startTime: number;
   username: string;
   uniqueTag: string;
