@@ -53,11 +53,13 @@ export default function updateTests(setupData: ISetupData, api) {
       .then((responseBody: IImage) => {
         t.equal(responseBody.id, imageWithFourPeople!.id);
         t.equal(responseBody.meta.newProperty, "squirrel", "updated data");
+        t.ok(responseBody.meta.height, `meta height exists`);
         t.equal(
           responseBody.meta.height,
           imageWithFourPeople!.meta.height,
           `existing meta heigh ${responseBody.meta.height} unaffected`,
         );
+        t.ok(responseBody.meta.width, `meta width exists`);
         t.equal(
           responseBody.meta.width,
           imageWithFourPeople!.meta.width,
