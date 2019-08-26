@@ -184,13 +184,10 @@ export default function deleteAllNotJustTestData(setupData, api) {
   });
 
   let rekognitionFaceIds;
-
-  AWS.config.update({region: "us-east-1"});
+  AWS.config.update({region: ( process.env.AWS_REGION || "us-east-1") });
   const rekognition = new AWS.Rekognition();
 
   test("Get the rekognition faces", (t) => {
-    // tslint:disable-next-line:no-console
-    console.log("region", process.env.AWS_REGION);
     const params = {
       CollectionId: setupData.collectionId,
     };
