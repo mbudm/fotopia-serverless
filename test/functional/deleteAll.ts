@@ -1,4 +1,3 @@
-import * as AWS from "aws-sdk";
 import * as test from "tape";
 
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
@@ -178,40 +177,6 @@ export default function deleteAllNotJustTestData(setupData, api) {
       })
       .then((responseBody) => {
         t.ok(responseBody, "people updated to [] ok");
-        t.end();
-      })
-      .catch(formatError);
-  });
-
-  let rekognitionFaceIds;
-  AWS.config.update({region: setupData.region });
-  const rekognition = new AWS.Rekognition();
-
-  test("Get the rekognition faces", (t) => {
-    const params = {
-      CollectionId: setupData.collectionId,
-    };
-    rekognition.listFaces(params).promise()
-      .then((faces) => {
-        t.ok(faces, `Faces retrieved from collection ${setupData.collectionId}`);
-        rekognitionFaceIds = faces!.Faces!.map((f) => f.FaceId);
-        t.ok(rekognitionFaceIds, `Faces mapped: ${rekognitionFaceIds.length}`);
-        t.end();
-      })
-      .catch(formatError);
-
-  });
-
-  test("Delete faces in the rekognition collection", (t) => {
-    const params = {
-      CollectionId: "myphotos",
-      FaceIds: rekognitionFaceIds,
-    };
-    rekognition.deleteFaces(params).promise()
-      .then((faces) => {
-        t.ok(faces, `Faces deleted from collection ${setupData.collectionId}`);
-        const deletedFaces = faces!.DeletedFaces!;
-        t.deepEqual(deletedFaces, rekognitionFaceIds, `Faces deleted are same as list retrieved`);
         t.end();
       })
       .catch(formatError);
