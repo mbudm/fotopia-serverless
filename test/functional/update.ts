@@ -7,6 +7,8 @@ import getEndpointPath from "./getEndpointPath";
 export default function updateTests(setupData: ISetupData, api) {
   let imageWithFourPeople: IImage | undefined;
 
+  // should remove this - no updates really doable from api as wipes out existing meta
+
   test("query all to get img with four people", (t) => {
     const query: IQueryBody = {
       criteria: {

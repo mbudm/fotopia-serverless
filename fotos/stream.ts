@@ -4,19 +4,21 @@ import {
   DynamoDBRecord,
   DynamoDBStreamEvent,
 } from "aws-lambda";
-import { GetObjectRequest, PutObjectOutput } from "aws-sdk/clients/s3";
+import { GetObjectRequest } from "aws-sdk/clients/s3";
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 
 import { getS3Params } from "./common/getS3Params";
-import { getS3PutParams } from "./common/getS3PutParams";
 import { failure, success } from "./common/responses";
 import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 
 import { S3 } from "aws-sdk";
+import { InvocationResponse } from "aws-sdk/clients/lambda";
 import getS3Bucket from "./common/getS3Bucket";
+import { getTraceMeta } from "./common/getTraceMeta";
+import invokePutIndex from "./common/invokePutIndex";
 import { safeLength } from "./create";
 import { JSONParseError } from "./errors/jsonParse";
 import { getZeroCount } from "./indexes";
@@ -124,11 +126,6 @@ export function getUpdatedIndexes(existing: IIndex, newRecords: DynamoDBRecord[]
   return updateCounts(existing, updates);
 }
 
-export function putIndex(index: IIndex): Promise<PutObjectOutput> {
-  const s3PutParams = getS3PutParams(index, INDEXES_KEY);
-  return s3.putObject(s3PutParams).promise();
-}
-
 export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, updatedIndexes?: IIndex) {
   const firstRecord = ddbAttVals.unwrap(records[0].dynamodb!.NewImage);
   return {
@@ -172,7 +169,7 @@ export async function indexRecords(event: DynamoDBStreamEvent, context: Context,
   try {
     const existingIndex: IIndex = await getExistingIndex();
     const updatedIndexes: IIndex = getUpdatedIndexes(existingIndex, event.Records);
-    const response: PutObjectOutput = await putIndex(updatedIndexes);
+    const response: InvocationResponse = await invokePutIndex(updatedIndexes, getTraceMeta(loggerBaseParams));
     logger(context, loggerBaseParams, getLogFields(event.Records, existingIndex, updatedIndexes));
     return callback(null, success(response));
   } catch (err) {
