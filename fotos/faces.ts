@@ -226,15 +226,16 @@ export function getUpdatePathParameters(newImage: IImage): IPathParameters {
 export function getInvokeUpdateParams(
   pathParameters: IPathParameters, body: IUpdateBody, traceMeta: ITraceMeta,
 ): InvocationRequest {
+  const bodyWithMeta: IUpdateBody = {
+    ...body,
+    traceMeta,
+  };
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}update`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
-      body: JSON.stringify({
-        body,
-        traceMeta,
-      }),
+      body: JSON.stringify(bodyWithMeta),
       pathParameters,
     }),
   };

@@ -23,7 +23,7 @@ export default function peopleTests(setupData, api) {
       fn: api.get,
     };
     const retryableTestThen = (responseBody: IPerson[]) => {
-      if (responseBody.length <= 5) {
+      if (responseBody.length < 5) {
         if (retryCount < retryStrategy.length) {
           setTimeout(() => {
             retryCount++;
@@ -31,7 +31,7 @@ export default function peopleTests(setupData, api) {
             retry();
           }, retryStrategy[retryCount]);
         } else {
-          t.fail(`Failed to get more than 5 people after ${retryCount} retries`);
+          t.fail(`Failed - retrieved only ${responseBody.length} people after ${retryCount} retries`);
           t.end();
         }
       } else {

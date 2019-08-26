@@ -1,5 +1,5 @@
+import { ITraceMeta } from "./common";
 import { IFaceWithPeople } from "./faces";
-import { IImageMeta } from "./images";
 
 export interface IUpdateBody {
   faceMatches?: IFaceWithPeople[];
@@ -7,4 +7,5 @@ export interface IUpdateBody {
   meta?: {
     [name: string]: string | number | undefined;
   };
+  traceMeta?: ITraceMeta;
 }
