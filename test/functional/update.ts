@@ -32,7 +32,6 @@ export default function updateTests(setupData: ISetupData, api) {
   });
 
   test("update imageWithFourPeople", (t) => {
-    t.plan(3);
     const updatedRecord = {
       meta: {
         newProperty: "squirrel",
@@ -44,12 +43,12 @@ export default function updateTests(setupData: ISetupData, api) {
         t.equal(responseBody.username, imageWithFourPeople!.username);
         t.equal(responseBody.id, imageWithFourPeople!.id);
         t.equal(responseBody.meta.newProperty, updatedRecord.meta.newProperty);
+        t.end();
       })
       .catch(formatError);
   });
 
   test("get updated item", (t) => {
-    t.plan(3);
     const apiPath = getEndpointPath(imageWithFourPeople);
     api.get(setupData.apiUrl, apiPath)
       .then((responseBody: IImage) => {
@@ -68,6 +67,7 @@ export default function updateTests(setupData: ISetupData, api) {
           `existing meta width ${responseBody.meta.width} unaffected`,
         );
         t.ok(responseBody.tags!.includes(imageWithFourPeople!.tags![0]), "existing other props unaffected");
+        t.end();
       })
       .catch(formatError);
   });

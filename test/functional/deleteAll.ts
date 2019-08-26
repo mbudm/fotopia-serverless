@@ -1,4 +1,6 @@
+import * as AWS from "aws-sdk";
 import * as test from "tape";
+
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
 import { createIndexAdjustment } from "./createIndexAdjustment";
 import formatError from "./formatError";
@@ -160,6 +162,78 @@ export default function deleteAllNotJustTestData(setupData, api) {
           0,
           `all people adjustments are correct. Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
         );
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  test("Update people to be an empty array", (t) => {
+    const people: IPerson[] = [];
+    const body = {
+      people,
+    };
+    api
+      .put(setupData.apiUrl, "/people/update", {
+        body,
+      })
+      .then((responseBody) => {
+        t.ok(responseBody, "people updated to [] ok");
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  let rekognitionFaceIds;
+
+  AWS.config.update({region: "us-east-1"});
+  const rekognition = new AWS.Rekognition();
+
+  test("Get the rekognition faces", (t) => {
+    // tslint:disable-next-line:no-console
+    console.log("region", process.env.AWS_REGION);
+    const params = {
+      CollectionId: setupData.collectionId,
+    };
+    rekognition.listFaces(params).promise()
+      .then((faces) => {
+        t.ok(faces, `Faces retrieved from collection ${setupData.collectionId}`);
+        rekognitionFaceIds = faces!.Faces!.map((f) => f.FaceId);
+        t.ok(rekognitionFaceIds, `Faces mapped: ${rekognitionFaceIds.length}`);
+        t.end();
+      })
+      .catch(formatError);
+
+  });
+
+  test("Delete faces in the rekognition collection", (t) => {
+    const params = {
+      CollectionId: "myphotos",
+      FaceIds: rekognitionFaceIds,
+    };
+    rekognition.deleteFaces(params).promise()
+      .then((faces) => {
+        t.ok(faces, `Faces deleted from collection ${setupData.collectionId}`);
+        const deletedFaces = faces!.DeletedFaces!;
+        t.deepEqual(deletedFaces, rekognitionFaceIds, `Faces deleted are same as list retrieved`);
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  test("Update indexes to be an empty IIndex", (t) => {
+    const index: IIndex = {
+      people: {},
+      tags: {},
+    };
+    const body = {
+      index,
+    };
+    api
+      .put(setupData.apiUrl, "/indexes/update", {
+        body,
+      })
+      .then((responseBody) => {
+        t.ok(responseBody, "index updated to empty obj ok");
         t.end();
       })
       .catch(formatError);

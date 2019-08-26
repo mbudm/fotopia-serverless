@@ -2,6 +2,7 @@ import { ICreateBody } from "../fotos/types";
 
 export interface ISetupData {
   apiUrl: string;
+  collectionId: string;
   images: ITestImage[];
   records: ICreateBody[];
   startTime: number;

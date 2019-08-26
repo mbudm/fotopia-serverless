@@ -7,6 +7,7 @@ import { ISetupData } from "../types";
 export default function setupTests(auth: any) {
   const setupData: ISetupData = {
     apiUrl: "",
+    collectionId: `${process.env.FOTOPIA_GROUP}-${process.env.STAGE}`,
     images: [],
     records: [],
     startTime: Date.now(),
