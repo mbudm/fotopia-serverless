@@ -1,6 +1,8 @@
 import { IFaceWithPeople } from "./faces";
+import { IImageMeta } from "./images";
 
 export interface IUpdateBody {
   faceMatches?: IFaceWithPeople[];
-  people: string[];
+  people?: string[];
+  meta?: IImageMeta;
 }

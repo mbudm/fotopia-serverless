@@ -77,8 +77,8 @@ export async function updateItem(event: APIGatewayProxyEvent, context: Context, 
   const data = event.body ? JSON.parse(event.body) : null;
   const traceMeta: ITraceMeta | undefined = data!.traceMeta;
   const requestBody: IUpdateBody = {
-    faceMatches: data.faceMatches,
-    people: data.people,
+    faceMatches: data.faceMatches || [],
+    people: data.people || [],
   };
 
   const loggerBaseParams: ILoggerBaseParams = {

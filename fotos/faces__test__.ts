@@ -479,7 +479,7 @@ test("getUpdateBody - no people", (t) => {
   faces.getPeopleForFaces(newImage, existingPeople, mockFaceMatcher)
     .then((facesWithPeople) => {
       const result = faces.getUpdateBody(facesWithPeople, new Array<IPerson>());
-      t.equal(result.people.length, 0, "passes joi validation but has 0 results, as none over threshold");
+      t.equal(result.people!.length, 0, "has 0 results, as none over threshold");
       t.end();
     })
     .catch(t.fail);
@@ -523,7 +523,7 @@ test("getUpdateBody - unique people", (t) => {
     userIdentityId: "some-str",
   }];
   const result = faces.getUpdateBody(facesWithPeople, newPeople);
-  t.equal(result.people.length, 1);
+  t.equal(result.people!.length, 1);
   t.deepEqual(result.people, [person.id], "dedupes person ids");
   t.end();
 });
