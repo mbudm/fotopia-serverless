@@ -78,6 +78,7 @@ export async function updateItem(event: APIGatewayProxyEvent, context: Context, 
   const traceMeta: ITraceMeta | undefined = data!.traceMeta;
   const requestBody: IUpdateBody = {
     faceMatches: data.faceMatches || [],
+    meta: data.meta || {},
     people: data.people || [],
   };
 

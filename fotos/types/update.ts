@@ -4,5 +4,7 @@ import { IImageMeta } from "./images";
 export interface IUpdateBody {
   faceMatches?: IFaceWithPeople[];
   people?: string[];
-  meta?: IImageMeta;
+  meta?: {
+    [name: string]: string | number | undefined;
+  };
 }

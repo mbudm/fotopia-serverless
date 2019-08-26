@@ -8,6 +8,9 @@ const requestParams = {
   username: "pedro",
 };
 const requestBody: IUpdateBody = {
+  meta: {
+    location: "Peru",
+  },
   people: ["Bob"],
 };
 
@@ -16,7 +19,7 @@ test("getDynamoDbParams", (t) => {
   try {
     const params = update.getDynamoDbParams(requestParams, requestBody);
     t.deepEqual(params.Key.username, requestParams.username);
-    t.equal(params.UpdateExpression, "SET #people = :people, updatedAt = :updatedAt");
+    t.equal(params.UpdateExpression, "SET #meta = :meta, #people = :people, updatedAt = :updatedAt");
     t.end();
   } catch (e) {
     t.fail(e);
