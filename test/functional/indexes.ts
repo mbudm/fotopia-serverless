@@ -15,7 +15,7 @@ export default function indexesTests(setupData, api) {
       fn: api.get,
     };
     const retryableTestThen = (responseBody: IIndex) => {
-      if (Object.keys(responseBody.tags).length < 10 && Object.keys(responseBody.people).length < 5) {
+      if (Object.keys(responseBody.tags).length < 10 || Object.keys(responseBody.people).length < 5) {
         if (retryCount < retryStrategy.length) {
           setTimeout(() => {
             retryCount++;
@@ -36,7 +36,6 @@ export default function indexesTests(setupData, api) {
           true,
           `tags length of ${Object.keys(responseBody.tags).length} - tags from two images`,
         );
-
         t.equal(
           Object.keys(responseBody.people).length  >= 5,
           true,
