@@ -9,7 +9,7 @@ import {
 
 export function getInvokeUpdateParams(body: IIndex, traceMeta): InvocationRequest {
   return {
-    FunctionName: `${process.env.LAMBDA_PREFIX}indexes`,
+    FunctionName: `${process.env.LAMBDA_PREFIX}indexesUpdate`,
     InvocationType: INVOCATION_EVENT,
     LogType: "Tail",
     Payload: JSON.stringify({

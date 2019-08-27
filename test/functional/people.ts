@@ -284,7 +284,6 @@ export default function peopleTests(setupData, api) {
           "image has person 0",
         );
         t.end();
-        t.end();
       }
     };
     const retry = () => {

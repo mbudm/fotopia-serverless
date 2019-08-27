@@ -34,6 +34,7 @@ export default function updateTests(setupData: ISetupData, api) {
   test("update imageWithFourPeople", (t) => {
     const updatedRecord = {
       meta: {
+        ...imageWithFourPeople!.meta,
         newProperty: "squirrel",
       },
     };
