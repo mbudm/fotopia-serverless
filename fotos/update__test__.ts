@@ -25,3 +25,22 @@ test("getDynamoDbParams", (t) => {
     t.fail(e);
   }
 });
+
+test("getDynamoDbParams - w undefined keys", (t) => {
+  const reqBodyWithUndefined = {
+    meta: {
+      someKey: "blah",
+    },
+    people: undefined,
+    tags: undefined,
+  };
+  process.env.DYNAMODB_TABLE = "TABLE";
+  try {
+    const params = update.getDynamoDbParams(requestParams, reqBodyWithUndefined);
+    t.deepEqual(params.Key.username, requestParams.username);
+    t.equal(params.UpdateExpression, "SET #meta = :meta, updatedAt = :updatedAt");
+    t.end();
+  } catch (e) {
+    t.fail(e);
+  }
+});

@@ -111,13 +111,6 @@ export default function deleteTests(setupData, api) {
       .catch(formatError);
   });
 
-  test("wait for 3 seconds", (t) => {
-    setTimeout(() => {
-      t.comment("Waited for 3 secs");
-      t.end();
-    }, 3000);
-  });
-
   test("get people should return no results with the test image ids", (t) => {
     const imageIds = [imageOne.id].concat(imagesWithFourPeople.map((i) => i.id));
     api
