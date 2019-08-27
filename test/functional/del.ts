@@ -3,6 +3,7 @@ import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
 import { createIndexAdjustment } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
 
 export default function deleteTests(setupData, api) {
 
@@ -183,15 +184,6 @@ export default function deleteTests(setupData, api) {
     t.end();
   });
 
-  const getIncorrectIndexUpdates = (indexAdjustments, sourceIndex: IIndex, updatedIndex: IIndex) => {
-    return {
-      people: Object.keys(indexAdjustments.people)
-        .filter((p) => updatedIndex.people[p] !==  sourceIndex.people[p] + indexAdjustments.people[p]),
-      tags: Object.keys(indexAdjustments.tags)
-        .filter((tag) => updatedIndex.tags[tag] !==  sourceIndex.tags[tag] + indexAdjustments.tags[tag]),
-    };
-  };
-
   test("get indexes should return an index object with 0 counts for ppl and tags matching test data", (t) => {
     const allImages: IImage[] = [imageOne].concat(imagesWithFourPeople);
     const testImagesPeople = getItemsInImages("people", allImages);
@@ -221,7 +213,17 @@ export default function deleteTests(setupData, api) {
             incorrectUpdates.tags.length
           } incorrectly adjusted tags and ${
             incorrectUpdates.people.length
-          } incorrectly adjusted people after ${retryCount} retries`);
+          } incorrectly adjusted people after ${retryCount} retries. ${JSON.stringify({
+            existingIndexes,
+            indexAdjustments,
+            responseBody,
+          })}.  Images tags/people: ${
+            JSON.stringify(allImages.map((i) => ({
+              img_key: i.img_key,
+              people: i.people,
+              tags: i.tags,
+            })))
+          }`);
           t.end();
         }
       } else {

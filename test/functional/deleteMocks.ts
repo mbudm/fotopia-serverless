@@ -3,6 +3,7 @@ import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
 import { createIndexAdjustment } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
 
 export default function deleteAllTestData(setupData, api) {
   let images: IImage[];
@@ -111,9 +112,6 @@ export default function deleteAllTestData(setupData, api) {
   });
 
   test("get people should return no results with the deleted test image ids", (t) => {
-    // const peopleToCheck = images.reduce((accum, img) =>
-    //   Array.isArray(img.people) ? accum.concat(img.people) : accum,
-    // [] as string[]);
     const imageIds =  deleteImages.map((img) => img.id);
     api
       .get(setupData.apiUrl, "/people")
@@ -149,19 +147,22 @@ export default function deleteAllTestData(setupData, api) {
     api
       .get(setupData.apiUrl, "/indexes")
       .then((responseBody: IIndex) => {
-        const incorrectAdjustmentTags = Object.keys(indexAdjustments.tags)
-          .filter((tag) => responseBody.tags[tag] !==  existingIndexes.tags[tag] + indexAdjustments.tags[tag]);
+        const incorrectUpdates = getIncorrectIndexUpdates(indexAdjustments, existingIndexes, responseBody);
+
         t.equal(
-          incorrectAdjustmentTags.length,
+          incorrectUpdates.tags.length,
           0,
-          `all tags adjustments are correct. Checked ${Object.keys(indexAdjustments.tags).length} adjustments`,
+          `all tags adjustments are correct (found ${
+            incorrectUpdates.tags.length}
+          ). Checked ${Object.keys(indexAdjustments.tags).length} adjustments`,
         );
-        const incorrectAdjustmentPeople = Object.keys(indexAdjustments.people)
-          .filter((p) => responseBody.people[p] !==  existingIndexes.people[p] + indexAdjustments.people[p]);
+
         t.equal(
-          incorrectAdjustmentPeople.length,
+          incorrectUpdates.people.length,
           0,
-          `all people adjustments are correct. Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
+          `all people adjustments are correct(found ${
+            incorrectUpdates.people.length}
+          ). Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
         );
         t.end();
       })
