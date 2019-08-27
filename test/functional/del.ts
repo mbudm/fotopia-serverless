@@ -213,17 +213,7 @@ export default function deleteTests(setupData, api) {
             incorrectUpdates.tags.length
           } incorrectly adjusted tags and ${
             incorrectUpdates.people.length
-          } incorrectly adjusted people after ${retryCount} retries. ${JSON.stringify({
-            existingIndexes,
-            indexAdjustments,
-            responseBody,
-          })}.  Images tags/people: ${
-            JSON.stringify(allImages.map((i) => ({
-              img_key: i.img_key,
-              people: i.people,
-              tags: i.tags,
-            })))
-          }`);
+          } incorrectly adjusted people after ${retryCount} retries.`);
           t.end();
         }
       } else {

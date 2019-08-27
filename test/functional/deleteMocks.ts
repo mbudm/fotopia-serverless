@@ -6,7 +6,10 @@ import getEndpointPath from "./getEndpointPath";
 import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
 
 export default function deleteAllTestData(setupData, api) {
+
+  const retryStrategy = [500, 1000, 2000, 5000];
   let images: IImage[];
+
   test("query all to get all images", (t) => {
     const query: IQueryBody = {
       criteria: {
@@ -113,15 +116,31 @@ export default function deleteAllTestData(setupData, api) {
 
   test("get people should return no results with the deleted test image ids", (t) => {
     const imageIds =  deleteImages.map((img) => img.id);
-    api
-      .get(setupData.apiUrl, "/people")
-      .then((responseBody: IPerson[]) => {
-        const peopleWithDeletedImageIds = responseBody.filter((p) => {
-          const facesWithDeletedImageId = p.faces.filter(
-            (f) => f.ExternalImageId && imageIds.includes(f.ExternalImageId),
-          );
-          return facesWithDeletedImageId.length > 0;
-        });
+
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/people"],
+      fn: api.get,
+    };
+    const retryableTestThen = (responseBody: IPerson[]) => {
+      const peopleWithDeletedImageIds = responseBody.filter((p) => {
+        const facesWithDeletedImageId = p.faces.filter(
+          (f) => f.ExternalImageId && imageIds.includes(f.ExternalImageId),
+        );
+        return facesWithDeletedImageId.length > 0;
+      });
+      if (peopleWithDeletedImageIds.length > 0) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed - people w deleted img ids: ${peopleWithDeletedImageIds.length} after ${retryCount} retries`);
+          t.end();
+        }
+      } else {
         t.equal(
           peopleWithDeletedImageIds.length,
           0,
@@ -132,8 +151,15 @@ export default function deleteAllTestData(setupData, api) {
           }`,
         );
         t.end();
-      })
-      .catch(formatError);
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
   });
 
   test("get indexes should return an index object with adjusted counts matching deleted test images", (t) => {
@@ -144,11 +170,30 @@ export default function deleteAllTestData(setupData, api) {
       people: createIndexAdjustment(testImagesPeople),
       tags: createIndexAdjustment(testImagesTags),
     };
-    api
-      .get(setupData.apiUrl, "/indexes")
-      .then((responseBody: IIndex) => {
-        const incorrectUpdates = getIncorrectIndexUpdates(indexAdjustments, existingIndexes, responseBody);
 
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/indexes"],
+      fn: api.get,
+    };
+    const retryableTestThen = (responseBody: IIndex) => {
+      const incorrectUpdates = getIncorrectIndexUpdates(indexAdjustments, existingIndexes, responseBody);
+      if (incorrectUpdates.tags.length + incorrectUpdates.people.length > 0) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed - index has ${
+            incorrectUpdates.tags.length
+          } incorrectly adjusted tags and ${
+            incorrectUpdates.people.length
+          } incorrectly adjusted people after ${retryCount} retries.`);
+          t.end();
+        }
+      } else {
         t.equal(
           incorrectUpdates.tags.length,
           0,
@@ -165,7 +210,15 @@ export default function deleteAllTestData(setupData, api) {
           ). Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
         );
         t.end();
-      })
-      .catch(formatError);
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
+
   });
 }
