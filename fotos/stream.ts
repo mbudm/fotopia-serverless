@@ -4,48 +4,21 @@ import {
   DynamoDBRecord,
   DynamoDBStreamEvent,
 } from "aws-lambda";
-import { GetObjectRequest } from "aws-sdk/clients/s3";
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 
-import { getS3Params } from "./common/getS3Params";
 import { failure, success } from "./common/responses";
-import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
-import createS3Client from "./lib/s3";
 
-import { S3 } from "aws-sdk";
 import { InvocationResponse } from "aws-sdk/clients/lambda";
-import getS3Bucket from "./common/getS3Bucket";
 import { getTraceMeta } from "./common/getTraceMeta";
+import invokeGetIndex from "./common/invokeGetIndex";
 import invokePutIndex from "./common/invokePutIndex";
 import { safeLength } from "./create";
-import { JSONParseError } from "./errors/jsonParse";
 import { getZeroCount } from "./indexes";
 import {
   IIndex, IIndexDictionary, IIndexFields, ILoggerBaseParams,
 } from "./types";
-
-let s3: S3;
-
-export function getExistingIndex(): Promise<IIndex> {
-  const bucket = getS3Bucket();
-  const s3Params: GetObjectRequest = getS3Params(bucket, INDEXES_KEY);
-  return s3.getObject(s3Params).promise()
-    .then((s3Object) => {
-      try {
-        if (s3Object.Body) {
-          const parsed: IIndex = JSON.parse(s3Object.Body.toString());
-          return parsed;
-        } else {
-          return { tags: {}, people: {} };
-        }
-      } catch (e) {
-        throw new JSONParseError(e, `getExistingIndex ${s3Object.Body && s3Object.Body.toString()}`);
-      }
-    })
-    .catch((error) => ({ error, tags: {}, people: {} }));
-}
 
 export function normaliseArrayFields(record: DynamoDBRecord): IIndexFields {
   const arrayFields: IIndexFields = {
@@ -176,7 +149,6 @@ export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, 
 
 export async function indexRecords(event: DynamoDBStreamEvent, context: Context, callback: Callback) {
   const startTime: number = Date.now();
-  s3 = createS3Client();
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "indexRecords",
@@ -185,7 +157,7 @@ export async function indexRecords(event: DynamoDBStreamEvent, context: Context,
     traceId: uuid.v1(),
   };
   try {
-    const existingIndex: IIndex = await getExistingIndex();
+    const existingIndex: IIndex = await invokeGetIndex(getTraceMeta(loggerBaseParams) );
     const updatedIndexes: IIndex = getUpdatedIndexes(existingIndex, event.Records);
     const response: InvocationResponse = await invokePutIndex(updatedIndexes, getTraceMeta(loggerBaseParams));
     logger(context, loggerBaseParams, getLogFields(event.Records, existingIndex, updatedIndexes));

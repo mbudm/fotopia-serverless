@@ -35,13 +35,43 @@ export default function indexesTests(setupData, api) {
       .catch(formatError);
   });
 
-  test("get indexes, should have at least tags and people of test images", (t) => {
-    const testImagesPeople = getItemsInImages("people", testImages);
-    const testImagesTags = getItemsInImages("tags", testImages);
-    const indexAdjustments = {
-      people: createIndexAdd(testImagesPeople),
-      tags: createIndexAdd(testImagesTags),
+  function createIndexChangeTable(images: IImage[], existingIndex: IIndex, actualIndex: IIndex) {
+    const people = Object.keys(actualIndex.people).map((p: string) => {
+      const imagesWithPerson = images.filter((img) => img.people && img.people.includes(p));
+      const existing: number = isNaN(existingIndex.people[p]) ? 0 : existingIndex.people[p];
+      return {
+        actual: actualIndex.people[p],
+        existing,
+        expected: existing + imagesWithPerson.length,
+        id: p,
+        images: imagesWithPerson.map((img) => img.img_key),
+      };
+    });
+    const tags = Object.keys(actualIndex.tags).map((t: string) => {
+      const imagesWithTag = images.filter((img) => img.tags && img.tags.includes(t));
+      const existing: number = isNaN(existingIndex.tags[t]) ? 0 : existingIndex.tags[t];
+      return {
+        actual: actualIndex.tags[t],
+        existing,
+        expected: existing + imagesWithTag.length,
+        id: t,
+        images: imagesWithTag.map((img) => img.img_key),
+      };
+    });
+
+    const valid = {
+      people: people.filter((p) => p.actual !== p.expected),
+      tags: tags.filter((t) => t.actual !== t.expected),
     };
+    return {
+      people,
+      tags,
+      valid,
+    };
+  }
+
+  test("get indexes, should have at least tags and people of test images", (t) => {
+
     const existingIndexes = {
       people: {},
       tags: {},
@@ -53,9 +83,8 @@ export default function indexesTests(setupData, api) {
       fn: api.get,
     };
     const retryableTestThen = (responseBody: IIndex) => {
-      const incorrectUpdates = getIncorrectIndexUpdates(indexAdjustments, existingIndexes, responseBody);
-
-      if (incorrectUpdates.tags.length + incorrectUpdates.people.length > 0) {
+      const changes = createIndexChangeTable(testImages, existingIndexes, responseBody);
+      if (changes.valid.people.length + changes.valid.tags.length > 0) {
         if (retryCount < retryStrategy.length) {
           setTimeout(() => {
             retryCount++;
@@ -64,26 +93,28 @@ export default function indexesTests(setupData, api) {
           }, retryStrategy[retryCount]);
         } else {
           t.fail(`Failed - index has ${
-            incorrectUpdates.tags.length
+            changes.valid.tags.length
           } incorrectly adjusted tags and ${
-            incorrectUpdates.people.length
-          } incorrectly adjusted people after ${retryCount} retries.`);
+            changes.valid.people.length
+          } incorrectly adjusted people after ${retryCount} retries. Fail details: \n${
+            JSON.stringify(changes.valid, null, 2)
+          }`);
           t.end();
         }
       } else {
         t.equal(
-          incorrectUpdates.tags.length,
+          changes.valid.tags.length,
           0,
           `all tags adjustments are correct (incorrect: ${
-            incorrectUpdates.tags.length
-          }). Checked ${Object.keys(indexAdjustments.tags).length} adjustments`,
+            changes.valid.tags.length
+          })`,
         );
         t.equal(
-          incorrectUpdates.people.length,
+          changes.valid.people.length,
           0,
           `all people adjustments are correct (incorrect: ${
-            incorrectUpdates.people.length
-          }). Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
+            changes.valid.people.length
+          }).`,
         );
         t.end();
       }

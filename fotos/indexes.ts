@@ -11,7 +11,7 @@ import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
-  IIndex, IIndexDictionary, ILoggerBaseParams, IPutIndexRequest,
+  IIndex, IIndexDictionary, ILoggerBaseParams, IPutIndexRequest, ITraceMeta,
 } from "./types";
 
 let s3: S3;
@@ -36,11 +36,14 @@ export function getObject(s3Params: GetObjectRequest): Promise<IIndex> {
       try {
         if (s3Object.Body) {
           const bodyString = s3Object.Body.toString();
-          return bodyString ? JSON.parse(bodyString) : [];
+          return bodyString ? JSON.parse(bodyString) : {
+            people: {},
+            tags: {},
+          };
         } else {
           return {
-            people: [],
-            tags: [],
+            people: {},
+            tags: {},
           };
         }
       } catch (e) {
@@ -75,12 +78,19 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
   const startTime: number = Date.now();
   s3 = createS3Client();
   const s3Params: GetObjectRequest = getS3Params();
+  const traceMeta: ITraceMeta | null  = context.clientContext &&
+    context.clientContext.Custom ?
+    JSON.parse(context.clientContext.Custom) :
+    null ;
+
+  // tslint:disable-next-line:no-console
+  console.log("client context", context.clientContext);
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
-    parentId: "",
+    parentId: traceMeta && traceMeta.parentId || "",
     startTime,
-    traceId: uuid.v1(),
+    traceId: traceMeta && traceMeta.traceId || uuid.v1(),
   };
   try {
     const indexesObject: IIndex = await getObject(s3Params);
