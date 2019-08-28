@@ -16,6 +16,11 @@ import {
 
 let s3: S3;
 
+const defaultIndex: IIndex = {
+  people: {},
+  tags: {},
+};
+
 export function getS3Params(): GetObjectRequest {
   const Bucket = getS3Bucket();
   const Key = INDEXES_KEY;
@@ -36,15 +41,9 @@ export function getObject(s3Params: GetObjectRequest): Promise<IIndex> {
       try {
         if (s3Object.Body) {
           const bodyString = s3Object.Body.toString();
-          return bodyString ? JSON.parse(bodyString) : {
-            people: {},
-            tags: {},
-          };
+          return bodyString ? JSON.parse(bodyString) : defaultIndex;
         } else {
-          return {
-            people: {},
-            tags: {},
-          };
+          return defaultIndex;
         }
       } catch (e) {
         throw new JSONParseError(e, `get indexes ${s3Object.Body && s3Object.Body.toString()}`);
@@ -54,10 +53,7 @@ export function getObject(s3Params: GetObjectRequest): Promise<IIndex> {
       if (e.code === "NoSuchKey" || e.code === "AccessDenied") {
         // tslint:disable-next-line:no-console
         console.log("No object found / AccessDenied - assuming empty indexes");
-        return {
-          people: [],
-          tags: [],
-        };
+        return defaultIndex;
       }
       // tslint:disable-next-line:no-console
       console.log("Another error with get indexes object", e);
@@ -110,10 +106,7 @@ export function putIndex(index: IIndex): Promise<PutObjectOutput> {
 export async function putItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime: number = Date.now();
 
-  const requestBody: IPutIndexRequest = event.body ? JSON.parse(event.body) : { index: {
-    people: {},
-    tags: {},
-  }};
+  const requestBody: IPutIndexRequest = event.body ? JSON.parse(event.body) : { index: defaultIndex};
   const traceMeta = requestBody!.traceMeta;
 
   s3 = createS3Client();
