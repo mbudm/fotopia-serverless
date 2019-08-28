@@ -152,9 +152,9 @@ export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, 
     imageUsername: firstRecord.username,
     imageWidth: firstRecord.meta && firstRecord.meta.width,
     indexesModifiedPeopleCount: existingIndex && updatedIndexes &&
-      getModifiedIndexItems(existingIndex.people, updatedIndexes.people),
+      getModifiedIndexItems(existingIndex.people, updatedIndexes.people).length,
     indexesModifiedTagCount: existingIndex && updatedIndexes &&
-      getModifiedIndexItems(existingIndex.tags, updatedIndexes.tags),
+      getModifiedIndexItems(existingIndex.tags, updatedIndexes.tags).length,
     indexesPeopleCount: existingIndex && Object.keys(existingIndex.people).length,
     indexesTagCount: existingIndex && Object.keys(existingIndex.tags).length,
     indexesUpdatedPeopleCount: updatedIndexes && Object.keys(updatedIndexes.people).length,
