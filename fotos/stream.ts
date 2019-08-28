@@ -132,9 +132,17 @@ export function getModifiedIndexItems(existing: IIndexDictionary, updated: IInde
   });
 }
 
+export function getFirstRecord(records: DynamoDBRecord[]) {
+  const firstRecord: DynamoDBRecord = records[0];
+  return firstRecord.dynamodb!.NewImage ?
+    ddbAttVals.unwrap(records[0].dynamodb!.NewImage) :
+    ddbAttVals.unwrap(records[0].dynamodb!.OldImage);
+}
+
 export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, updatedIndexes?: IIndex) {
-  const firstRecord = ddbAttVals.unwrap(records[0].dynamodb!.NewImage);
+  const firstRecord = getFirstRecord(records);
   return {
+    ddbEventName: records[0].eventName,
     ddbEventRecordsCount: safeLength(records),
     ddbEventRecordsRaw: records,
     imageBirthtime: firstRecord.birthtime,
