@@ -140,8 +140,8 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
 
   try {
     const indexesClean = removeZeroCounts(requestBody.index);
-    const putIndexObject: PutObjectOutput = await putIndex(requestBody.index);
-    logger(context, loggerBaseParams, getLogFields(requestBody.index));
+    const putIndexObject: PutObjectOutput = await putIndex(indexesClean);
+    logger(context, loggerBaseParams, getLogFields(indexesClean));
     return callback(null, success(requestBody));
   } catch (err) {
     logger(context, loggerBaseParams, { err, ...getLogFields(requestBody.index)});
