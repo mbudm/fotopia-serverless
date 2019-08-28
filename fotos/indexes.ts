@@ -74,12 +74,9 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
   const startTime: number = Date.now();
   s3 = createS3Client();
   const s3Params: GetObjectRequest = getS3Params();
-  const traceMeta: ITraceMeta | null  = context.clientContext &&
-    context.clientContext.Custom ?
-    JSON.parse(context.clientContext.Custom) :
-    null ;
-  // tslint:disable-next-line:no-console
-  console.log("client context - custom?", context);
+  const eventBody = event.body ? JSON.parse(event.body) : null;
+  const traceMeta: ITraceMeta | undefined = eventBody!.traceMeta;
+
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",

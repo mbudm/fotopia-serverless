@@ -9,17 +9,21 @@ import {
   IIndex, ITraceMeta,
 } from "../types";
 
-export function getInvokeGetIndexParams(ctx: ITraceMeta): InvocationRequest {
+export function getInvokeGetIndexParams(traceMeta: ITraceMeta): InvocationRequest {
   return {
-    ClientContext: JSON.stringify({ custom: ctx}),
     FunctionName: `${process.env.LAMBDA_PREFIX}indexes`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
+    Payload: JSON.stringify({
+      body: JSON.stringify({
+        traceMeta,
+      }),
+    }),
   };
 }
 
-export default function invokeGetIndex(ctx: ITraceMeta) {
-  const params = getInvokeGetIndexParams(ctx);
+export default function invokeGetIndex(traceMeta: ITraceMeta) {
+  const params = getInvokeGetIndexParams(traceMeta);
   return lambda.invoke(params).promise()
     .then((invocationResponse: InvocationResponse) => {
       try {
