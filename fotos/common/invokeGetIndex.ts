@@ -11,7 +11,7 @@ import {
 
 export function getInvokeGetIndexParams(ctx: ITraceMeta): InvocationRequest {
   return {
-    ClientContext: JSON.stringify(ctx),
+    ClientContext: JSON.stringify({ custom: ctx}),
     FunctionName: `${process.env.LAMBDA_PREFIX}indexes`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
