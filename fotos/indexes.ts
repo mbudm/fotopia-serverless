@@ -78,9 +78,8 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
     context.clientContext.Custom ?
     JSON.parse(context.clientContext.Custom) :
     null ;
-
   // tslint:disable-next-line:no-console
-  console.log("client context", context.clientContext);
+  console.log("client context", context.clientContext, event);
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
