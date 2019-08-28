@@ -1,9 +1,9 @@
 import * as test from "tape";
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
 import { createIndexSubtract } from "./createIndexAdjustment";
+import { createIndexChangeTable, MODES } from "./createIndexChangeTable";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
-import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
 import { getItemsInImages } from "./getItemsInImages";
 
 export default function deleteTests(setupData, api) {
@@ -213,26 +213,16 @@ export default function deleteTests(setupData, api) {
     t.end();
   });
 
-  test("get indexes should return an index object with 0 counts for ppl and tags matching test data", (t) => {
-    // failing in lots of situations. only seems to be clean with a reset env.
-    // print out differences more clearly and diagnose
-    const allImages: IImage[] = [imageOne].concat(imagesWithFourPeople);
-    const testImagesPeople = getItemsInImages("people", allImages);
-    const testImagesTags = getItemsInImages("tags", allImages);
-    const indexAdjustments = {
-      people: createIndexSubtract(testImagesPeople),
-      tags: createIndexSubtract(testImagesTags),
-    };
-
+  test("get indexes, should not have tags and people of test images", (t) => {
+    const testImages: IImage[] = [imageOne].concat(imagesWithFourPeople);
     let retryCount = 0;
     const retryableTest = {
       args: [setupData.apiUrl, "/indexes"],
       fn: api.get,
     };
     const retryableTestThen = (responseBody: IIndex) => {
-      const incorrectUpdates = getIncorrectIndexUpdates(indexAdjustments, existingIndexes, responseBody);
-
-      if (incorrectUpdates.tags.length + incorrectUpdates.people.length > 0) {
+      const changes = createIndexChangeTable(MODES.REMOVE, testImages, existingIndexes, responseBody);
+      if (changes.valid.people.length + changes.valid.tags.length > 0) {
         if (retryCount < retryStrategy.length) {
           setTimeout(() => {
             retryCount++;
@@ -241,26 +231,28 @@ export default function deleteTests(setupData, api) {
           }, retryStrategy[retryCount]);
         } else {
           t.fail(`Failed - index has ${
-            incorrectUpdates.tags.length
+            changes.valid.tags.length
           } incorrectly adjusted tags and ${
-            incorrectUpdates.people.length
-          } incorrectly adjusted people after ${retryCount} retries.`);
+            changes.valid.people.length
+          } incorrectly adjusted people after ${retryCount} retries. Fail details: \n${
+            JSON.stringify(changes.valid, null, 2)
+          }`);
           t.end();
         }
       } else {
         t.equal(
-          incorrectUpdates.tags.length,
+          changes.valid.tags.length,
           0,
           `all tags adjustments are correct (incorrect: ${
-            incorrectUpdates.tags.length
-          }). Checked ${Object.keys(indexAdjustments.tags).length} adjustments`,
+            changes.valid.tags.length
+          })`,
         );
         t.equal(
-          incorrectUpdates.people.length,
+          changes.valid.people.length,
           0,
           `all people adjustments are correct (incorrect: ${
-            incorrectUpdates.people.length
-          }). Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
+            changes.valid.people.length
+          }).`,
         );
         t.end();
       }
@@ -272,6 +264,6 @@ export default function deleteTests(setupData, api) {
     };
 
     retry();
-
   });
+
 }
