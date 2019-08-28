@@ -1,6 +1,6 @@
 import * as test from "tape";
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
-import { createIndexAdjustment } from "./createIndexAdjustment";
+import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
@@ -167,8 +167,8 @@ export default function deleteAllTestData(setupData, api) {
     const testImagesTags = deleteImages.reduce((accum, img) => accum.concat(img.tags!), [] as string[]);
 
     const indexAdjustments = {
-      people: createIndexAdjustment(testImagesPeople),
-      tags: createIndexAdjustment(testImagesTags),
+      people: createIndexSubtract(testImagesPeople),
+      tags: createIndexSubtract(testImagesTags),
     };
 
     let retryCount = 0;

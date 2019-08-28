@@ -26,7 +26,7 @@ export function getS3Params(): GetObjectRequest {
 }
 
 export function getZeroCount(indexObj: IIndexDictionary): number {
-  return Object.keys(indexObj).filter((item) => +item <= 0).length;
+  return Object.keys(indexObj).filter((item) => indexObj[item] <= 0).length;
 }
 
 export function getObject(s3Params: GetObjectRequest): Promise<IIndex> {

@@ -1,21 +1,61 @@
 import * as test from "tape";
 import {
-  IIndex,
+  IImage, IIndex, IQueryBody,
 } from "../../fotos/types";
+import { createIndexAdd } from "./createIndexAdjustment";
 import formatError from "./formatError";
+import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
+import { getItemsInImages } from "./getItemsInImages";
 
 export default function indexesTests(setupData, api) {
 
   const retryStrategy = [500, 1000, 2000, 5000];
 
-  test("get indexes, should have at least 5 people and 10 tags", (t) => {
+  let testImages: IImage[];
+  test("query images to get testimages", (t) => {
+    const query: IQueryBody = {
+      criteria: {
+        people: [],
+        tags: [],
+      },
+      from: setupData.startTime,
+      to: Date.now(),
+    };
+
+    api.post(setupData.apiUrl, "/query", {
+      body: query,
+    })
+      .then((responseBody) => {
+        t.equal(responseBody.length >= 2, true, "at least two images in env");
+        testImages = responseBody.filter((img) => img.img_key === setupData.records[1].img_key ||
+          img.img_key === setupData.records[0].img_key );
+        t.equal(testImages.length >= 2, true, `at least two test images - actual: ${testImages.length}`);
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  test("get indexes, should have at least tags and people of test images", (t) => {
+    const testImagesPeople = getItemsInImages("people", testImages);
+    const testImagesTags = getItemsInImages("tags", testImages);
+    const indexAdjustments = {
+      people: createIndexAdd(testImagesPeople),
+      tags: createIndexAdd(testImagesTags),
+    };
+    const existingIndexes = {
+      people: {},
+      tags: {},
+    };
+
     let retryCount = 0;
     const retryableTest = {
       args: [setupData.apiUrl, "/indexes"],
       fn: api.get,
     };
     const retryableTestThen = (responseBody: IIndex) => {
-      if (Object.keys(responseBody.tags).length < 10 || Object.keys(responseBody.people).length < 5) {
+      const incorrectUpdates = getIncorrectIndexUpdates(indexAdjustments, existingIndexes, responseBody);
+
+      if (incorrectUpdates.tags.length + incorrectUpdates.people.length > 0) {
         if (retryCount < retryStrategy.length) {
           setTimeout(() => {
             retryCount++;
@@ -24,24 +64,26 @@ export default function indexesTests(setupData, api) {
           }, retryStrategy[retryCount]);
         } else {
           t.fail(`Failed - index has ${
-            Object.keys(responseBody.tags).length
-          } tags and ${
-            Object.keys(responseBody.people).length
-          } people after ${retryCount} retries`);
+            incorrectUpdates.tags.length
+          } incorrectly adjusted tags and ${
+            incorrectUpdates.people.length
+          } incorrectly adjusted people after ${retryCount} retries.`);
           t.end();
         }
       } else {
         t.equal(
-          Object.keys(responseBody.tags).length  >= 10,
-          true,
-          `tags length of ${Object.keys(responseBody.tags).length} - tags from two images`,
+          incorrectUpdates.tags.length,
+          0,
+          `all tags adjustments are correct (incorrect: ${
+            incorrectUpdates.tags.length
+          }). Checked ${Object.keys(indexAdjustments.tags).length} adjustments`,
         );
         t.equal(
-          Object.keys(responseBody.people).length  >= 5,
-          true,
-          `people length of ${
-            Object.keys(responseBody.people).length
-          } - at least each person from image one and image with 4 people`,
+          incorrectUpdates.people.length,
+          0,
+          `all people adjustments are correct (incorrect: ${
+            incorrectUpdates.people.length
+          }). Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
         );
         t.end();
       }

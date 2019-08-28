@@ -23,7 +23,7 @@ import { safeLength } from "./create";
 import { JSONParseError } from "./errors/jsonParse";
 import { getZeroCount } from "./indexes";
 import {
-  IIndex, IIndexFields, ILoggerBaseParams,
+  IIndex, IIndexDictionary, IIndexFields, ILoggerBaseParams,
 } from "./types";
 
 let s3: S3;
@@ -126,6 +126,12 @@ export function getUpdatedIndexes(existing: IIndex, newRecords: DynamoDBRecord[]
   return updateCounts(existing, updates);
 }
 
+export function getModifiedIndexItems(existing: IIndexDictionary, updated: IIndexDictionary) {
+  return Object.keys(updated).filter((fieldKey: string) => {
+    return updated[fieldKey] !== existing[fieldKey];
+  });
+}
+
 export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, updatedIndexes?: IIndex) {
   const firstRecord = ddbAttVals.unwrap(records[0].dynamodb!.NewImage);
   return {
@@ -145,6 +151,10 @@ export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, 
     imageUserIdentityId: firstRecord.userIdentityId,
     imageUsername: firstRecord.username,
     imageWidth: firstRecord.meta && firstRecord.meta.width,
+    indexesModifiedPeopleCount: existingIndex && updatedIndexes &&
+      getModifiedIndexItems(existingIndex.people, updatedIndexes.people),
+    indexesModifiedTagCount: existingIndex && updatedIndexes &&
+      getModifiedIndexItems(existingIndex.tags, updatedIndexes.tags),
     indexesPeopleCount: existingIndex && Object.keys(existingIndex.people).length,
     indexesTagCount: existingIndex && Object.keys(existingIndex.tags).length,
     indexesUpdatedPeopleCount: updatedIndexes && Object.keys(updatedIndexes.people).length,

@@ -1,9 +1,10 @@
 import * as test from "tape";
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
-import { createIndexAdjustment } from "./createIndexAdjustment";
+import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
+import { getItemsInImages } from "./getItemsInImages";
 
 export default function deleteTests(setupData, api) {
 
@@ -167,18 +168,14 @@ export default function deleteTests(setupData, api) {
     retry();
   });
 
-  test("createIndexAdjustment should show correct minus vales", (t) => {
+  test("createIndexSubtract should show correct minus vales", (t) => {
     const testArr = ["bob", "amelia", "amelia"];
-    const result = createIndexAdjustment(testArr);
+    const result = createIndexSubtract(testArr);
 
     t.equal(result.bob, -1, "minus 1 for bob");
     t.equal(result.amelia, -2, "minus 2 for amelia");
     t.end();
   });
-
-  const getItemsInImages = (key: string, imgArr: IImage[]): string[] => {
-    return imgArr.reduce((accum, img) => accum.concat(img[key]), [] as string[]);
-  };
 
   test("getItemsInImages should collate key and not dedupe", (t) => {
     const testImageArr: IImage[] = [{
@@ -223,8 +220,8 @@ export default function deleteTests(setupData, api) {
     const testImagesPeople = getItemsInImages("people", allImages);
     const testImagesTags = getItemsInImages("tags", allImages);
     const indexAdjustments = {
-      people: createIndexAdjustment(testImagesPeople),
-      tags: createIndexAdjustment(testImagesTags),
+      people: createIndexSubtract(testImagesPeople),
+      tags: createIndexSubtract(testImagesTags),
     };
 
     let retryCount = 0;

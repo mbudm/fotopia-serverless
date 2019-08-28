@@ -1,7 +1,7 @@
 import * as test from "tape";
 
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
-import { createIndexAdjustment } from "./createIndexAdjustment";
+import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 
@@ -169,8 +169,8 @@ export default function deleteAllNotJustTestData(setupData, api) {
     const testImagesTags = deleteImages.reduce((accum, img) => accum.concat(img.tags!), [] as string[]);
 
     const indexAdjustments = {
-      people: createIndexAdjustment(testImagesPeople),
-      tags: createIndexAdjustment(testImagesTags),
+      people: createIndexSubtract(testImagesPeople),
+      tags: createIndexSubtract(testImagesTags),
     };
 
     let retryCount = 0;
@@ -255,5 +255,52 @@ export default function deleteAllNotJustTestData(setupData, api) {
         t.end();
       })
       .catch(formatError);
+  });
+
+  test("get indexes, check it is actually reset", (t) => {
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/indexes"],
+      fn: api.get,
+    };
+    const retryableTestThen = (responseBody: IIndex) => {
+      if (Object.keys(responseBody.tags).length > 0 || Object.keys(responseBody.people).length > 0) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed - index has ${
+            Object.keys(responseBody.tags).length
+          } tags and ${
+            Object.keys(responseBody.people).length
+          } people after ${retryCount} retries`);
+          t.end();
+        }
+      } else {
+        t.equal(
+          Object.keys(responseBody.tags).length,
+          0,
+          `tags length of ${Object.keys(responseBody.tags).length} - tags from two images`,
+        );
+        t.equal(
+          Object.keys(responseBody.people).length,
+          0,
+          `people length of ${
+            Object.keys(responseBody.people).length
+          } - at least each person from image one and image with 4 people`,
+        );
+        t.end();
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
   });
 }
