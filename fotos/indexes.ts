@@ -99,6 +99,29 @@ export function putIndex(index: IIndex): Promise<PutObjectOutput> {
   return s3.putObject(s3PutParams).promise();
 }
 
+export function removeZeroCounts(index: IIndex): IIndex {
+  const people: IIndexDictionary = Object.keys(index.people).reduce((accum, key) => {
+    return index.people[key] > 0 ?
+      {
+        ...accum,
+        [key]: index.people[key],
+      } :
+      accum;
+  }, {} as IIndexDictionary);
+  const tags: IIndexDictionary = Object.keys(index.tags).reduce((accum, key) => {
+    return index.tags[key] > 0 ?
+      {
+        ...accum,
+        [key]: index.tags[key],
+      } :
+      accum;
+  }, {} as IIndexDictionary);
+  return {
+    people,
+    tags,
+  };
+}
+
 export async function putItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime: number = Date.now();
 
@@ -116,6 +139,7 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
   };
 
   try {
+    const indexesClean = removeZeroCounts(requestBody.index);
     const putIndexObject: PutObjectOutput = await putIndex(requestBody.index);
     logger(context, loggerBaseParams, getLogFields(requestBody.index));
     return callback(null, success(requestBody));
