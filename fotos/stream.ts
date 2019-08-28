@@ -157,7 +157,7 @@ export async function indexRecords(event: DynamoDBStreamEvent, context: Context,
     traceId: uuid.v1(),
   };
   try {
-    const existingIndex: IIndex = await invokeGetIndex(getTraceMeta(loggerBaseParams) );
+    const existingIndex: IIndex = await invokeGetIndex(getTraceMeta(loggerBaseParams));
     const updatedIndexes: IIndex = getUpdatedIndexes(existingIndex, event.Records);
     const response: InvocationResponse = await invokePutIndex(updatedIndexes, getTraceMeta(loggerBaseParams));
     logger(context, loggerBaseParams, getLogFields(event.Records, existingIndex, updatedIndexes));

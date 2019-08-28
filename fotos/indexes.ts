@@ -75,7 +75,7 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
   s3 = createS3Client();
   const s3Params: GetObjectRequest = getS3Params();
   const eventBody = event.body ? JSON.parse(event.body) : null;
-  const traceMeta: ITraceMeta | undefined = eventBody!.traceMeta;
+  const traceMeta: ITraceMeta | undefined = eventBody && eventBody.traceMeta;
 
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
