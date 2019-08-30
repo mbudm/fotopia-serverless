@@ -7,6 +7,8 @@ import getEndpointPath from "./getEndpointPath";
 export default function updateTests(setupData: ISetupData, api) {
   let imageWithFourPeople: IImage | undefined;
 
+  // should remove this - no updates really doable from api as wipes out existing meta
+
   test("query all to get img with four people", (t) => {
     const query: IQueryBody = {
       criteria: {
@@ -30,9 +32,9 @@ export default function updateTests(setupData: ISetupData, api) {
   });
 
   test("update imageWithFourPeople", (t) => {
-    t.plan(3);
     const updatedRecord = {
       meta: {
+        ...imageWithFourPeople!.meta,
         newProperty: "squirrel",
       },
     };
@@ -42,18 +44,31 @@ export default function updateTests(setupData: ISetupData, api) {
         t.equal(responseBody.username, imageWithFourPeople!.username);
         t.equal(responseBody.id, imageWithFourPeople!.id);
         t.equal(responseBody.meta.newProperty, updatedRecord.meta.newProperty);
+        t.end();
       })
       .catch(formatError);
   });
 
   test("get updated item", (t) => {
-    t.plan(3);
     const apiPath = getEndpointPath(imageWithFourPeople);
     api.get(setupData.apiUrl, apiPath)
       .then((responseBody: IImage) => {
         t.equal(responseBody.id, imageWithFourPeople!.id);
         t.equal(responseBody.meta.newProperty, "squirrel", "updated data");
-        t.ok(responseBody.tags!.includes(imageWithFourPeople!.tags![0]), "existing data unaffected");
+        t.ok(responseBody.meta.height, `meta height exists`);
+        t.equal(
+          responseBody.meta.height,
+          imageWithFourPeople!.meta.height,
+          `existing meta heigh ${responseBody.meta.height} unaffected`,
+        );
+        t.ok(responseBody.meta.width, `meta width exists`);
+        t.equal(
+          responseBody.meta.width,
+          imageWithFourPeople!.meta.width,
+          `existing meta width ${responseBody.meta.width} unaffected`,
+        );
+        t.ok(responseBody.tags!.includes(imageWithFourPeople!.tags![0]), "existing other props unaffected");
+        t.end();
       })
       .catch(formatError);
   });

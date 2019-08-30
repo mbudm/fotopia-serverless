@@ -1,12 +1,16 @@
 import * as test from "tape";
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
-import { createIndexAdjustment } from "./createIndexAdjustment";
+import { createIndexSubtract } from "./createIndexAdjustment";
+import { createIndexChangeTable, MODES } from "./createIndexChangeTable";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { getItemsInImages } from "./getItemsInImages";
 
 export default function deleteTests(setupData, api) {
 
+  const retryStrategy = [500, 1000, 2000, 5000];
   let existingIndexes: IIndex;
+
   test("get existing indexes", (t) => {
     api
       .get(setupData.apiUrl, "/indexes")
@@ -111,73 +115,155 @@ export default function deleteTests(setupData, api) {
       .catch(formatError);
   });
 
-  test("wait for 3 seconds", (t) => {
-    setTimeout(() => {
-      t.comment("Waited for 3 secs");
-      t.end();
-    }, 3000);
-  });
-
   test("get people should return no results with the test image ids", (t) => {
+    // fails when there is another image with the person. the person is not
+    // deleted and so a ref to the deleted image remains
+    // so we should clean out the faces/images from the person record?
+    // or just be smarter in the test and ignore the person if there are faces in other images
+    // I prefer the former as dead data is going to muddy too many situations
     const imageIds = [imageOne.id].concat(imagesWithFourPeople.map((i) => i.id));
-    api
-      .get(setupData.apiUrl, "/people")
-      .then((responseBody: IPerson[]) => {
-        const peopleWithDeletedImageIds = responseBody.filter((p) => {
-          const facesWithDeletedImageId = p.faces.filter(
-            (f) => f.ExternalImageId && imageIds.includes(f.ExternalImageId),
-          );
-          return facesWithDeletedImageId.length > 0;
-        });
+
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/people"],
+      fn: api.get,
+    };
+    const retryableTestThen = (responseBody: IPerson[]) => {
+      const peopleWithDeletedImageIds = responseBody.filter((p) => {
+        const facesWithDeletedImageId = p.faces.filter(
+          (f) => f.ExternalImageId && imageIds.includes(f.ExternalImageId),
+        );
+        return facesWithDeletedImageId.length > 0;
+      });
+      if (peopleWithDeletedImageIds.length > 0) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed - people w test img ids: ${peopleWithDeletedImageIds.length} after ${retryCount} retries`);
+          t.end();
+        }
+      } else {
         t.equal(
           peopleWithDeletedImageIds.length,
           0,
-          `all deleted images (${imageIds.toString()}) have been removed from people`,
+          `all deleted images (${
+            imageIds.toString()
+          }) have been removed from people ${
+            peopleWithDeletedImageIds.map((p) => p.id).toString()
+          }`,
         );
         t.end();
-      })
-      .catch(formatError);
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
   });
 
-  test("createIndexAdjustment should show correct minus vales", (t) => {
+  test("createIndexSubtract should show correct minus vales", (t) => {
     const testArr = ["bob", "amelia", "amelia"];
-    const result = createIndexAdjustment(testArr);
+    const result = createIndexSubtract(testArr);
 
     t.equal(result.bob, -1, "minus 1 for bob");
     t.equal(result.amelia, -2, "minus 2 for amelia");
     t.end();
   });
 
-  test("get indexes should return an index object with 0 counts for ppl and tags matching test data", (t) => {
-    const testImagesPeople = imageOne.people!.concat(
-      imagesWithFourPeople.reduce((accum, img) => accum.concat(img.people!), [] as string[]),
-    );
-    const testImagesTags = imageOne.tags!.concat(
-      imagesWithFourPeople.reduce((accum, img) => accum.concat(img.tags!), [] as string[]),
-    );
-    const indexAdjustments = {
-      people: createIndexAdjustment(testImagesPeople),
-      tags: createIndexAdjustment(testImagesTags),
+  test("getItemsInImages should collate key and not dedupe", (t) => {
+    const testImageArr: IImage[] = [{
+      birthtime: 123,
+      group: "blue",
+      id: "abc",
+      img_key: "one.jpg",
+      meta: {
+        height: 200,
+        width: 300,
+      },
+      people: ["bob", "amelia"],
+      tags: ["car", "sun"],
+      userIdentityId: "f23",
+      username: "fred",
+    }, {
+      birthtime: 456,
+      group: "blue",
+      id: "def",
+      img_key: "one.jpg",
+      meta: {
+        height: 200,
+        width: 300,
+      },
+      people: ["cynthia", "amelia"],
+      tags: ["car", "people"],
+      userIdentityId: "f23",
+      username: "fred",
+    }];
+    const peopleResult = getItemsInImages("people", testImageArr);
+    const tagsResult = getItemsInImages("tags", testImageArr);
+
+    t.deepEqual(peopleResult, ["bob", "amelia", "cynthia", "amelia"], "concatenated the people");
+    t.deepEqual(tagsResult, ["car", "sun", "car", "people"], "concatenated the tags");
+    t.end();
+  });
+
+  test("get indexes, should not have tags and people of test images", (t) => {
+    const testImages: IImage[] = [imageOne].concat(imagesWithFourPeople);
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/indexes"],
+      fn: api.get,
     };
-    api
-      .get(setupData.apiUrl, "/indexes")
-      .then((responseBody: IIndex) => {
-        const incorrectAdjustmentTags = Object.keys(indexAdjustments.tags)
-          .filter((tag) => responseBody.tags[tag] !==  existingIndexes.tags[tag] + indexAdjustments.tags[tag]);
+    const retryableTestThen = (responseBody: IIndex) => {
+      const changes = createIndexChangeTable(MODES.REMOVE, testImages, existingIndexes, responseBody);
+      if (changes.valid.people.length + changes.valid.tags.length > 0) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed - index has ${
+            changes.valid.tags.length
+          } incorrectly adjusted tags and ${
+            changes.valid.people.length
+          } incorrectly adjusted people after ${retryCount} retries. Fail details: \n${
+            JSON.stringify(changes.valid, null, 2)
+          }`);
+          t.end();
+        }
+      } else {
         t.equal(
-          incorrectAdjustmentTags.length,
+          changes.valid.tags.length,
           0,
-          `all tags adjustments are correct. Checked ${Object.keys(indexAdjustments.tags).length} adjustments`,
+          `all tags adjustments are correct (incorrect: ${
+            changes.valid.tags.length
+          })`,
         );
-        const incorrectAdjustmentPeople = Object.keys(indexAdjustments.people)
-          .filter((p) => responseBody.people[p] !==  existingIndexes.people[p] + indexAdjustments.people[p]);
         t.equal(
-          incorrectAdjustmentPeople.length,
+          changes.valid.people.length,
           0,
-          `all people adjustments are correct. Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
+          `all people adjustments are correct (incorrect: ${
+            changes.valid.people.length
+          }).`,
         );
         t.end();
-      })
-      .catch(formatError);
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
   });
+
 }

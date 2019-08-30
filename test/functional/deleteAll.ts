@@ -1,11 +1,15 @@
 import * as test from "tape";
+
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
-import { createIndexAdjustment } from "./createIndexAdjustment";
+import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 
 export default function deleteAllNotJustTestData(setupData, api) {
+
+  const retryStrategy = [500, 1000, 2000, 5000];
   let images: IImage[];
+
   test("query all to get all images", (t) => {
     const query: IQueryBody = {
       criteria: {
@@ -108,31 +112,56 @@ export default function deleteAllNotJustTestData(setupData, api) {
   });
 
   test("get people should return no results with the deleted test image ids", (t) => {
-    // const peopleToCheck = images.reduce((accum, img) =>
-    //   Array.isArray(img.people) ? accum.concat(img.people) : accum,
-    // [] as string[]);
     const imageIds =  deleteImages.map((img) => img.id);
-    api
-      .get(setupData.apiUrl, "/people")
-      .then((responseBody: IPerson[]) => {
-        const peopleWithDeletedImageIds = responseBody.filter((p) => {
-          const facesWithDeletedImageId = p.faces.filter(
-            (f) => f.ExternalImageId && imageIds.includes(f.ExternalImageId),
-          );
-          return facesWithDeletedImageId.length > 0;
-        });
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/people"],
+      fn: api.get,
+    };
+    const retryableTestThen = (responseBody: IPerson[]) => {
+      const peopleWithDeletedImageIds = responseBody.filter((p) => {
+        const facesWithDeletedImageId = p.faces.filter(
+          (f) => f.ExternalImageId && imageIds.includes(f.ExternalImageId),
+        );
+        return facesWithDeletedImageId.length > 0;
+      });
+      if (peopleWithDeletedImageIds.length > 0) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed - people with deleted image ids: ${
+            peopleWithDeletedImageIds.length
+          }  after ${retryCount} retries. Deleted images ids: ${
+            imageIds.toString()
+          }, people with deleted images:  ${
+            peopleWithDeletedImageIds.map((p) => p.id).toString()
+          }.`);
+          t.end();
+        }
+      } else {
         t.equal(
           peopleWithDeletedImageIds.length,
           0,
           `all deleted images (${
             imageIds.toString()
           }) have been removed from people ${
-            peopleWithDeletedImageIds.map((p) => p.id).toString()
+            responseBody.length
           }`,
         );
         t.end();
-      })
-      .catch(formatError);
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
   });
 
   test("get indexes should return an index object with adjusted counts matching deleted test images", (t) => {
@@ -140,28 +169,138 @@ export default function deleteAllNotJustTestData(setupData, api) {
     const testImagesTags = deleteImages.reduce((accum, img) => accum.concat(img.tags!), [] as string[]);
 
     const indexAdjustments = {
-      people: createIndexAdjustment(testImagesPeople),
-      tags: createIndexAdjustment(testImagesTags),
+      people: createIndexSubtract(testImagesPeople),
+      tags: createIndexSubtract(testImagesTags),
     };
-    api
-      .get(setupData.apiUrl, "/indexes")
-      .then((responseBody: IIndex) => {
-        const incorrectAdjustmentTags = Object.keys(indexAdjustments.tags)
+
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/indexes"],
+      fn: api.get,
+    };
+    const retryableTestThen = (responseBody: IIndex) => {
+      const incorrectAdjustmentTags = Object.keys(indexAdjustments.tags)
           .filter((tag) => responseBody.tags[tag] !==  existingIndexes.tags[tag] + indexAdjustments.tags[tag]);
+      const incorrectAdjustmentPeople = Object.keys(indexAdjustments.people)
+        .filter((p) => responseBody.people[p] !==  existingIndexes.people[p] + indexAdjustments.people[p]);
+
+      if (incorrectAdjustmentTags.length > 0 || incorrectAdjustmentPeople.length > 0) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed - index with incorrect adjustments for tags: ${
+            incorrectAdjustmentTags.length
+          } and people: ${
+            incorrectAdjustmentPeople.length
+          }after ${retryCount} retries.`);
+          t.end();
+        }
+      } else {
         t.equal(
           incorrectAdjustmentTags.length,
           0,
           `all tags adjustments are correct. Checked ${Object.keys(indexAdjustments.tags).length} adjustments`,
         );
-        const incorrectAdjustmentPeople = Object.keys(indexAdjustments.people)
-          .filter((p) => responseBody.people[p] !==  existingIndexes.people[p] + indexAdjustments.people[p]);
         t.equal(
           incorrectAdjustmentPeople.length,
           0,
           `all people adjustments are correct. Checked ${Object.keys(indexAdjustments.people).length} adjustments`,
         );
         t.end();
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
+  });
+
+  test("Update people to be an empty array", (t) => {
+    const people: IPerson[] = [];
+    const body = {
+      people,
+    };
+    api
+      .put(setupData.apiUrl, "/people/update", {
+        body,
+      })
+      .then((responseBody) => {
+        t.ok(responseBody, "people updated to [] ok");
+        t.end();
       })
       .catch(formatError);
+  });
+
+  test("Update indexes to be an empty IIndex", (t) => {
+    const index: IIndex = {
+      people: {},
+      tags: {},
+    };
+    const body = {
+      index,
+    };
+    api
+      .put(setupData.apiUrl, "/indexes/update", {
+        body,
+      })
+      .then((responseBody) => {
+        t.ok(responseBody, "index updated to empty obj ok");
+        t.end();
+      })
+      .catch(formatError);
+  });
+
+  test("get indexes, check it is actually reset", (t) => {
+    let retryCount = 0;
+    const retryableTest = {
+      args: [setupData.apiUrl, "/indexes"],
+      fn: api.get,
+    };
+    const retryableTestThen = (responseBody: IIndex) => {
+      if (Object.keys(responseBody.tags).length > 0 || Object.keys(responseBody.people).length > 0) {
+        if (retryCount < retryStrategy.length) {
+          setTimeout(() => {
+            retryCount++;
+            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+            retry();
+          }, retryStrategy[retryCount]);
+        } else {
+          t.fail(`Failed - index has ${
+            Object.keys(responseBody.tags).length
+          } tags and ${
+            Object.keys(responseBody.people).length
+          } people after ${retryCount} retries`);
+          t.end();
+        }
+      } else {
+        t.equal(
+          Object.keys(responseBody.tags).length,
+          0,
+          `tags length of ${Object.keys(responseBody.tags).length} - tags from two images`,
+        );
+        t.equal(
+          Object.keys(responseBody.people).length,
+          0,
+          `people length of ${
+            Object.keys(responseBody.people).length
+          } - at least each person from image one and image with 4 people`,
+        );
+        t.end();
+      }
+    };
+    const retry = () => {
+      retryableTest.fn.apply(this, retryableTest.args)
+        .then(retryableTestThen)
+        .catch(formatError);
+    };
+
+    retry();
   });
 }

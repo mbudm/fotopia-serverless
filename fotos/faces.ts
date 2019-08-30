@@ -30,6 +30,7 @@ import {
   IPathParameters,
   IPerson,
   IPersonMatch,
+  ITraceMeta,
   IUpdateBody,
 } from "./types";
 
@@ -222,13 +223,19 @@ export function getUpdatePathParameters(newImage: IImage): IPathParameters {
   };
 }
 
-export function getInvokeUpdateParams(pathParameters: IPathParameters, body: IUpdateBody): InvocationRequest {
+export function getInvokeUpdateParams(
+  pathParameters: IPathParameters, body: IUpdateBody, traceMeta: ITraceMeta,
+): InvocationRequest {
+  const bodyWithMeta: IUpdateBody = {
+    ...body,
+    traceMeta,
+  };
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}update`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
-      body: JSON.stringify(body),
+      body: JSON.stringify(bodyWithMeta),
       pathParameters,
     }),
   };
@@ -291,7 +298,9 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
     await invokePutPeople(updatedPeople, getTraceMeta(logBaseParams));
     const pathParameters: IPathParameters = getUpdatePathParameters(newImage);
     const updateBody: IUpdateBody = getUpdateBody(facesWithPeople, newPeopleThatAreOkSize);
-    const updateParams: InvocationRequest = getInvokeUpdateParams(pathParameters, updateBody);
+    const updateParams: InvocationRequest = getInvokeUpdateParams(
+      pathParameters, updateBody, getTraceMeta(logBaseParams),
+    );
     await lambda.invoke(updateParams).promise();
     const logMetaParams: ILoggerFacesParams = {
       existingPeople,

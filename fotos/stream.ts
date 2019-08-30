@@ -4,46 +4,21 @@ import {
   DynamoDBRecord,
   DynamoDBStreamEvent,
 } from "aws-lambda";
-import { GetObjectRequest, PutObjectOutput } from "aws-sdk/clients/s3";
 import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 
-import { getS3Params } from "./common/getS3Params";
-import { getS3PutParams } from "./common/getS3PutParams";
 import { failure, success } from "./common/responses";
-import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
-import createS3Client from "./lib/s3";
 
-import { S3 } from "aws-sdk";
-import getS3Bucket from "./common/getS3Bucket";
+import { InvocationResponse } from "aws-sdk/clients/lambda";
+import { getTraceMeta } from "./common/getTraceMeta";
+import invokeGetIndex from "./common/invokeGetIndex";
+import invokePutIndex from "./common/invokePutIndex";
 import { safeLength } from "./create";
-import { JSONParseError } from "./errors/jsonParse";
 import { getZeroCount } from "./indexes";
 import {
-  IIndex, IIndexFields, ILoggerBaseParams,
+  IIndex, IIndexDictionary, IIndexFields, ILoggerBaseParams,
 } from "./types";
-
-let s3: S3;
-
-export function getExistingIndex(): Promise<IIndex> {
-  const bucket = getS3Bucket();
-  const s3Params: GetObjectRequest = getS3Params(bucket, INDEXES_KEY);
-  return s3.getObject(s3Params).promise()
-    .then((s3Object) => {
-      try {
-        if (s3Object.Body) {
-          const parsed: IIndex = JSON.parse(s3Object.Body.toString());
-          return parsed;
-        } else {
-          return { tags: {}, people: {} };
-        }
-      } catch (e) {
-        throw new JSONParseError(e, `getExistingIndex ${s3Object.Body && s3Object.Body.toString()}`);
-      }
-    })
-    .catch((error) => ({ error, tags: {}, people: {} }));
-}
 
 export function normaliseArrayFields(record: DynamoDBRecord): IIndexFields {
   const arrayFields: IIndexFields = {
@@ -124,14 +99,23 @@ export function getUpdatedIndexes(existing: IIndex, newRecords: DynamoDBRecord[]
   return updateCounts(existing, updates);
 }
 
-export function putIndex(index: IIndex): Promise<PutObjectOutput> {
-  const s3PutParams = getS3PutParams(index, INDEXES_KEY);
-  return s3.putObject(s3PutParams).promise();
+export function getModifiedIndexItems(existing: IIndexDictionary, updated: IIndexDictionary) {
+  return Object.keys(updated).filter((fieldKey: string) => {
+    return updated[fieldKey] !== existing[fieldKey];
+  });
+}
+
+export function getFirstRecord(records: DynamoDBRecord[]) {
+  const firstRecord: DynamoDBRecord = records[0];
+  return firstRecord.dynamodb!.NewImage ?
+    ddbAttVals.unwrap(records[0].dynamodb!.NewImage) :
+    ddbAttVals.unwrap(records[0].dynamodb!.OldImage);
 }
 
 export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, updatedIndexes?: IIndex) {
-  const firstRecord = ddbAttVals.unwrap(records[0].dynamodb!.NewImage);
+  const firstRecord = getFirstRecord(records);
   return {
+    ddbEventName: records[0].eventName,
     ddbEventRecordsCount: safeLength(records),
     ddbEventRecordsRaw: records,
     imageBirthtime: firstRecord.birthtime,
@@ -148,6 +132,10 @@ export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, 
     imageUserIdentityId: firstRecord.userIdentityId,
     imageUsername: firstRecord.username,
     imageWidth: firstRecord.meta && firstRecord.meta.width,
+    indexesModifiedPeopleCount: existingIndex && updatedIndexes &&
+      getModifiedIndexItems(existingIndex.people, updatedIndexes.people).length,
+    indexesModifiedTagCount: existingIndex && updatedIndexes &&
+      getModifiedIndexItems(existingIndex.tags, updatedIndexes.tags).length,
     indexesPeopleCount: existingIndex && Object.keys(existingIndex.people).length,
     indexesTagCount: existingIndex && Object.keys(existingIndex.tags).length,
     indexesUpdatedPeopleCount: updatedIndexes && Object.keys(updatedIndexes.people).length,
@@ -161,7 +149,6 @@ export function getLogFields(records: DynamoDBRecord[], existingIndex?: IIndex, 
 
 export async function indexRecords(event: DynamoDBStreamEvent, context: Context, callback: Callback) {
   const startTime: number = Date.now();
-  s3 = createS3Client();
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "indexRecords",
@@ -170,9 +157,9 @@ export async function indexRecords(event: DynamoDBStreamEvent, context: Context,
     traceId: uuid.v1(),
   };
   try {
-    const existingIndex: IIndex = await getExistingIndex();
+    const existingIndex: IIndex = await invokeGetIndex(getTraceMeta(loggerBaseParams));
     const updatedIndexes: IIndex = getUpdatedIndexes(existingIndex, event.Records);
-    const response: PutObjectOutput = await putIndex(updatedIndexes);
+    const response: InvocationResponse = await invokePutIndex(updatedIndexes, getTraceMeta(loggerBaseParams));
     logger(context, loggerBaseParams, getLogFields(event.Records, existingIndex, updatedIndexes));
     return callback(null, success(response));
   } catch (err) {

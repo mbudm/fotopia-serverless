@@ -1,3 +1,5 @@
+import { ITraceMeta } from "./common";
+
 export interface IIndex {
   people: IIndexDictionary;
   tags: IIndexDictionary;
@@ -17,4 +19,9 @@ export interface IIndexFields {
     new: number[];
     old: number[];
   };
+}
+
+export interface IPutIndexRequest {
+  index: IIndex;
+  traceMeta: ITraceMeta;
 }

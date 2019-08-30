@@ -52,11 +52,4 @@ export default function queryTests(setupData, api) {
       .catch(formatError);
   });
 
-  // Query by person tests removed as they require that new people are
-  // created with the creation of the mock images. This involves an additon to the delete
-  // lambda, removing faces from rekognition collection and from people records.
-  // Cascading effects include:
-  // - person removal if no faces left in that person
-  // - removal of person in other images
-  // - removal of face similarity in images face data...
 }

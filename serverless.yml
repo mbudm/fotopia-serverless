@@ -104,6 +104,7 @@ provider:
         - "rekognition:DeleteCollection"
         - "rekognition:DeleteFaces"
         - "rekognition:DetectLabels"
+        - "rekognition:ListFaces"
         - "rekognition:SearchFaces"
       Resource: "*"
 functions:
@@ -180,6 +181,7 @@ functions:
           method: post
           cors: true
           authorizer: aws_iam
+
   indexes:
     handler: fotos/indexes.getItem
     memorySize: 128
@@ -189,6 +191,17 @@ functions:
           method: get
           cors: true
           authorizer: aws_iam
+
+  indexesUpdate:
+    handler: fotos/indexes.putItem
+    memorySize: 128
+    events:
+      - http:
+          path: indexes/update
+          method: put
+          cors: true
+          authorizer: aws_iam
+
   people:
     handler: fotos/people.getItem
     memorySize: 128
