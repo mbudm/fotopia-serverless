@@ -23,7 +23,7 @@ export default function indexesTests(setupData, api) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody) => {
+      .then((responseBody: IImage[]) => {
         t.equal(responseBody.length >= 2, true, "at least two images in env");
         testImages = responseBody.filter((img) => img.img_key === setupData.records[1].img_key ||
           img.img_key === setupData.records[0].img_key );
@@ -45,6 +45,12 @@ export default function indexesTests(setupData, api) {
       args: [setupData.apiUrl, "/indexes"],
       fn: api.get,
     };
+
+    const testImgTagsAndPeopleIds = testImages.map((i) => ({
+      img_key: i.img_key,
+      people: i.people,
+      tags: i.tags,
+    }));
     const retryableTestThen = (responseBody: IIndex) => {
       const changes = createIndexChangeTable(MODES.ADD, testImages, existingIndexes, responseBody);
       if (changes.valid.people.length + changes.valid.tags.length > 0) {
@@ -61,7 +67,8 @@ export default function indexesTests(setupData, api) {
             changes.valid.people.length
           } incorrectly adjusted people after ${retryCount} retries. Fail details: \n${
             JSON.stringify(changes.valid, null, 2)
-          }`);
+          } testImgTagsAndPeopleIds: ${JSON.stringify(testImgTagsAndPeopleIds)}
+          responseBody: ${JSON.stringify(responseBody)}`);
           t.end();
         }
       } else {
