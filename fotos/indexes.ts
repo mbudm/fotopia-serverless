@@ -5,13 +5,15 @@ import { GetObjectRequest, PutObjectOutput } from "aws-sdk/clients/s3";
 import * as uuid from "uuid";
 import getS3Bucket from "./common/getS3Bucket";
 import { getS3PutParams } from "./common/getS3PutParams";
+import { getTraceMeta } from "./common/getTraceMeta";
+import invokeGetIndex from "./common/invokeGetIndex";
 import { failure, success } from "./common/responses";
 import { JSONParseError } from "./errors/jsonParse";
 import { INDEXES_KEY } from "./lib/constants";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
-  IIndex, IIndexDictionary, ILoggerBaseParams, IPutIndexRequest, ITraceMeta,
+  IIndex, IIndexDictionary, IIndexUpdate, ILoggerBaseParams, IPutIndexRequest, ITraceMeta,
 } from "./types";
 
 let s3: S3;
@@ -65,8 +67,17 @@ export function getLogFields(indexesObj: IIndex) {
   return {
     indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
     indexesTagCount: indexesObj && Object.keys(indexesObj.tags).length,
-    indexesZeroPeopleCount: indexesObj && getZeroCount(indexesObj.people),
-    indexesZeroTagCount: indexesObj && getZeroCount(indexesObj.tags),
+  };
+}
+
+export function getPutLogFields(existingIndex: IIndex, updates: IIndexUpdate, updatedIndexesObj: IIndex) {
+  return {
+    indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
+    indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
+    indexesPeopleCount: existingIndex && Object.keys(existingIndex.people).length,
+    indexesTagCount: existingIndex && Object.keys(existingIndex.tags).length,
+    indexesUpdatedPeopleCount: updatedIndexesObj && Object.keys(updatedIndexesObj.people).length,
+    indexesUpdatedTagCount: updatedIndexesObj && Object.keys(updatedIndexesObj.tags).length,
   };
 }
 
@@ -99,6 +110,28 @@ export function putIndex(index: IIndex): Promise<PutObjectOutput> {
   return s3.putObject(s3PutParams).promise();
 }
 
+export function calculateUpdatedIndex(existing: IIndex, updates: IIndexUpdate): IIndex {
+  const updated: IIndex = {
+    people: {},
+    tags: {},
+  };
+  ["tags", "people"].forEach((key) => {
+    updated[key] = { ...existing[key] };
+    Object.keys(updates[key]).forEach((item) => {
+      updated[key][item] = updated[key][item] ?
+        Math.max(0, updated[key][item] + updates[key][item]) :
+        Math.max(0, updates[key][item]);
+    });
+  });
+  return updated;
+}
+
+export function getModifiedIndexItems(existing: IIndexDictionary, updated: IIndexDictionary) {
+  return Object.keys(updated).filter((fieldKey: string) => {
+    return updated[fieldKey] !== existing[fieldKey];
+  });
+}
+
 export function removeZeroCounts(index: IIndex): IIndex {
   const people: IIndexDictionary = Object.keys(index.people).reduce((accum, key) => {
     return index.people[key] > 0 ?
@@ -125,7 +158,9 @@ export function removeZeroCounts(index: IIndex): IIndex {
 export async function putItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime: number = Date.now();
 
-  const requestBody: IPutIndexRequest = event.body ? JSON.parse(event.body) : { index: defaultIndex};
+  const requestBody: IPutIndexRequest = event.body ?
+    JSON.parse(event.body) :
+    { indexUpdate: defaultIndex as IIndexUpdate};
   const traceMeta = requestBody!.traceMeta;
 
   s3 = createS3Client();
@@ -139,12 +174,14 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
   };
 
   try {
-    const indexesClean = removeZeroCounts(requestBody.index);
+    const existingIndex: IIndex = await invokeGetIndex(getTraceMeta(loggerBaseParams));
+    const updatedIndex = calculateUpdatedIndex(existingIndex, requestBody.indexUpdate);
+    const indexesClean = removeZeroCounts(updatedIndex);
     const putIndexObject: PutObjectOutput = await putIndex(indexesClean);
     logger(context, loggerBaseParams, getLogFields(indexesClean));
     return callback(null, success(requestBody));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(requestBody.index)});
+    logger(context, loggerBaseParams, { err, ...getLogFields(requestBody.indexUpdate)});
     return callback(null, failure(err));
   }
 }

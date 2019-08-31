@@ -6,6 +6,13 @@ export interface IIndex {
   error?: boolean;
 }
 
+// same shape as IIndex but calling it out as a
+// different type to flag it wil have relative values that reflect the updates
+export interface IIndexUpdate {
+  people: IIndexDictionary;
+  tags: IIndexDictionary;
+}
+
 export interface IIndexDictionary {
   [name: string]: number;
 }
@@ -22,6 +29,6 @@ export interface IIndexFields {
 }
 
 export interface IPutIndexRequest {
-  index: IIndex;
+  indexUpdate: IIndexUpdate;
   traceMeta: ITraceMeta;
 }
