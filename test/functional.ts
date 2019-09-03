@@ -1,6 +1,5 @@
 import { config } from "dotenv";
 
-import cleanup from "./functional/cleanup";
 import createTests from "./functional/create";
 import deleteTests from "./functional/del";
 import deleteAllTestData from "./functional/deleteMocks";
@@ -26,6 +25,5 @@ export default function(auth: any, api: any, upload: any) {
       updateTests(setupData, api);
       peopleTests(setupData, api);
       deleteTests(setupData, api);
-      cleanup();
     });
 }
