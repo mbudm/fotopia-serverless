@@ -70,7 +70,7 @@ export function getLogFields(indexesObj: IIndex) {
   };
 }
 
-export function getPutLogFields(existingIndex: IIndex, updates: IIndexUpdate, updatedIndexesObj: IIndex) {
+export function getPutLogFields(updates: IIndexUpdate, existingIndex?: IIndex, updatedIndexesObj?: IIndex) {
   return {
     indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
     indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
@@ -178,10 +178,10 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
     const updatedIndex = calculateUpdatedIndex(existingIndex, requestBody.indexUpdate);
     const indexesClean = removeZeroCounts(updatedIndex);
     const putIndexObject: PutObjectOutput = await putIndex(indexesClean);
-    logger(context, loggerBaseParams, getLogFields(indexesClean));
+    logger(context, loggerBaseParams, getPutLogFields(requestBody.indexUpdate, existingIndex, indexesClean));
     return callback(null, success(requestBody));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(requestBody.indexUpdate)});
+    logger(context, loggerBaseParams, { err, ...getPutLogFields(requestBody.indexUpdate)});
     return callback(null, failure(err));
   }
 }
