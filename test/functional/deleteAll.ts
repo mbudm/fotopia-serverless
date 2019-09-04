@@ -1,6 +1,13 @@
 import * as test from "tape";
 
-import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
+import {
+  IImage,
+  IIndex,
+  IIndexDictionary,
+  IIndexUpdate,
+  IPerson,
+  IQueryBody,
+} from "../../fotos/types";
 import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
@@ -238,20 +245,28 @@ export default function deleteAllNotJustTestData(setupData, api) {
       .catch(formatError);
   });
 
+  const getIndexUpdate = (indexDictionary: IIndexDictionary) => {
+    const indexUpdate = {};
+    Object.keys(indexDictionary).forEach((key) => {
+      indexUpdate[key] = -indexDictionary[key];
+    });
+    return indexUpdate;
+  };
+
   test("Update indexes to be an empty IIndex", (t) => {
-    const index: IIndex = {
-      people: {},
-      tags: {},
+    const indexUpdate: IIndexUpdate = {
+      people: getIndexUpdate(existingIndexes.people),
+      tags: getIndexUpdate(existingIndexes.tags),
     };
     const body = {
-      index,
+      indexUpdate,
     };
     api
       .put(setupData.apiUrl, "/indexes/update", {
         body,
       })
       .then((responseBody) => {
-        t.ok(responseBody, "index updated to empty obj ok");
+        t.ok(responseBody, `index updated to empty obj ok - updateObj: ${JSON.stringify(indexUpdate)}`);
         t.end();
       })
       .catch(formatError);
