@@ -2,7 +2,7 @@ import * as test from "tape";
 import * as query from "./query";
 import { IQueryBody, IQueryDBResponseItem } from "./types";
 
-const clientId: string = "unit test";
+const clientId = "unit test";
 
 const requestBody: IQueryBody = {
   clientId,

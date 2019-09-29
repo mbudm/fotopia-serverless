@@ -1,14 +1,18 @@
 import * as test from "tape";
 import { IImage, IQueryBody } from "../../fotos/types";
 import formatError from "./formatError";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function queryTests(setupData, api) {
+
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - query.ts`
   let imageWithFourPeople: IImage | undefined;
 
   test("query all", (t) => {
     t.plan(2);
 
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -33,6 +37,7 @@ export default function queryTests(setupData, api) {
     t.plan(3);
 
     const query: IQueryBody  = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [setupData.uniqueTag],

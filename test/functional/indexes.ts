@@ -4,14 +4,17 @@ import {
 } from "../../fotos/types";
 import { createIndexChangeTable, MODES } from "./createIndexChangeTable";
 import formatError from "./formatError";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function indexesTests(setupData, api) {
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - indexes.ts`
 
   const retryStrategy = [500, 1000, 2000, 5000];
 
   let testImages: IImage[];
   test("query images to get testimages", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],

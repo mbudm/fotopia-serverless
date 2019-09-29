@@ -7,6 +7,7 @@ import getEndpointPath from "./getEndpointPath";
 import { getItemsInImages } from "./getItemsInImages";
 
 export default function deleteTests(setupData, api) {
+  const CLIENT_ID = "functionalTest - del.ts"
 
   const retryStrategy = [500, 1000, 2000, 5000];
   let existingIndexes: IIndex;
@@ -26,6 +27,7 @@ export default function deleteTests(setupData, api) {
 
   test("query image one by unique tag", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [setupData.uniqueTag],
@@ -59,6 +61,7 @@ export default function deleteTests(setupData, api) {
   let imagesWithFourPeople: IImage[];
   test("query image w four people by querying all", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -96,6 +99,7 @@ export default function deleteTests(setupData, api) {
 
   test("query all should return no results", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],

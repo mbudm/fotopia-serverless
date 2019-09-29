@@ -14,7 +14,7 @@
     "functional-prod": "STAGE=prod tape -r ts-node/register -r babel-register ./test/functional.remote.ts | tap-spec",
     "functional-dev": "STAGE=dev tape -r ts-node/register -r babel-register ./test/functional.remote.ts | tap-spec",
     "functional-alpha": "STAGE=alpha tape -r ts-node/register -r babel-register ./test/functional.remote.ts | tap-spec",
-    "lint": "tslint -c tslint.json 'fotos/**/*.ts' 'test/**/*.ts'"
+    "lint": "eslint 'fotos/**/*.ts' 'test/**/*.ts'"
   },
   "pre-commit": [
     "lint",
@@ -40,6 +40,8 @@
     "@types/dotenv": "^6.1.1",
     "@types/node": "^12.6.9",
     "@types/tape": "^4.2.33",
+    "@typescript-eslint/eslint-plugin": "^2.3.1",
+    "@typescript-eslint/parser": "^2.3.1",
     "aws-amplify": "^1.1.35",
     "aws-sdk": "2.474.0",
     "babel-core": "^6.26.3",
@@ -50,7 +52,6 @@
     "babel-preset-stage-3": "^6.24.1",
     "es6-promise": "^4.2.8",
     "eslint": "^6.1.0",
-    "eslint-config-airbnb": "^17.1.1",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-react": "^7.14.3",

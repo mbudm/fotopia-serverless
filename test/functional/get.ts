@@ -3,8 +3,10 @@ import { IImage, IQueryBody } from "../../fotos/types";
 import { ISetupData } from "../types";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function getTests(setupData: ISetupData, api: any) {
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - get.ts`
 
   const retryStrategy = [300, 500, 1000, 2000, 5000];
   let imagesWithFourPeople: IImage[];
@@ -13,6 +15,7 @@ export default function getTests(setupData: ISetupData, api: any) {
     t.plan(2);
 
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],

@@ -8,8 +8,10 @@ import {
 } from "../../fotos/types";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function peopleTests(setupData, api) {
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - people.ts`
   let people: IPerson[];
   let imageWithFourPeople: IImage | undefined;
   let imageWithOnePerson: IImage | undefined;
@@ -55,6 +57,7 @@ export default function peopleTests(setupData, api) {
 
   test("query all to get the test image records", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],

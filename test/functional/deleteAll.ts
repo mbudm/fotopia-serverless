@@ -11,14 +11,16 @@ import {
 import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function deleteAllNotJustTestData(setupData, api) {
-
+  const CLIENT_ID = `${FUNC_TEST_PREFIX}- deleteAll.ts`
   const retryStrategy = [500, 1000, 2000, 5000];
   let images: IImage[];
 
   test("query all to get all images", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -92,6 +94,7 @@ export default function deleteAllNotJustTestData(setupData, api) {
 
   test("query all should return no results matching test data", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],

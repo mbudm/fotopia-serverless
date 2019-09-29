@@ -14,7 +14,14 @@ import {
 import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import {
-  IFace, IImage, ILoggerBaseParams, ILoggerPeopleMergeParams, IPathParameters, IPerson, IUpdateBody,
+  IFace,
+  IImage,
+  ILoggerBaseParams,
+  ILoggerPeopleMergeParams,
+  IPathParameters,
+  IPerson,
+  IQueryBody,
+  IUpdateBody,
 } from "./types";
 
 export function mergePeopleObjects(mergePeopleIds: string[], existingPeople: IPerson[]): IPerson {
@@ -70,10 +77,13 @@ export function getInvokeQueryParams(
   deletedPeople: IPerson[],
   mergedPerson: IPerson,
   loggerBaseParams: ILoggerBaseParams,
+  context: Context,
 ): InvocationRequest {
-  const body = {
+  const body: IQueryBody = {
+    clientId: context.functionName,
     criteria: {
       people: deletedPeople.map((person) => person.id).concat(mergedPerson.id),
+      tags: [],
     },
     from: 0,
     to: Date.now(),
@@ -99,8 +109,9 @@ export async function queryImagesByPeople(
   deletedPeople: IPerson[],
   mergedPerson: IPerson,
   loggerBaseParams: ILoggerBaseParams,
+  context: Context,
 ): Promise<IImage[]> {
-  const params = getInvokeQueryParams(deletedPeople, mergedPerson, loggerBaseParams);
+  const params = getInvokeQueryParams(deletedPeople, mergedPerson, loggerBaseParams, context);
   return lambda.invoke(params).promise()
     .then((response) => {
       const payload = typeof response.Payload === "string" ? JSON.parse(response.Payload) : null ;
@@ -206,7 +217,7 @@ export async function mergePeople(event: APIGatewayProxyEvent, context: Context,
     const existingPeople = await invokeGetPeople();
     const mergedPerson = mergePeopleObjects(mergePeopleIds, existingPeople);
     const deletePeople = getDeletePeople(mergePeopleIds, mergedPerson, existingPeople);
-    const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams);
+    const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams, context);
     await updatedImages(imagesWithAffectedPeople, mergedPerson, deletePeople, loggerBaseParams);
     const updatedPeople = getUpdatedPeople(existingPeople, mergedPerson, deletePeople);
     invokePutPeople(updatedPeople, getTraceMeta(loggerBaseParams));
