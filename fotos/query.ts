@@ -21,9 +21,51 @@ import {
   ILoggerBaseParams,
   IQueryBody,
   IQueryBodyCriteria,
+  IQueryDBResponseItem,
   IQueryResponse,
   ITraceMeta,
 } from "./types";
+/*
+  With the in-lambda filtering that I'm currently using (cheaper than elastic search)
+  pagination is a bit tricky. By setting a maximum database query limit we will usually
+  have enough results after filtering on criteria to still return a full page of results to the user.
+*/
+export const MAX_QUERY_LIMIT = 500;
+export const MAX_DATE_RANGE = (90 * 24 * 60 * 60 * 1000); // 90 days
+
+export const calculateFromDate = (data: IQueryBody): number => {
+  const proposedFromDate = anyDateFormatToMilliseconds(data.from);
+  const lastRetrievedBirthtime = data.lastRetrievedBirthtime ?
+    anyDateFormatToMilliseconds(data.lastRetrievedBirthtime) :
+    proposedFromDate;
+  return Math.max(proposedFromDate, lastRetrievedBirthtime);
+};
+
+const anyDateFormatToMilliseconds = (d) => new Date(d).getTime();
+
+export const canBreakLimit = (data: IQueryBody): boolean => {
+  return data.breakDateRestriction === true && typeof data.clientId === "string";
+};
+
+export const calculateToDate = (data: IQueryBody): number => {
+  const fromDate = calculateFromDate(data);
+  const proposedToDate = anyDateFormatToMilliseconds(data.to);
+  if (proposedToDate >= (fromDate + MAX_DATE_RANGE)) {
+    return canBreakLimit(data) ?
+      proposedToDate :
+      fromDate + MAX_DATE_RANGE;
+  } else if (proposedToDate >= fromDate) {
+    return proposedToDate;
+  } else {
+    throw new Error(`'To' date is prior to 'from' date`);
+  }
+};
+
+export const calculateLimit = (data: IQueryBody): number => {
+  return hasCriteria(data.criteria) ?
+    MAX_QUERY_LIMIT :
+    (data.limit || MAX_QUERY_LIMIT );
+};
 
 export const getUserDynamoDbParams = (data: IQueryBody): DocClient.QueryInput => {
   const params = {
@@ -32,13 +74,14 @@ export const getUserDynamoDbParams = (data: IQueryBody): DocClient.QueryInput =>
       "#username": "username",
     },
     ExpressionAttributeValues: {
-      ":from": new Date(data.from).getTime(),
-      ":to": new Date(data.to).getTime(),
+      ":from": calculateFromDate(data),
+      ":to": calculateToDate(data),
       ":username": data.username,
     },
     IndexName: "UsernameBirthtimeIndex",
     KeyConditionExpression: "#username = :username AND #birthtime BETWEEN :from AND :to",
-    ProjectionExpression: "#birthtime, #username, id, meta, people, tags, img_location, img_key, img_thumb_key",
+    Limit: calculateLimit(data),
+    ProjectionExpression: "id, meta, people, tags, img_location, img_key, img_thumb_key",
     TableName: getTableName(),
   };
   return params;
@@ -51,12 +94,13 @@ export const getGroupDynamoDbParams = (data: IQueryBody): DocClient.QueryInput =
       "#group": "group",
     },
     ExpressionAttributeValues: {
-      ":from": new Date(data.from).getTime(),
+      ":from": calculateFromDate(data),
       ":group": process.env.FOTOPIA_GROUP,
-      ":to": new Date(data.to).getTime(),
+      ":to": calculateToDate(data),
     },
     IndexName: "GroupBirthtimeIndex",
     KeyConditionExpression: "#group = :group AND #birthtime BETWEEN :from AND :to",
+    Limit: calculateLimit(data),
     // tslint:disable-next-line:max-line-length
     ProjectionExpression: "#group, #birthtime, username, userIdentityId, id, meta, people, tags, img_key, img_thumb_key",
     TableName: getTableName(),
@@ -74,22 +118,32 @@ export const hasCriteria = (criteria?: IQueryBodyCriteria): boolean => criteria 
   Object.keys(criteria).every((key) => Array.isArray(criteria[key])) &&
   Object.keys(criteria).some((key) => criteria[key].length > 0);
 
-export const filterByCriteria = (item: IQueryResponse, criteriaKey: string, criteriaData: string[]): boolean =>
+export const filterByCriteria = (item: IQueryDBResponseItem, criteriaKey, criteriaData): boolean =>
   criteriaData.some((criteriaDataItem) => item[criteriaKey].includes(criteriaDataItem));
 
-export const filterItemsByCriteria = (items: IQueryResponse[], data: IQueryBody): IQueryResponse[] =>
-  (hasCriteria(data.criteria) && items ?
+export const filterItemsByCriteria = (items: IQueryDBResponseItem[], data: IQueryBody): IQueryDBResponseItem[] =>
+  (hasCriteria(data.criteria) ?
     items.filter((item) => item &&
       Object.keys(data!.criteria || {}).some((criteriaKey) =>
         filterByCriteria(item, criteriaKey, data!.criteria![criteriaKey]))) :
-    items || []);
+    items);
 
-export function getResponseBody(ddbResponse: DocClient.QueryOutput, data: IQueryBody): IQueryResponse[] | string {
-  const items: IQueryResponse[] = ddbResponse.Items ?
-    ddbResponse.Items as IQueryResponse[] :
+export function getResponseBody(ddbResponse: DocClient.QueryOutput, data: IQueryBody): IQueryResponse {
+  const items: IQueryDBResponseItem[] = ddbResponse.Items ?
+    ddbResponse.Items as IQueryDBResponseItem[] :
     [];
-  const filteredItems: IQueryResponse[] = filterItemsByCriteria(items, data) ;
-  return filteredItems.length > 0 ? filteredItems : "No items found that match your criteria";
+  const filteredItems: IQueryDBResponseItem[] = filterItemsByCriteria(items, data);
+
+  const delimitedItems = data.limit && data.limit > 0 ? filteredItems.slice(0, data.limit) : filteredItems;
+  const message = delimitedItems.length > 0 ?
+    `${filteredItems.length} items found, ${delimitedItems.length} returned` :
+    "No items found that match your criteria";
+
+  return {
+    items: delimitedItems,
+    message,
+    remainingResults: filteredItems.length - delimitedItems.length,
+  };
 }
 
 export function queryDatabase(ddbParams): Promise<PromiseResult<DocClient.QueryOutput, AWSError>> {
@@ -126,15 +180,28 @@ export function validateQueryBody(data: IQueryBody) {
 }
 
 export function getLogFields(
-  data: IQueryBody, ddbResponse?: DocClient.QueryOutput, responseBody?: IQueryResponse[] | string,
+  data: IQueryBody,
+  ddbParams?: DocClient.QueryInput | null,
+  ddbResponse?: DocClient.QueryOutput,
+  responseBody?: IQueryResponse,
 ) {
   return {
-    queryFilteredCount: Array.isArray(responseBody) ? responseBody.length : 0,
-    queryFiltersPeopleCount: data.criteria && safeLength(data.criteria.people),
-    queryFiltersTagsCount: data.criteria && safeLength(data.criteria.tags),
-    queryFromDate: data.from,
+    queryActualFromDate: ddbParams &&
+      new Date(ddbParams.ExpressionAttributeValues![":from"]).toISOString(),
+    queryActualToDate: ddbParams &&
+      new Date(ddbParams.ExpressionAttributeValues![":to"]).toISOString(),
+    queryBreakDateRestriction: data.breakDateRestriction,
+    queryClientId: data.clientId,
+    queryFilteredCount: responseBody && safeLength(responseBody.items),
+    queryFiltersPeopleCount:
+      data.criteria && safeLength(data.criteria.people),
+    queryFiltersTagsCount:
+      data.criteria && safeLength(data.criteria.tags),
+    queryFromDate: new Date(data.from).toISOString(),
+    queryLimit: data.limit,
     queryRawCount: ddbResponse && safeLength(ddbResponse.Items),
-    queryToDate: data.to,
+    queryRevisedLimit: ddbParams && ddbParams.Limit,
+    queryToDate: new Date(data.to).toISOString(),
   };
 }
 
@@ -153,8 +220,8 @@ export async function queryItems(event: APIGatewayProxyEvent, context: Context, 
     const validatedQueryBody: IQueryBody = validateQueryBody(data);
     const ddbParams: DocClient.QueryInput = getDynamoDbParams(validatedQueryBody);
     const ddbResponse: DocClient.QueryOutput = await queryDatabase(ddbParams);
-    const responseBody: IQueryResponse[] | string = getResponseBody(ddbResponse, validatedQueryBody);
-    logger(context, loggerBaseParams, getLogFields(validatedQueryBody, ddbResponse, responseBody));
+    const responseBody: IQueryResponse = getResponseBody(ddbResponse, validatedQueryBody);
+    logger(context, loggerBaseParams, getLogFields(validatedQueryBody, ddbParams, ddbResponse, responseBody));
     return callback(null, success(responseBody));
   } catch (err) {
     logger(context, loggerBaseParams, { err, ...getLogFields(data) });
