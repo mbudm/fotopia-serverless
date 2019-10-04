@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { IImage, IQueryBody } from "../../fotos/types";
+import { IImage, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
 import { ISetupData } from "../types";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
@@ -9,8 +9,8 @@ export default function getTests(setupData: ISetupData, api: any) {
   const CLIENT_ID = `${FUNC_TEST_PREFIX} - get.ts`
 
   const retryStrategy = [300, 500, 1000, 2000, 5000];
-  let imagesWithFourPeople: IImage[];
-  let imagesWithOnePerson: IImage[];
+  let imagesWithFourPeople: IQueryDBResponseItem[];
+  let imagesWithOnePerson: IQueryDBResponseItem[];
   test("query all to get the test image ids", (t) => {
     t.plan(2);
 
@@ -28,10 +28,10 @@ export default function getTests(setupData: ISetupData, api: any) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody: IImage[]) => {
-        imagesWithOnePerson = responseBody.filter((rec) => rec.img_key === setupData.records[0].img_key);
-        t.ok(imagesWithOnePerson.length > 0, "image(s) with one  personfound");
-        imagesWithFourPeople = responseBody.filter((rec) => rec.img_key === setupData.records[1].img_key);
+      .then((responseBody: IQueryResponse) => {
+        imagesWithOnePerson = responseBody.items.filter((rec) => rec.img_key === setupData.records[0].img_key);
+        t.ok(imagesWithOnePerson.length > 0, "image(s) with one person found");
+        imagesWithFourPeople = responseBody.items.filter((rec) => rec.img_key === setupData.records[1].img_key);
         t.ok(imagesWithFourPeople.length > 0, "image(s) with four people found");
       })
       .catch(formatError);
@@ -55,7 +55,7 @@ export default function getTests(setupData: ISetupData, api: any) {
               retry();
             }, retryStrategy[retryCount]);
           } else {
-            t.fail(`Failed - ${responseBody.img_key} people: ${responseBody.people} after ${retryCount} retries`);
+            t.fail(`Failed - ${responseBody.img_key} people: ${responseBody.people} after ${retryCount} retries. ${JSON.stringify(image)}`);
             if (idx === arr.length - 1) {
               t.end();
             }

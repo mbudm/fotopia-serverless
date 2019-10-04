@@ -11,9 +11,9 @@
   "scripts": {
     "test": "tape -r ts-node/register -r babel-register './fotos/**/*__test__.ts' | tap-spec",
     "test-watch": "tape-watch -r ts-node/register -r babel-register './fotos/**/*__test__.ts' -p tap-spec",
-    "functional-prod": "STAGE=prod tape -r ts-node/register -r babel-register ./test/functional.remote.ts | tap-spec",
-    "functional-dev": "STAGE=dev tape -r ts-node/register -r babel-register ./test/functional.remote.ts | tap-spec",
-    "functional-alpha": "STAGE=alpha tape -r ts-node/register -r babel-register ./test/functional.remote.ts | tap-spec",
+    "functional-prod": "STAGE=prod tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
+    "functional-dev": "STAGE=dev tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
+    "functional-alpha": "STAGE=alpha tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
     "lint": "eslint 'fotos/**/*.ts' 'test/**/*.ts'"
   },
   "pre-commit": [
@@ -70,7 +70,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "resolutions": {
-    "serverless-domain-manager/aws-sdk": "2.474.0",
-    "serverless-s3-sync/**/aws-sdk": "2.474.0"
+    "serverless-domain-manager/aws-sdk": "2.518.0",
+    "serverless-s3-sync/**/aws-sdk": "2.518.0"
   }
 }

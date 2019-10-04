@@ -9,6 +9,10 @@ export interface ISetupData {
   startTime: number;
   username: string;
   uniqueTag: string;
+  api?: any;
+  upload?: any;
+  bucket?: string;
+  userIdentityId?: string;
 }
 
 export interface ITestImage {

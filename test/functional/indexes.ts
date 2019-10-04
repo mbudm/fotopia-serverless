@@ -1,6 +1,6 @@
 import * as test from "tape";
 import {
-  IImage, IIndex, IQueryBody,
+  IImage, IIndex, IQueryBody, IQueryResponse,
 } from "../../fotos/types";
 import { createIndexChangeTable, MODES } from "./createIndexChangeTable";
 import formatError from "./formatError";
@@ -26,10 +26,15 @@ export default function indexesTests(setupData, api) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody: IImage[]) => {
-        t.equal(responseBody.length >= 2, true, "at least two images in env");
-        testImages = responseBody.filter((img) => img.img_key === setupData.records[1].img_key ||
-          img.img_key === setupData.records[0].img_key );
+      .then((responseBody: IQueryResponse) => {
+        t.equal(responseBody.items.length >= 2, true, "at least two images in env");
+        testImages = responseBody.items.filter((img) =>
+          img.img_key === setupData.records[1].img_key ||
+          img.img_key === setupData.records[0].img_key )
+          .map(dbItem => ({
+            ...dbItem,
+            birthtime: parseInt(dbItem.birthtime) // IImage expects a numeric birthtime
+          }));
         t.equal(testImages.length >= 2, true, `at least two test images - actual: ${testImages.length}`);
         t.end();
       })

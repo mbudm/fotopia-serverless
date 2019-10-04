@@ -1,12 +1,12 @@
 import * as test from "tape";
-import { IImage, IQueryBody } from "../../fotos/types";
+import { IImage, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
 import formatError from "./formatError";
 import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function queryTests(setupData, api) {
 
   const CLIENT_ID = `${FUNC_TEST_PREFIX} - query.ts`
-  let imageWithFourPeople: IImage | undefined;
+  let imageWithFourPeople: IQueryDBResponseItem | undefined;
 
   test("query all", (t) => {
     t.plan(2);
@@ -25,9 +25,9 @@ export default function queryTests(setupData, api) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody: IImage[]) => {
-        t.ok(responseBody.find((rec) => rec.img_key === setupData.records[0].img_key), "image one found");
-        imageWithFourPeople = responseBody.find((rec) => rec.img_key === setupData.records[1].img_key);
+      .then((responseBody: IQueryResponse) => {
+        t.ok(responseBody.items.find((rec) => rec.img_key === setupData.records[0].img_key), "image one found");
+        imageWithFourPeople = responseBody.items.find((rec) => rec.img_key === setupData.records[1].img_key);
         t.ok(imageWithFourPeople, "image with four people found");
       })
       .catch(formatError);
@@ -49,10 +49,10 @@ export default function queryTests(setupData, api) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody) => {
-        t.equal(responseBody.length, 1);
-        t.ok(responseBody.find((rec) => rec.img_key === setupData.images[0].key), "image one found");
-        t.notOk(responseBody.find((rec) => rec.img_key === setupData.images[1].key), "image w four people not found");
+      .then((responseBody: IQueryResponse) => {
+        t.equal(responseBody.items.length, 1);
+        t.ok(responseBody.items.find((rec) => rec.img_key === setupData.images[0].key), "image one found");
+        t.notOk(responseBody.items.find((rec) => rec.img_key === setupData.images[1].key), "image w four people not found");
       })
       .catch(formatError);
   });

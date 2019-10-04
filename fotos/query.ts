@@ -81,8 +81,7 @@ export const getUserDynamoDbParams = (data: IQueryBody): DocClient.QueryInput =>
     IndexName: "UsernameBirthtimeIndex",
     KeyConditionExpression: "#username = :username AND #birthtime BETWEEN :from AND :to",
     Limit: calculateLimit(data),
-    ProjectionExpression: "id, meta, people, tags, img_location, img_key, img_thumb_key",
-    TableName: getTableName(),
+    ProjectionExpression: "#birthtime, #username, id, meta, people, tags, img_location, img_key, img_thumb_key",    TableName: getTableName(),
   };
   return params;
 };
