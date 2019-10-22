@@ -7,18 +7,22 @@ import {
   IIndexUpdate,
   IPerson,
   IQueryBody,
+  IQueryResponse,
+  IQueryDBResponseItem,
 } from "../../fotos/types";
 import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function deleteAllNotJustTestData(setupData, api) {
-
+  const CLIENT_ID = `${FUNC_TEST_PREFIX}- deleteAll.ts`
   const retryStrategy = [500, 1000, 2000, 5000];
-  let images: IImage[];
+  let images: IQueryDBResponseItem[];
 
   test("query all to get all images", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -30,17 +34,11 @@ export default function deleteAllNotJustTestData(setupData, api) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody: IImage[]) => {
-        if (Array.isArray(responseBody)) {
-          t.ok(Array.isArray(responseBody), "query response is an array");
-          t.ok(responseBody, `queried all and found ${responseBody.length} images`);
-          images = responseBody;
-          t.end();
-        } else {
-          t.notOk(Array.isArray(responseBody), "query response is a string - no results");
-          images = [];
-          t.end();
-        }
+      .then((responseBody: IQueryResponse) => {
+        t.ok(responseBody, `queried all and found ${responseBody.items.length} images`);
+        images = responseBody.items;
+        t.end();
+
       })
       .catch(formatError);
   });
@@ -68,7 +66,7 @@ export default function deleteAllNotJustTestData(setupData, api) {
       .catch(formatError);
   });
 
-  let deleteImages: IImage[];
+  let deleteImages: IQueryDBResponseItem[];
   test("delete all images in the env!!!", (t) => {
     deleteImages = images;
 
@@ -92,6 +90,7 @@ export default function deleteAllNotJustTestData(setupData, api) {
 
   test("query all should return no results matching test data", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -103,16 +102,11 @@ export default function deleteAllNotJustTestData(setupData, api) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody) => {
-        if (Array.isArray(responseBody)) {
-          const matchingResults = responseBody.filter((img) => {
-            return setupData.records.includes((rec) => rec.img_key === img.img_key);
-          });
-          t.equal(matchingResults.length, 0, "No results match test images");
-        } else {
-          const resultAsString = Array.isArray(responseBody) ? "" : responseBody;
-          t.ok(resultAsString.includes("No items found"));
-        }
+      .then((responseBody: IQueryResponse) => {
+        const matchingResults = responseBody.items.filter((img) => {
+          return setupData.records.includes((rec) => rec.img_key === img.img_key);
+        });
+        t.equal(matchingResults.length, 0, `No results match test images - len ${responseBody.items.length}`);
         t.end();
       })
       .catch(formatError);

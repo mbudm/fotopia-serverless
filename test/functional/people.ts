@@ -5,14 +5,18 @@ import {
   IPersonMergeBody,
   IPersonUpdateBody,
   IQueryBody,
+  IQueryResponse,
+  IQueryDBResponseItem,
 } from "../../fotos/types";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function peopleTests(setupData, api) {
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - people.ts`
   let people: IPerson[];
-  let imageWithFourPeople: IImage | undefined;
-  let imageWithOnePerson: IImage | undefined;
+  let imageWithFourPeople: IQueryDBResponseItem | undefined;
+  let imageWithOnePerson: IQueryDBResponseItem | undefined;
 
   const retryStrategy = [500, 1000, 2000, 5000];
 
@@ -55,6 +59,7 @@ export default function peopleTests(setupData, api) {
 
   test("query all to get the test image records", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -67,16 +72,18 @@ export default function peopleTests(setupData, api) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody: IImage[]) => {
-        imageWithOnePerson = responseBody.find((rec) => rec.img_key === setupData.records[0].img_key);
+      .then((responseBody: IQueryResponse) => {
+        imageWithOnePerson = responseBody.items.find((rec) => rec.img_key === setupData.records[0].img_key);
         t.ok(imageWithOnePerson, "image one found");
-        imageWithFourPeople = responseBody.find((rec) => rec.img_key === setupData.records[1].img_key);
+        imageWithFourPeople = responseBody.items.find((rec) => rec.img_key === setupData.records[1].img_key);
         t.ok(imageWithFourPeople, "image with four people found");
         t.end();
       })
       .catch(formatError);
   });
 
+  let updatedImageWithOnePerson: IImage;
+  let updatedIimageWithFourPeople: IImage;
   // do a seperate retry get with both images to check they have the
   // people - img w 4 has been observed as failing due to a def race condition
   test("image w 1 person has person populated", (t) => {
@@ -99,11 +106,11 @@ export default function peopleTests(setupData, api) {
           t.end();
         }
       } else {
-        imageWithOnePerson = responseBody;
+        updatedImageWithOnePerson = responseBody;
         t.equal(
-          imageWithOnePerson!.people!.length,
+          updatedImageWithOnePerson!.people!.length,
           1,
-          `image has people length of ${imageWithOnePerson!.people!.length}`,
+          `image has people length of ${updatedImageWithOnePerson!.people!.length}`,
         );
         t.end();
       }
@@ -137,11 +144,11 @@ export default function peopleTests(setupData, api) {
           t.end();
         }
       } else {
-        imageWithFourPeople = responseBody;
+        updatedIimageWithFourPeople = responseBody;
         t.equal(
-          imageWithFourPeople!.people!.length,
+          updatedIimageWithFourPeople!.people!.length,
           4,
-          `image w 4 has people length of ${imageWithFourPeople!.people!.length}`,
+          `image w 4 has people length of ${updatedIimageWithFourPeople!.people!.length}`,
         );
         t.end();
       }
@@ -160,11 +167,11 @@ export default function peopleTests(setupData, api) {
   };
   test("updatePerson in image 1", (t) => {
     api
-      .put(setupData.apiUrl, `/person/${imageWithOnePerson!.people![0]}`, {
+      .put(setupData.apiUrl, `/person/${updatedImageWithOnePerson!.people![0]}`, {
         body: updatedPerson,
       })
       .then((responseBody) => {
-        t.ok(responseBody, `update person in image one ${imageWithOnePerson!.people![0]} ok`);
+        t.ok(responseBody, `update person in image one ${updatedImageWithOnePerson!.people![0]} ok`);
         t.end();
       })
       .catch(formatError);
@@ -176,13 +183,13 @@ export default function peopleTests(setupData, api) {
       .then((responseBody) => {
         people = responseBody;
         const personInResponse = responseBody.find(
-          (person) => person.id === imageWithOnePerson!.people![0],
+          (person) => person.id === updatedImageWithOnePerson!.people![0],
         );
-        t.ok(personInResponse, `image one found in people ${imageWithOnePerson!.people![0]} ok`);
+        t.ok(personInResponse, `image one found in people ${updatedImageWithOnePerson!.people![0]} ok`);
         t.equal(
           personInResponse.name,
           updatedPerson.name,
-          `updated name for person 1 ${imageWithOnePerson!.people![0]} in people`,
+          `updated name for person 1 ${updatedImageWithOnePerson!.people![0]} in people`,
         );
         t.end();
       })
@@ -190,7 +197,7 @@ export default function peopleTests(setupData, api) {
   });
 
   test("peopleMerge - merge first two people in image with 4 people", (t) => {
-    const body: IPersonMergeBody = [imageWithFourPeople!.people![0], imageWithFourPeople!.people![1]];
+    const body: IPersonMergeBody = [updatedIimageWithFourPeople!.people![0], updatedIimageWithFourPeople!.people![1]];
     api
       .post(setupData.apiUrl, "/people/merge", {
         body,
@@ -224,10 +231,10 @@ export default function peopleTests(setupData, api) {
       } else {
         t.equal(responseBody.length, people.length - 1, "one less person");
         t.ok(responseBody.find(
-          (person) => person.id === imageWithFourPeople!.people![0],
+          (person) => person.id === updatedIimageWithFourPeople!.people![0],
         ), "person 0 is still in the people object");
         t.notOk(responseBody.find(
-          (person) => person.id === imageWithFourPeople!.people![1],
+          (person) => person.id === updatedIimageWithFourPeople!.people![1],
         ), "person 1 is not in the people object");
         t.end();
       }
@@ -243,7 +250,7 @@ export default function peopleTests(setupData, api) {
   });
 
   test("after merge image that had person 1 now has person 0", (t) => {
-    const apiPath = getEndpointPath(imageWithFourPeople);
+    const apiPath = getEndpointPath(updatedIimageWithFourPeople);
     let retryCount = 0;
     const retryableTest = {
       args: [setupData.apiUrl, apiPath],
@@ -264,22 +271,22 @@ export default function peopleTests(setupData, api) {
       } else {
         t.equal(
           responseBody.img_key,
-          imageWithFourPeople!.img_key,
+          updatedIimageWithFourPeople!.img_key,
           "response has same img_key",
         );
-        t.equal(responseBody.id, imageWithFourPeople!.id, "response has same id");
+        t.equal(responseBody.id, updatedIimageWithFourPeople!.id, "response has same id");
         t.equal(
           responseBody.people!.length,
           3,
           "image has only 3 people",
         );
         t.equal(
-          responseBody.people!.includes(imageWithFourPeople!.people![1]),
+          responseBody.people!.includes(updatedIimageWithFourPeople!.people![1]),
           false,
           "image doesnt have person 1",
         );
         t.equal(
-          responseBody.people!.includes(imageWithFourPeople!.people![0]),
+          responseBody.people!.includes(updatedIimageWithFourPeople!.people![0]),
           true,
           "image has person 0",
         );

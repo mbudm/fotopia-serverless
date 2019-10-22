@@ -5,8 +5,10 @@ import { createIndexChangeTable, MODES } from "./createIndexChangeTable";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 import { getItemsInImages } from "./getItemsInImages";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function deleteTests(setupData, api) {
+  const CLIENT_ID = `${FUNC_TEST_PREFIX}- del.ts`
 
   const retryStrategy = [500, 1000, 2000, 5000];
   let existingIndexes: IIndex;
@@ -26,6 +28,7 @@ export default function deleteTests(setupData, api) {
 
   test("query image one by unique tag", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [setupData.uniqueTag],
@@ -38,8 +41,8 @@ export default function deleteTests(setupData, api) {
       body: query,
     })
       .then((responseBody) => {
-        t.equal(responseBody.length, 1);
-        imageOne = responseBody[0];
+        t.equal(responseBody.items.length, 1);
+        imageOne = responseBody.items[0];
         t.end();
       })
       .catch(formatError);
@@ -59,6 +62,7 @@ export default function deleteTests(setupData, api) {
   let imagesWithFourPeople: IImage[];
   test("query image w four people by querying all", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -71,8 +75,8 @@ export default function deleteTests(setupData, api) {
       body: query,
     })
       .then((responseBody) => {
-        t.equal(responseBody.length, 1);
-        imagesWithFourPeople = responseBody.filter((img) => img.img_key === setupData.records[1].img_key);
+        t.equal(responseBody.items.length, 1);
+        imagesWithFourPeople = responseBody.items.filter((img) => img.img_key === setupData.records[1].img_key);
         t.end();
       })
       .catch(formatError);
@@ -96,6 +100,7 @@ export default function deleteTests(setupData, api) {
 
   test("query all should return no results", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -108,8 +113,7 @@ export default function deleteTests(setupData, api) {
       body: query,
     })
       .then((responseBody) => {
-        const resultAsString = Array.isArray(responseBody) ? "" : responseBody;
-        t.ok(resultAsString.includes("No items found"));
+        t.equal(responseBody.items.length, 0);
         t.end();
       })
       .catch(formatError);
