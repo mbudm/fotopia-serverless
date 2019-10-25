@@ -10,10 +10,9 @@ import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import { getPutObjectParams } from "./thumbs";
 
-import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import { Rekognition, S3 } from "aws-sdk";
 import { GetObjectOutput, PutObjectOutput } from "aws-sdk/clients/s3";
-import { Context } from "vm";
 import getS3Bucket from "./common/getS3Bucket";
 import { EXIF_ORIENT } from "./lib/constants";
 import {

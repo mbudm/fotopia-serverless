@@ -10,8 +10,7 @@ import {
   PromiseResult,
 } from "aws-sdk/lib/request";
 
-import { APIGatewayProxyEvent, Callback } from "aws-lambda";
-import { Context } from "vm";
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import getTableName from "./common/getTableName";
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
@@ -81,7 +80,8 @@ export const getUserDynamoDbParams = (data: IQueryBody): DocClient.QueryInput =>
     IndexName: "UsernameBirthtimeIndex",
     KeyConditionExpression: "#username = :username AND #birthtime BETWEEN :from AND :to",
     Limit: calculateLimit(data),
-    ProjectionExpression: "#birthtime, #username, id, meta, people, tags, img_location, img_key, img_thumb_key",    TableName: getTableName(),
+    ProjectionExpression: "#birthtime, #username, id, meta, people, tags, img_location, img_key, img_thumb_key",
+    TableName: getTableName(),
   };
   return params;
 };
