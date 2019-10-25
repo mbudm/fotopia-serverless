@@ -27,3 +27,10 @@ packages
  gets rekognitions data
  works out people
  updates people indexes and tag indexes
+
+
+
+
+sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":1}}"}'
+
+sls invoke -f get --data '{"pathParameters":{"id":"tags"}}'
