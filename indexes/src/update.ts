@@ -29,7 +29,6 @@ export function getDynamoDbParams(pathParams: IPathParameters, body: IIndex): Do
     ":zero": 0,
     ":updatedAt": timestamp,
   });
-  // =if_not_exists(counter, :zero)+:counter
   const updateKeyValues = validKeys.map((key) => `#${key} = if_not_exists(#${key},:zero) + :${key}`).join(", ");
   return {
     ExpressionAttributeNames,
