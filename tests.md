@@ -30,7 +30,13 @@ packages
 
 
 
-
+//increment
 sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":1}}"}'
+
+//decrement
+sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":-1}}"}'
+
+//multiple
+sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":-1,\"tag2\":1,\"tag3\":1}}"}'
 
 sls invoke -f get --data '{"pathParameters":{"id":"tags"}}'
