@@ -129,6 +129,7 @@ export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta, conte
     },
     from: 0,
     to: Date.now(),
+    breakDateRestriction: true,
   };
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}query`,
