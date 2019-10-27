@@ -39,6 +39,7 @@ provider:
   region: us-east-1
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    DYNAMODB_TABLE_INDEXES: ${self:service}-${opt:stage, self:provider.stage}-indexes
     S3_BUCKET: ${self:custom.fotopia.resourcePrefix}
     S3_OUTPUT_BUCKET: ${self:custom.fotopia.resourcePrefix}-output
     S3_OUTPUT_FILENAME: config.json
@@ -335,6 +336,22 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+    IndexesDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_TABLE_INDEXES}
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
     S3BucketFotos:

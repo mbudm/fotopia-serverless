@@ -1,66 +1,65 @@
 
 import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
-import { S3 } from "aws-sdk/clients/all";
-import { GetObjectRequest, PutObjectOutput } from "aws-sdk/clients/s3";
 import * as uuid from "uuid";
-import getS3Bucket from "./common/getS3Bucket";
-import { getS3PutParams } from "./common/getS3PutParams";
-import { getTraceMeta } from "./common/getTraceMeta";
-import invokeGetIndex from "./common/invokeGetIndex";
 import { failure, success } from "./common/responses";
-import { JSONParseError } from "./errors/jsonParse";
-import { INDEXES_KEY } from "./lib/constants";
+import dynamodb from "./lib/dynamodb";
 import logger from "./lib/logger";
-import createS3Client from "./lib/s3";
 import {
   IIndex, IIndexDictionary, IIndexUpdate, ILoggerBaseParams, IPutIndexRequest, ITraceMeta,
 } from "./types";
 
-let s3: S3;
+import {
+  DocumentClient as DocClient,
+} from "aws-sdk/lib/dynamodb/document_client.d";
+import { PromiseResult } from "aws-sdk/lib/request";
+import { AWSError } from "aws-sdk";
+
+export const TAGS_ID = "tags"
+export const PEOPLE_ID = "people"
 
 const defaultIndex: IIndex = {
   people: {},
   tags: {},
 };
 
-export function getS3Params(): GetObjectRequest {
-  const Bucket = getS3Bucket();
-  const Key = INDEXES_KEY;
+const getIndexTableName = (): string => {
+  if (process.env.DYNAMODB_TABLE_INDEXES) {
+    return process.env.DYNAMODB_TABLE_INDEXES;
+  } else {
+    throw new Error("No DYNAMODB_TABLE_INDEXES env variable set");
+  }
+};
+
+export function getDynamoDbBatchGetItemParams(): DocClient.BatchGetItemInput {
   return {
-    Bucket,
-    Key,
+    RequestItems: {
+      [getIndexTableName()]: {
+        Keys: [{
+          id: TAGS_ID,
+        },
+        {
+          id: PEOPLE_ID,
+        }]
+      }
+    }
   };
 }
 
-export function getZeroCount(indexObj: IIndexDictionary): number {
-  return Object.keys(indexObj).filter((item) => indexObj[item] <= 0).length;
+export function getIndexRecords(
+  ddbParams: DocClient.BatchGetItemInput,
+): Promise<PromiseResult<DocClient.BatchGetItemOutput, AWSError>> {
+  return dynamodb.batchGet(ddbParams).promise();
 }
 
-export function getObject(s3Params: GetObjectRequest): Promise<IIndex> {
-  return s3.getObject(s3Params)
-    .promise()
-    .then((s3Object) => {
-      try {
-        if (s3Object.Body) {
-          const bodyString = s3Object.Body.toString();
-          return bodyString ? JSON.parse(bodyString) : defaultIndex;
-        } else {
-          return defaultIndex;
-        }
-      } catch (e) {
-        throw new JSONParseError(e, `get indexes ${s3Object.Body && s3Object.Body.toString()}`);
-      }
-    })
-    .catch((e) => {
-      if (e.code === "NoSuchKey" || e.code === "AccessDenied") {
-        // tslint:disable-next-line:no-console
-        console.log("No object found / AccessDenied - assuming empty indexes");
-        return defaultIndex;
-      }
-      // tslint:disable-next-line:no-console
-      console.log("Another error with get indexes object", e);
-      throw e;
-    });
+export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): IIndex{
+  const indexes: IIndex = {
+    ...defaultIndex,
+  }
+  if(ddbResponse.Responses){
+    indexes.tags = ddbResponse.Responses[getIndexTableName()].find((response) => response.id === TAGS_ID) || indexes.tags;
+    indexes.people = ddbResponse.Responses[getIndexTableName()].find((response) => response.id === PEOPLE_ID) || indexes.people;
+  }
+  return indexes;
 }
 
 export function getLogFields(indexesObj: IIndex) {
@@ -70,21 +69,9 @@ export function getLogFields(indexesObj: IIndex) {
   };
 }
 
-export function getPutLogFields(updates: IIndexUpdate, existingIndex?: IIndex, updatedIndexesObj?: IIndex) {
-  return {
-    indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
-    indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
-    indexesPeopleCount: existingIndex && Object.keys(existingIndex.people).length,
-    indexesTagCount: existingIndex && Object.keys(existingIndex.tags).length,
-    indexesUpdatedPeopleCount: updatedIndexesObj && Object.keys(updatedIndexesObj.people).length,
-    indexesUpdatedTagCount: updatedIndexesObj && Object.keys(updatedIndexesObj.tags).length,
-  };
-}
-
+// get each index (if no record then create one)
 export async function getItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime: number = Date.now();
-  s3 = createS3Client();
-  const s3Params: GetObjectRequest = getS3Params();
   const eventBody = event.body ? JSON.parse(event.body) : null;
   const traceMeta: ITraceMeta | undefined = eventBody && eventBody.traceMeta;
 
@@ -95,8 +82,11 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
     startTime,
     traceId: traceMeta && traceMeta.traceId || uuid.v1(),
   };
+  // change to batch get items
   try {
-    const indexesObject: IIndex = await getObject(s3Params);
+    const ddbParams: DocClient.BatchGetItemInput = getDynamoDbBatchGetItemParams();
+    const ddbResponse: DocClient.BatchGetItemOutput = await getIndexRecords(ddbParams);
+    const indexesObject: IIndex = parseIndexesObject(ddbResponse);
     logger(context, loggerBaseParams, getLogFields(indexesObject));
     return callback(null, success(indexesObject));
   } catch (err) {
@@ -105,53 +95,46 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
   }
 }
 
-export function putIndex(index: IIndex): Promise<PutObjectOutput> {
-  const s3PutParams = getS3PutParams(index, INDEXES_KEY);
-  return s3.putObject(s3PutParams).promise();
-}
+export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDictionary): DocClient.UpdateItemInput {
+  const timestamp = new Date().getTime();
+  const validKeys =  Object.keys(indexData).filter((k) => indexData[k] !== undefined);
+  const ExpressionAttributeNames = validKeys.reduce((accum, key) => ({
+    ...accum,
+    [`#${key}`]: key,
+  }), {});
 
-export function calculateUpdatedIndex(existing: IIndex, updates: IIndexUpdate): IIndex {
-  const updated: IIndex = {
-    people: {},
-    tags: {},
-  };
-  ["tags", "people"].forEach((key) => {
-    updated[key] = { ...existing[key] };
-    Object.keys(updates[key]).forEach((item) => {
-      updated[key][item] = updated[key][item] ?
-        Math.max(0, updated[key][item] + updates[key][item]) :
-        Math.max(0, updates[key][item]);
-    });
+  const ExpressionAttributeValues = validKeys.reduce((accum, key) => ({
+    ...accum,
+    [`:${key}`]: indexData[key],
+  }), {
+    ":zero": 0,
+    ":updatedAt": timestamp,
   });
-  return updated;
-}
-
-export function getModifiedIndexItems(existing: IIndexDictionary, updated: IIndexDictionary) {
-  return Object.keys(updated).filter((fieldKey: string) => {
-    return updated[fieldKey] !== existing[fieldKey];
-  });
-}
-
-export function removeZeroCounts(index: IIndex): IIndex {
-  const people: IIndexDictionary = Object.keys(index.people).reduce((accum, key) => {
-    return index.people[key] > 0 ?
-      {
-        ...accum,
-        [key]: index.people[key],
-      } :
-      accum;
-  }, {} as IIndexDictionary);
-  const tags: IIndexDictionary = Object.keys(index.tags).reduce((accum, key) => {
-    return index.tags[key] > 0 ?
-      {
-        ...accum,
-        [key]: index.tags[key],
-      } :
-      accum;
-  }, {} as IIndexDictionary);
+  const updateKeyValues = validKeys.map((key) => `#${key} = if_not_exists(#${key},:zero) + :${key}`).join(", ");
   return {
-    people,
-    tags,
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    Key: {
+      id: indexId
+    },
+    ReturnValues: "ALL_NEW",
+    TableName: getIndexTableName(),
+    UpdateExpression: `SET ${updateKeyValues}, updatedAt = :updatedAt`,
+  };
+}
+
+export function updateIndexRecord(indexId: string, indexData: IIndexDictionary): Promise<DocClient.UpdateItemOutput> {
+  const ddbParams: DocClient.UpdateItemInput = getDynamoDbUpdateItemParams(indexId, indexData);
+  return dynamodb.update(ddbParams).promise();
+}
+
+
+export function getPutLogFields(updates: IIndexUpdate, tagsUpdateResponse?: DocClient.UpdateItemOutput , peopleUpdateResponse?: DocClient.UpdateItemOutput ) {
+  return {
+    indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
+    indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
+    indexesPeopleCount: peopleUpdateResponse && peopleUpdateResponse.Attributes && peopleUpdateResponse.Attributes.length,
+    indexesTagCount: tagsUpdateResponse && tagsUpdateResponse.Attributes && tagsUpdateResponse.Attributes.length,
   };
 }
 
@@ -163,8 +146,6 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
     { indexUpdate: defaultIndex as IIndexUpdate};
   const traceMeta = requestBody!.traceMeta;
 
-  s3 = createS3Client();
-
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "putItem",
@@ -174,11 +155,10 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
   };
 
   try {
-    const existingIndex: IIndex = await invokeGetIndex(getTraceMeta(loggerBaseParams));
-    const updatedIndex = calculateUpdatedIndex(existingIndex, requestBody.indexUpdate);
-    const indexesClean = removeZeroCounts(updatedIndex);
-    const putIndexObject: PutObjectOutput = await putIndex(indexesClean);
-    logger(context, loggerBaseParams, getPutLogFields(requestBody.indexUpdate, existingIndex, indexesClean));
+    // update each index - change to batch write item
+    const tagsUpdateResponse: DocClient.UpdateItemOutput = await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
+    const peopleUpdateResponse: DocClient.UpdateItemOutput = await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.tags);
+    logger(context, loggerBaseParams, getPutLogFields(requestBody.indexUpdate, tagsUpdateResponse, peopleUpdateResponse));
     return callback(null, success(requestBody));
   } catch (err) {
     logger(context, loggerBaseParams, { err, ...getPutLogFields(requestBody.indexUpdate)});
