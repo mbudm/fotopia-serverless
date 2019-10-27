@@ -99,14 +99,22 @@ export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDi
   const timestamp = new Date().getTime();
   const validKeys =  Object.keys(indexData).filter((k) => indexData[k] !== undefined);
   if(validKeys.length > 0){
-    const ExpressionAttributeNames = validKeys.reduce((accum, key) => ({
+    /*
+    https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ExpressionAttributeNames.html
+    "If an attribute name begins with a number or contains a space, a special character,
+    or a reserved word, you must use an expression attribute name to replace that attribute's
+    name in the expression."
+
+    So because tags could be anything, we use idx
+    */
+    const ExpressionAttributeNames = validKeys.reduce((accum, key, idx) => ({
       ...accum,
-      [`#${key}`]: key,
+      [`#${idx}`]: key,
     }), {});
 
-    const ExpressionAttributeValues = validKeys.reduce((accum, key) => ({
+    const ExpressionAttributeValues = validKeys.reduce((accum, key, idx) => ({
       ...accum,
-      [`:${key}`]: indexData[key],
+      [`:${idx}`]: indexData[key],
     }), {
       ":zero": 0,
       ":updatedAt": timestamp,
