@@ -95,37 +95,41 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
   }
 }
 
-export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDictionary): DocClient.UpdateItemInput {
+export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDictionary): DocClient.UpdateItemInput | null {
   const timestamp = new Date().getTime();
   const validKeys =  Object.keys(indexData).filter((k) => indexData[k] !== undefined);
-  const ExpressionAttributeNames = validKeys.reduce((accum, key) => ({
-    ...accum,
-    [`#${key}`]: key,
-  }), {});
+  if(validKeys.length > 0){
+    const ExpressionAttributeNames = validKeys.reduce((accum, key) => ({
+      ...accum,
+      [`#${key}`]: key,
+    }), {});
 
-  const ExpressionAttributeValues = validKeys.reduce((accum, key) => ({
-    ...accum,
-    [`:${key}`]: indexData[key],
-  }), {
-    ":zero": 0,
-    ":updatedAt": timestamp,
-  });
-  const updateKeyValues = validKeys.map((key) => `#${key} = if_not_exists(#${key},:zero) + :${key}`).join(", ");
-  return {
-    ExpressionAttributeNames,
-    ExpressionAttributeValues,
-    Key: {
-      id: indexId
-    },
-    ReturnValues: "ALL_NEW",
-    TableName: getIndexTableName(),
-    UpdateExpression: `SET ${updateKeyValues}, updatedAt = :updatedAt`,
-  };
+    const ExpressionAttributeValues = validKeys.reduce((accum, key) => ({
+      ...accum,
+      [`:${key}`]: indexData[key],
+    }), {
+      ":zero": 0,
+      ":updatedAt": timestamp,
+    });
+    const updateKeyValues = validKeys.map((key) => `#${key} = if_not_exists(#${key},:zero) + :${key}`).join(", ");
+    return {
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      Key: {
+        id: indexId
+      },
+      ReturnValues: "ALL_NEW",
+      TableName: getIndexTableName(),
+      UpdateExpression: `SET ${updateKeyValues}, updatedAt = :updatedAt`,
+    };
+  } else {
+    return null;
+  }
 }
 
-export function updateIndexRecord(indexId: string, indexData: IIndexDictionary): Promise<DocClient.UpdateItemOutput> {
-  const ddbParams: DocClient.UpdateItemInput = getDynamoDbUpdateItemParams(indexId, indexData);
-  return dynamodb.update(ddbParams).promise();
+export function updateIndexRecord(indexId: string, indexData: IIndexDictionary): Promise<DocClient.UpdateItemOutput> | undefined {
+  const ddbParams: DocClient.UpdateItemInput | null = getDynamoDbUpdateItemParams(indexId, indexData);
+  return ddbParams ? dynamodb.update(ddbParams).promise() : undefined ;
 }
 
 
@@ -156,8 +160,8 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
 
   try {
     // update each index - change to batch write item
-    const tagsUpdateResponse: DocClient.UpdateItemOutput = await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
-    const peopleUpdateResponse: DocClient.UpdateItemOutput = await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.tags);
+    const tagsUpdateResponse: DocClient.UpdateItemOutput | undefined = await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
+    const peopleUpdateResponse: DocClient.UpdateItemOutput | undefined = await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.tags);
     logger(context, loggerBaseParams, getPutLogFields(requestBody.indexUpdate, tagsUpdateResponse, peopleUpdateResponse));
     return callback(null, success(requestBody));
   } catch (err) {

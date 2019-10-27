@@ -36,7 +36,7 @@ test("getDynamoDbUpdateItemParams", (t) => {
   const tags: IIndexDictionary = {
     yellow: -2,
   }
-  const result = indexes.getDynamoDbUpdateItemParams(indexes.TAGS_ID, tags);
+  const result = indexes.getDynamoDbUpdateItemParams(indexes.TAGS_ID, tags) as DocClient.UpdateItemInput;
   t.deepEqual(result.ExpressionAttributeNames, { '#yellow': 'yellow' });
   t.equal(result.ExpressionAttributeValues![':yellow'], tags.yellow);
   t.deepEqual(result.Key, { id: 'tags' });
