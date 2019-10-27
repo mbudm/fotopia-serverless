@@ -21,6 +21,8 @@ import {
   IPerson,
   IQueryBody,
   IUpdateBody,
+  IQueryResponse,
+  IQueryDBResponseItem,
 } from "./types";
 
 export function mergePeopleObjects(mergePeopleIds: string[], existingPeople: IPerson[]): IPerson {
@@ -110,13 +112,13 @@ export async function queryImagesByPeople(
   mergedPerson: IPerson,
   loggerBaseParams: ILoggerBaseParams,
   context: Context,
-): Promise<IImage[]> {
+): Promise<IQueryDBResponseItem[]> {
   const params = getInvokeQueryParams(deletedPeople, mergedPerson, loggerBaseParams, context);
   return lambda.invoke(params).promise()
     .then((response) => {
       const payload = typeof response.Payload === "string" ? JSON.parse(response.Payload) : null ;
-      const body = payload && JSON.parse(payload.body);
-      return Array.isArray(body) ? body : new Array<IImage>();
+      const body: IQueryResponse = payload && JSON.parse(payload.body);
+      return body.items;
     });
 }
 
@@ -140,7 +142,7 @@ export function getInvokeUpdateParams(
 }
 
 export function getAllInvokeUpdateParams(
-  imagesWithAffectedPeople: IImage[],
+  imagesWithAffectedPeople: IQueryDBResponseItem[],
   mergedPerson: IPerson,
   deletePeople: IPerson[],
   loggerBaseParams: ILoggerBaseParams,
@@ -161,7 +163,7 @@ export function getAllInvokeUpdateParams(
 }
 
 export async function updatedImages(
-  imagesWithAffectedPeople: IImage[],
+  imagesWithAffectedPeople: IQueryDBResponseItem[],
   mergedPerson: IPerson,
   deletePeople: IPerson[],
   loggerBaseParams: ILoggerBaseParams,
