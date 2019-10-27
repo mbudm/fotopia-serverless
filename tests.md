@@ -28,7 +28,8 @@ packages
  works out people
  updates people indexes and tag indexes
 
-
+// new index
+sls invoke -f update --data '{"pathParameters":{"id":"locations"},"body":"{\"index\":{\"paris\":1}}"}'
 
 //increment
 sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":1}}"}'
@@ -39,4 +40,5 @@ sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":
 //multiple
 sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":-1,\"tag2\":1,\"tag3\":1}}"}'
 
+//get 
 sls invoke -f get --data '{"pathParameters":{"id":"tags"}}'
