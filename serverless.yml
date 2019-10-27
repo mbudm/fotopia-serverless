@@ -114,7 +114,7 @@ functions:
   create:
     handler: fotos/create.createItem
     memorySize: 128
-    timeout: 10
+    timeout: 20
     events:
       - http:
           path: create
