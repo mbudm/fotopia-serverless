@@ -2,10 +2,11 @@ import { IFaceWithPeople } from "./faces";
 import {
   IImage,
 } from "./images";
-import { IPerson, IPersonWithImages } from "./people";
+import { IPerson } from "./people";
 import {
   IUpdateBody,
 } from "./update";
+import { IQueryDBResponseItem } from ".";
 
 export interface ILoggerBaseParams {
   id: string; // A unique ID for each span
@@ -52,6 +53,6 @@ export interface ILoggerPeopleMergeParams {
   existingPeople: IPerson[];
   mergedPerson: IPerson;
   deletePeople: IPerson[];
-  imagesWithAffectedPeople: IImage[];
+  imagesWithAffectedPeople: IQueryDBResponseItem[];
   updatedPeople: IPerson[];
 }

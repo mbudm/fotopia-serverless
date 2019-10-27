@@ -1,16 +1,19 @@
 import * as test from "tape";
-import { IImage, IQueryBody } from "../../fotos/types";
+import { IImage, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
 import { ISetupData } from "../types";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
+import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function updateTests(setupData: ISetupData, api) {
-  let imageWithFourPeople: IImage | undefined;
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - query.ts`
+  let imageWithFourPeople: IQueryDBResponseItem | undefined;
 
   // should remove this - no updates really doable from api as wipes out existing meta
 
   test("query all to get img with four people", (t) => {
     const query: IQueryBody = {
+      clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
@@ -23,8 +26,8 @@ export default function updateTests(setupData: ISetupData, api) {
     api.post(setupData.apiUrl, "/query", {
       body: query,
     })
-      .then((responseBody: IImage[]) => {
-        imageWithFourPeople = responseBody.find((rec) => rec.img_key === setupData.images[1].key);
+      .then((responseBody: IQueryResponse) => {
+        imageWithFourPeople = responseBody.items.find((rec) => rec.img_key === setupData.images[1].key);
         t.ok(imageWithFourPeople, "image with four people found");
         t.end();
       })

@@ -1,7 +1,6 @@
-import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import { InvocationResponse } from "aws-sdk/clients/lambda";
 import * as uuid from "uuid";
-import { Context } from "vm";
 import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
 import invokePutPeople from "./common/invokePutPeople";

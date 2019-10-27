@@ -12,7 +12,6 @@ import {
 import {
   DocumentClient as DocClient,
 } from "aws-sdk/lib/dynamodb/document_client.d";
-import { AttributeValue as ddbAttVals } from "dynamodb-data-types";
 import * as uuid from "uuid";
 import getTableName from "./common/getTableName";
 import { getTraceMeta } from "./common/getTraceMeta";

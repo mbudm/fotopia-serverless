@@ -1,10 +1,9 @@
 import * as uuid from "uuid";
 
-import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import {
   DocumentClient as DocClient,
 } from "aws-sdk/lib/dynamodb/document_client.d";
-import { Context } from "vm";
 import getTableName from "./common/getTableName";
 import { failure, success } from "./common/responses";
 import validatePathParameters from "./common/validatePathParameters";

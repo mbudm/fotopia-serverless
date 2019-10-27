@@ -1,10 +1,9 @@
-import * as test from "tape";
-import * as deleteFns from "./delete";
-
 import {
   InvocationRequest,
-  InvocationResponse,
 } from "aws-sdk/clients/lambda";
+import * as test from "tape";
+import contextMock from "./common/contextMock";
+import * as deleteFns from "./delete";
 import { IImage, IPerson, IPersonWithImages } from "./types";
 
 const username = "billy-mae";
@@ -66,10 +65,14 @@ test("getInvokeQueryParams, adds the people from image into the request body", (
       "p-3",
     ],
   };
-  const result = deleteFns.getInvokeQueryParams(imageWithThreepeople, {
-    parentId: "blah",
-    traceId: "123",
-  });
+  const result = deleteFns.getInvokeQueryParams(
+    imageWithThreepeople,
+    {
+      parentId: "blah",
+      traceId: "123",
+    },
+    contextMock,
+  );
   const payloadParsed = JSON.parse(result.Payload! as string);
   const bodyParsed = JSON.parse(payloadParsed.body);
   t.deepEqual(bodyParsed.criteria.people,  imageWithThreepeople.people);

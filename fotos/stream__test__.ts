@@ -1,6 +1,5 @@
 import { DynamoDBRecord } from "aws-lambda";
 import * as test from "tape";
-import { getZeroCount } from "./indexes";
 import * as stream from "./stream";
 import { IIndex } from "./types";
 
@@ -181,10 +180,10 @@ test("getZeroCount", (t) => {
     },
   };
 
-  const resultExistingPeople = getZeroCount(existing.people);
-  const resultExistingTags = getZeroCount(existing.tags);
-  const resultUpdatedPeople = getZeroCount(updated.people);
-  const resultUpdatedTags = getZeroCount(updated.tags);
+  const resultExistingPeople = stream.getZeroCount(existing.people);
+  const resultExistingTags = stream.getZeroCount(existing.tags);
+  const resultUpdatedPeople = stream.getZeroCount(updated.people);
+  const resultUpdatedTags = stream.getZeroCount(updated.tags);
 
   t.equal(resultExistingPeople, 0, `${resultExistingPeople} zero counts in existing people`);
   t.equal(resultExistingTags, 0, `${resultExistingTags}  zero counts in existing tags`);

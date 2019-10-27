@@ -3,7 +3,7 @@ import * as test from "tape";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import * as peopleMerge from "./peopleMerge";
 import {
-  IImage, ILoggerBaseParams, IPerson,
+  ILoggerBaseParams, IPerson, IQueryDBResponseItem,
 } from "./types";
 
 const existingPeople = [
@@ -170,11 +170,12 @@ test("getUpdatedPeople", (t) => {
   t.end();
 });
 
-const imageBase: IImage = {
-  birthtime: 234,
+const imageBase: IQueryDBResponseItem = {
+  birthtime: "234",
   group: "gang-of-four",
   id: "someid",
   img_key: "my.png",
+  img_thumb_key: "my-thumb.png",
   meta: {
     height: 200,
     width: 300,
@@ -187,7 +188,7 @@ test("getAllInvokeUpdateParams", (t) => {
   const mergePeopleIds = [existingPeople[1].id, existingPeople[0].id];
   const mergedPerson = peopleMerge.mergePeopleObjects(mergePeopleIds, existingPeople);
   const deletePeople = peopleMerge.getDeletePeople(mergePeopleIds, mergedPerson, existingPeople);
-  const imagesWithAffectedPeople: IImage[] = [{
+  const imagesWithAffectedPeople: IQueryDBResponseItem[] = [{
     ...imageBase,
     people: [mergedPerson.id],
   }, {
@@ -238,7 +239,7 @@ test("getAllInvokeUpdateParams - simpler mocks", (t) => {
   }];
   const mergedPerson: IPerson = peopleMerge.mergePeopleObjects(data, simpleExisting);
   const deletePeople: IPerson[] = peopleMerge.getDeletePeople(data, mergedPerson, simpleExisting);
-  const imagesWithAffectedPeople: IImage[] = [{
+  const imagesWithAffectedPeople: IQueryDBResponseItem[] = [{
     ...imageBase,
     people: [mergedPerson.id],
   }, {

@@ -81,7 +81,7 @@ function authenticateExistingUser(config: any) {
       .catch(reject);
   });
 }
-export function getIdentityId(response: any) {
+export function getIdentityId(response: any, config: any) {
   return Amplify.Auth.currentUserCredentials()
     .then((res: any) => {
       // forcibly assign the cognito credentials to aws-sdk
@@ -89,8 +89,12 @@ export function getIdentityId(response: any) {
       // and competing aws-sdk dependencies may mean storage looks in the wrong
       // aws-sdk lib version and reverts to tthe creds in the bash profile
       // at least thats my best explanation so far.
+      if(!res.params.IdentityId){
+        throw new Error(`No IdentityId found ${res.params.IdentityId}`);
+      }
       AWS.config.credentials = res;
       return {
+        bucket: config.Bucket,
         userIdentityId: res.params.IdentityId,
         ...response,
       };
@@ -117,7 +121,7 @@ export default function auth(config: any) {
         authenticateExistingUser(config) :
         authenticateNewUser(config);
     })
-    .then(getIdentityId)
+    .then((response: any) => getIdentityId(response, config))
     .catch((err) => {
       // tslint:disable-next-line:no-console
       console.error("check user err", err);

@@ -1,8 +1,7 @@
-import { APIGatewayProxyEvent, Callback } from "aws-lambda";
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import { S3 } from "aws-sdk/clients/all";
 import { GetObjectRequest, PutObjectOutput, PutObjectRequest } from "aws-sdk/clients/s3";
 import * as uuid from "uuid";
-import { Context } from "vm";
 import getS3Bucket from "./common/getS3Bucket";
 import { getS3Params } from "./common/getS3Params";
 import { getS3PutParams } from "./common/getS3PutParams";
@@ -97,7 +96,7 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
   };
 
   try {
-    const putPeopleObject: PutObjectOutput = await putPeople(s3, requestBody.people);
+    await putPeople(s3, requestBody.people);
     logger(context, loggerBaseParams, getLogFields(requestBody.people));
     return callback(null, success(requestBody));
   } catch (err) {

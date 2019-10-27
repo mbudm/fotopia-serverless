@@ -12,13 +12,15 @@ import logger from "./lib/logger";
 
 import { InvocationResponse } from "aws-sdk/clients/lambda";
 import { getTraceMeta } from "./common/getTraceMeta";
-import invokeGetIndex from "./common/invokeGetIndex";
 import invokePutIndex from "./common/invokePutIndex";
 import { safeLength } from "./create";
-import { getZeroCount } from "./indexes";
 import {
   IIndex, IIndexDictionary, IIndexFields, IIndexUpdate, ILoggerBaseParams,
 } from "./types";
+
+export function getZeroCount(indexObj: IIndexDictionary): number {
+  return Object.keys(indexObj).filter((item) => indexObj[item] <= 0).length;
+}
 
 export function normaliseArrayFields(record: DynamoDBRecord): IIndexFields {
   const arrayFields: IIndexFields = {

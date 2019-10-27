@@ -1,7 +1,7 @@
 import { BoundingBox, Landmark } from "aws-sdk/clients/rekognition";
 import { ITraceMeta } from "./common";
 import { IFace } from "./faces";
-import { IImage, IImageDimensions } from "./images";
+import { IImageDimensions } from "./images";
 
 export interface IPerson {
   id: string;

@@ -1,3 +1,4 @@
+import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import { Rekognition, S3 } from "aws-sdk";
 import {
   InvocationRequest,
@@ -48,15 +49,19 @@ export function getS3Params(imageRecord: IImage): GetObjectRequest  {
   }
 }
 
-export function getInvokeGetParams(request: IPathParameters): InvocationRequest {
-  return {
-    FunctionName: `${process.env.LAMBDA_PREFIX}get`,
-    InvocationType: INVOCATION_REQUEST_RESPONSE,
-    LogType: "Tail",
-    Payload: JSON.stringify({
-      pathParameters: request,
-    }),
-  };
+export function getInvokeGetParams(request: IPathParameters | null): InvocationRequest {
+  if (request === null ) {
+    throw new Error("No path parameters provided");
+  } else {
+    return {
+      FunctionName: `${process.env.LAMBDA_PREFIX}get`,
+      InvocationType: INVOCATION_REQUEST_RESPONSE,
+      LogType: "Tail",
+      Payload: JSON.stringify({
+        pathParameters: request,
+      }),
+    };
+  }
 }
 
 export function invokeGetImageRecord(params): Promise<IImage> {
@@ -115,14 +120,16 @@ export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> 
   }
 }
 
-export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta): InvocationRequest {
+export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta, context: Context): InvocationRequest {
   const request: IQueryBody = {
+    clientId: context.functionName,
     criteria: {
       people: image.people!,
       tags: [],
     },
     from: 0,
     to: Date.now(),
+    breakDateRestriction: true,
   };
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}query`,
@@ -146,8 +153,10 @@ export function getPeopleWithImages(image: IImage, queriedImages: IImage[]): IPe
   }));
 }
 
-export function queryImagesByPeople(image: IImage, traceMeta: ITraceMeta): Promise<IPersonWithImages[]> {
-  const params = getInvokeQueryParams(image, traceMeta);
+export function queryImagesByPeople(
+  image: IImage, traceMeta: ITraceMeta, context: Context,
+): Promise<IPersonWithImages[]> {
+  const params = getInvokeQueryParams(image, traceMeta, context);
   return lambda.invoke(params).promise()
   .then((invocationResponse: InvocationResponse) => parseQueryResponse(invocationResponse, image));
 }
@@ -178,7 +187,7 @@ export function getUpdatedPeople(existingPeople: IPerson[], imagesForPeople: IPe
 }
 
 export function getLogFields(
-  pathParams: IPathParameters,
+  pathParams: IPathParameters | null,
   imageRecord?: IImage,
   existingPeople?: IPerson[],
   updatedPeople?: IPerson[],
@@ -200,14 +209,14 @@ export function getLogFields(
     imageUsername: imageRecord && imageRecord.username,
     imageWidth: imageRecord && imageRecord.meta.width,
     imagesForPeopleRaw: imagesForPeople && JSON.stringify(imagesForPeople),
-    paramId: pathParams.id,
-    paramUsername: pathParams.username,
+    paramId: pathParams && pathParams.id,
+    paramUsername: pathParams && pathParams.username,
     peopleCount: safeLength(existingPeople),
     updatedPeopleCount: safeLength(updatedPeople),
   };
 }
 
-export async function deleteItem(event, context, callback) {
+export async function deleteItem(event: APIGatewayProxyEvent, context: Context, callback: Callback) {
   const startTime: number = Date.now();
   const s3: S3 = createS3Client();
   const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
@@ -218,8 +227,8 @@ export async function deleteItem(event, context, callback) {
     startTime,
     traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
+  const request: IPathParameters | null = event.pathParameters && event.pathParameters! as unknown as IPathParameters;
   try {
-    const request: IPathParameters = event.pathParameters;
     const params: InvocationRequest = getInvokeGetParams(request);
     const imageRecord: IImage = await invokeGetImageRecord(params);
     const existingPeople: IPerson[] = await invokeGetPeople();
@@ -228,9 +237,11 @@ export async function deleteItem(event, context, callback) {
     const ddbParams: DocClient.GetItemInput = getDynamoDbParams(request);
     const deleteImageRecordPromise: Promise<DocClient.DeleteItemOutput> = deleteImageRecord(ddbParams);
     const deleteFacesInImagePromise: Promise<DeleteFacesResponse> = deleteFacesInImage(imageRecord);
-    const imagesForPeople: IPersonWithImages[] = await queryImagesByPeople(imageRecord, getTraceMeta(loggerBaseParams));
+    const imagesForPeople: IPersonWithImages[] = await queryImagesByPeople(
+      imageRecord, getTraceMeta(loggerBaseParams), context,
+    );
     const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, imagesForPeople);
-    const putPeopleResponse: Promise<InvocationResponse> = invokePutPeople(
+    invokePutPeople(
       updatedPeople,
       getTraceMeta(loggerBaseParams),
     );
@@ -246,7 +257,7 @@ export async function deleteItem(event, context, callback) {
     );
     return callback(null, success(ddbParams.Key));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(event.pathParameters)});
+    logger(context, loggerBaseParams, { err, ...getLogFields(request)});
     return callback(null, failure(err));
   }
 }

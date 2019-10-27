@@ -23,14 +23,18 @@ import {
 import getTableName from "./common/getTableName";
 import validatePathParameters from "./common/validatePathParameters";
 
-export function getDynamoDbParams(request: IPathParameters): DocClient.GetItemInput {
-  return {
-    Key: {
-      id: request.id,
-      username: request.username,
-    },
-    TableName: getTableName(),
-  };
+export function getDynamoDbParams(request: IPathParameters | null ): DocClient.GetItemInput {
+  if (request === null ) {
+    throw new Error("No path parameters provided");
+  } else {
+    return {
+      Key: {
+        id: request.id,
+        username: request.username,
+      },
+      TableName: getTableName(),
+    };
+  }
 }
 
 export function getResponseBody(ddbResponse: DocClient.GetItemOutput): IImage {

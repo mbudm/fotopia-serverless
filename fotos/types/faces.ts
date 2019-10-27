@@ -2,7 +2,6 @@ import {
   BoundingBox,
   FaceMatch,
   FaceMatchList,
-  FaceRecord,
   Landmark,
 } from "aws-sdk/clients/rekognition";
 

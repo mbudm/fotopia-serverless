@@ -4,7 +4,7 @@ import getConfig from "./getConfig";
 
 import { ISetupData } from "../types";
 
-export default function setupTests(auth: any) {
+export default function setupTests(auth: any, uploader?: any, api?: any) {
   const setupData: ISetupData = {
     apiUrl: "",
     collectionId: `${process.env.FOTOPIA_GROUP}-${process.env.STAGE}`,
@@ -54,6 +54,11 @@ export default function setupTests(auth: any) {
         userIdentityId: signedIn.userIdentityId,
         username: setupData.username,
       }];
+
+      setupData.api = api;
+      setupData.bucket = signedIn.bucket
+      setupData.userIdentityId = signedIn.userIdentityId
+      setupData.upload = uploader && uploader(setupData);
       return setupData;
     })
     .catch(formatError);
