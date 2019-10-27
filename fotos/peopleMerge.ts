@@ -14,7 +14,6 @@ import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import {
   IFace,
-  IImage,
   ILoggerBaseParams,
   ILoggerPeopleMergeParams,
   IPathParameters,

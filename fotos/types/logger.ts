@@ -2,7 +2,7 @@ import { IFaceWithPeople } from "./faces";
 import {
   IImage,
 } from "./images";
-import { IPerson, IPersonWithImages } from "./people";
+import { IPerson } from "./people";
 import {
   IUpdateBody,
 } from "./update";

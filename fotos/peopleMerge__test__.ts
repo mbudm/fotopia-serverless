@@ -3,7 +3,7 @@ import * as test from "tape";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import * as peopleMerge from "./peopleMerge";
 import {
-  IImage, ILoggerBaseParams, IPerson, IQueryDBResponseItem,
+  ILoggerBaseParams, IPerson, IQueryDBResponseItem,
 } from "./types";
 
 const existingPeople = [

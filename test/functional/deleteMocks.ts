@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { IImage, IIndex, IPerson, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
+import { IIndex, IPerson, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
 import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
@@ -47,13 +47,11 @@ export default function deleteAllTestData(setupData, api) {
       .catch(formatError);
   });
 
-  let existingPeople: IPerson[];
   test("get existing people", (t) => {
     api
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
         t.ok(responseBody, "Existing people retrieved");
-        existingPeople = responseBody;
         t.end();
       })
       .catch(formatError);

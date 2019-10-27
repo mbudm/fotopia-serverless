@@ -1,8 +1,6 @@
-import { DynamoDBRecord } from "aws-lambda";
 import * as test from "tape";
 import * as indexes from "./indexes";
-import { getIndexUpdates } from "./stream";
-import { IIndex, IIndexUpdate, IIndexDictionary } from "./types";
+import { IIndexDictionary } from "./types";
 
 import {
   DocumentClient as DocClient,

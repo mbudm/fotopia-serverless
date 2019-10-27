@@ -12,7 +12,6 @@ import logger from "./lib/logger";
 
 import { InvocationResponse } from "aws-sdk/clients/lambda";
 import { getTraceMeta } from "./common/getTraceMeta";
-import invokeGetIndex from "./common/invokeGetIndex";
 import invokePutIndex from "./common/invokePutIndex";
 import { safeLength } from "./create";
 import {

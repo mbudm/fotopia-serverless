@@ -1,7 +1,6 @@
 import * as test from "tape";
 
 import {
-  IImage,
   IIndex,
   IIndexDictionary,
   IIndexUpdate,
@@ -54,13 +53,11 @@ export default function deleteAllNotJustTestData(setupData, api) {
       .catch(formatError);
   });
 
-  let existingPeople: IPerson[];
   test("get existing people", (t) => {
     api
       .get(setupData.apiUrl, "/people")
       .then((responseBody: IPerson[]) => {
         t.ok(responseBody, "Existing people retrieved");
-        existingPeople = responseBody;
         t.end();
       })
       .catch(formatError);

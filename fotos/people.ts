@@ -96,7 +96,7 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
   };
 
   try {
-    const putPeopleObject: PutObjectOutput = await putPeople(s3, requestBody.people);
+    await putPeople(s3, requestBody.people);
     logger(context, loggerBaseParams, getLogFields(requestBody.people));
     return callback(null, success(requestBody));
   } catch (err) {

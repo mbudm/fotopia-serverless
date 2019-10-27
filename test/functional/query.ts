@@ -1,5 +1,5 @@
 import * as test from "tape";
-import { IImage, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
+import { IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
 import formatError from "./formatError";
 import { FUNC_TEST_PREFIX } from "./constants";
 

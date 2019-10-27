@@ -241,7 +241,7 @@ export async function deleteItem(event: APIGatewayProxyEvent, context: Context, 
       imageRecord, getTraceMeta(loggerBaseParams), context,
     );
     const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, imagesForPeople);
-    const putPeopleResponse: Promise<InvocationResponse> = invokePutPeople(
+    invokePutPeople(
       updatedPeople,
       getTraceMeta(loggerBaseParams),
     );

@@ -248,7 +248,7 @@ test("calculateToDate - to date is < from date", (t) => {
     to: lessThanFromDate,
   };
   try {
-    const toDate = query.calculateToDate(requestBodyWithOutOfRangeToDate);
+    query.calculateToDate(requestBodyWithOutOfRangeToDate);
   } catch (e) {
     t.equal(e.message, `'To' date is prior to 'from' date`);
     t.end();
@@ -262,7 +262,7 @@ test("calculateToDate - to date is < lastRetrievedBirthtime", (t) => {
     lastRetrievedBirthtime,
   };
   try {
-    const toDate = query.calculateToDate(requestBodyWithOutOfRangeToDate);
+    query.calculateToDate(requestBodyWithOutOfRangeToDate);
   } catch (e) {
     t.equal(e.message, `'To' date is prior to 'from' date`);
     t.end();
