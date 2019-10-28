@@ -14,6 +14,7 @@ import {
 } from "aws-sdk/lib/dynamodb/document_client.d";
 import { PromiseResult } from "aws-sdk/lib/request";
 import { getZeroCount } from "./stream";
+import { BatchWriteItemOutput } from "aws-sdk/clients/dynamodb";
 
 export const TAGS_ID = "tags";
 export const PEOPLE_ID = "people";
@@ -68,6 +69,62 @@ export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): I
   return indexes;
 }
 
+export function updateCleanIndexes(indexObject: IIndex): Promise<PromiseResult<BatchWriteItemOutput, AWSError>> {
+  const ddbParams: DocClient.BatchWriteItemInput = {
+    RequestItems: {
+      [getIndexTableName()]: [
+        {
+          PutRequest: {
+            Item: {
+              id: TAGS_ID,
+              [INDEX_KEYS_PROP]: {
+                ...indexObject.tags
+              }
+            }
+          }
+        },
+        {
+          PutRequest: {
+            Item: {
+              id: PEOPLE_ID,
+              [INDEX_KEYS_PROP]: {
+                ...indexObject.people
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+  return dynamodb.batchWrite(ddbParams).promise();
+}
+
+export function cleanZeroIndexes(indexObject: IIndex): Promise<IIndex> | IIndex {
+  const cleanedIndex: IIndex = {
+    ...defaultIndex,
+  };
+  let updateNeeded = false;
+  Object.keys(indexObject.people).forEach((p) => {
+    if (indexObject.people[p] <= 0) {
+      updateNeeded = true;
+    } else {
+      cleanedIndex.people[p] = indexObject.people[p];
+    }
+  });
+
+  Object.keys(indexObject.tags).forEach((t) => {
+    if (indexObject.tags[t] <= 0) {
+      updateNeeded = true;
+    } else {
+      cleanedIndex.tags[t] = indexObject.tags[t];
+    }
+  });
+  return updateNeeded ?
+    updateCleanIndexes(cleanedIndex)
+      .then(() => cleanedIndex) :
+    cleanedIndex;
+}
+
 export function getLogFields(indexesObj: IIndex) {
   return {
     indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
@@ -95,8 +152,9 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
     const ddbParams: DocClient.BatchGetItemInput = getDynamoDbBatchGetItemParams();
     const ddbResponse: DocClient.BatchGetItemOutput = await getIndexRecords(ddbParams);
     const indexesObject: IIndex = parseIndexesObject(ddbResponse);
-    logger(context, loggerBaseParams, getLogFields(indexesObject));
-    return callback(null, success(indexesObject));
+    const cleanZeroIndexesObject: IIndex = await cleanZeroIndexes(indexesObject);
+    logger(context, loggerBaseParams, getLogFields(cleanZeroIndexesObject));
+    return callback(null, success(cleanZeroIndexesObject));
   } catch (err) {
     logger(context, loggerBaseParams, { err });
     return callback(null, failure(err));
