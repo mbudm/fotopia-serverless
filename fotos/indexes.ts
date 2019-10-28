@@ -59,10 +59,10 @@ export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): I
   if (ddbResponse.Responses) {
     const tagsRecord = ddbResponse.Responses[getIndexTableName()]
       .find((response) => response.id === TAGS_ID);
-    indexes.tags = tagsRecord ? tagsRecord[INDEX_KEYS_PROP] : indexes.tags;
+    indexes.tags = tagsRecord && tagsRecord[INDEX_KEYS_PROP] ? tagsRecord[INDEX_KEYS_PROP] : indexes.tags;
     const peopleRecord = ddbResponse.Responses[getIndexTableName()]
       .find((response) => response.id === PEOPLE_ID);
-    indexes.people = peopleRecord ? peopleRecord[INDEX_KEYS_PROP] : indexes.people;
+    indexes.people = peopleRecord && peopleRecord[INDEX_KEYS_PROP] ? peopleRecord[INDEX_KEYS_PROP] : indexes.people;
   }
   return indexes;
 }
