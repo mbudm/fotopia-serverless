@@ -144,12 +144,39 @@ export function getDynamoDbUpdateItemParams(
   }
 }
 
+export function updateAndHandleEmptyMap(ddbParams: DocClient.UpdateItemInput): Promise<DocClient.UpdateItemOutput> {
+  return dynamodb.update(ddbParams).promise()
+  .catch((e) => {
+    // this check may be a bit too brittle, but we want to only retry on this very specific error
+    if (e.code === "ValidationException"
+      && e.message === "The document path provided in the update expression is invalid for update"
+    ) {
+      const setMapParams: DocClient.UpdateItemInput = {
+        ConditionExpression: "attribute_not_exists(#indexKeysProp)",
+        ExpressionAttributeNames: {
+          [`#indexKeysProp`]: INDEX_KEYS_PROP,
+        },
+        Key: ddbParams.Key,
+        TableName: ddbParams.TableName,
+        UpdateExpression: "SET #indexKeysProp = {}",
+      };
+      return dynamodb.update(setMapParams).promise()
+        .then(() => {
+          // now that the map has been created try the update again
+          return dynamodb.update(ddbParams).promise();
+        });
+    } else {
+      throw e;
+    }
+  });
+}
+
 export function updateIndexRecord(
   indexId: string,
   indexData: IIndexDictionary,
 ): Promise<DocClient.UpdateItemOutput> | undefined {
   const ddbParams: DocClient.UpdateItemInput | null = getDynamoDbUpdateItemParams(indexId, indexData);
-  return ddbParams ? dynamodb.update(ddbParams).promise() : undefined ;
+  return ddbParams ? updateAndHandleEmptyMap(ddbParams) : undefined ;
 }
 
 export function getPutLogFields(
