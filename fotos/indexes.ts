@@ -13,6 +13,7 @@ import {
   DocumentClient as DocClient,
 } from "aws-sdk/lib/dynamodb/document_client.d";
 import { PromiseResult } from "aws-sdk/lib/request";
+import { getZeroCount } from "./stream";
 
 export const TAGS_ID = "tags";
 export const PEOPLE_ID = "people";
@@ -71,6 +72,8 @@ export function getLogFields(indexesObj: IIndex) {
   return {
     indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
     indexesTagCount: indexesObj && Object.keys(indexesObj.tags).length,
+    indexesZeroPeopleCount: indexesObj && getZeroCount(indexesObj.people),
+    indexesZeroTagCount: indexesObj && getZeroCount(indexesObj.tags),
   };
 }
 
@@ -187,13 +190,14 @@ export function getPutLogFields(
   tagsUpdateResponse?: DocClient.UpdateItemOutput,
   peopleUpdateResponse?: DocClient.UpdateItemOutput,
 ) {
+
+  const indexesPeopleAtts = peopleUpdateResponse && peopleUpdateResponse.Attributes || {};
+  const indexesTagsAtts = tagsUpdateResponse && tagsUpdateResponse.Attributes || {};
   return {
     indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
     indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
-    indexesPeopleCount: peopleUpdateResponse
-      && peopleUpdateResponse.Attributes
-      && peopleUpdateResponse.Attributes.length,
-    indexesTagCount: tagsUpdateResponse && tagsUpdateResponse.Attributes && tagsUpdateResponse.Attributes.length,
+    indexesPeopleCount: Object.keys(indexesPeopleAtts).length,
+    indexesTagCount: Object.keys(indexesTagsAtts).length,
   };
 }
 
