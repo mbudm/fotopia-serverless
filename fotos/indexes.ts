@@ -156,9 +156,12 @@ export function updateAndHandleEmptyMap(ddbParams: DocClient.UpdateItemInput): P
         ExpressionAttributeNames: {
           [`#indexKeysProp`]: INDEX_KEYS_PROP,
         },
+        ExpressionAttributeValues: {
+          ":emptyMap": {},
+        },
         Key: ddbParams.Key,
         TableName: ddbParams.TableName,
-        UpdateExpression: "SET #indexKeysProp = {}",
+        UpdateExpression: "SET #indexKeysProp = :emptyMap",
       };
       return dynamodb.update(setMapParams).promise()
         .then(() => {
