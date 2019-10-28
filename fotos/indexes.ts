@@ -8,14 +8,14 @@ import {
   IIndex, IIndexDictionary, IIndexUpdate, ILoggerBaseParams, IPutIndexRequest, ITraceMeta,
 } from "./types";
 
+import { AWSError } from "aws-sdk";
 import {
   DocumentClient as DocClient,
 } from "aws-sdk/lib/dynamodb/document_client.d";
 import { PromiseResult } from "aws-sdk/lib/request";
-import { AWSError } from "aws-sdk";
 
-export const TAGS_ID = "tags"
-export const PEOPLE_ID = "people"
+export const TAGS_ID = "tags";
+export const PEOPLE_ID = "people";
 
 const defaultIndex: IIndex = {
   people: {},
@@ -39,9 +39,9 @@ export function getDynamoDbBatchGetItemParams(): DocClient.BatchGetItemInput {
         },
         {
           id: PEOPLE_ID,
-        }]
-      }
-    }
+        }],
+      },
+    },
   };
 }
 
@@ -51,13 +51,15 @@ export function getIndexRecords(
   return dynamodb.batchGet(ddbParams).promise();
 }
 
-export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): IIndex{
+export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): IIndex {
   const indexes: IIndex = {
     ...defaultIndex,
-  }
-  if(ddbResponse.Responses){
-    indexes.tags = ddbResponse.Responses[getIndexTableName()].find((response) => response.id === TAGS_ID) || indexes.tags;
-    indexes.people = ddbResponse.Responses[getIndexTableName()].find((response) => response.id === PEOPLE_ID) || indexes.people;
+  };
+  if (ddbResponse.Responses) {
+    indexes.tags = ddbResponse.Responses[getIndexTableName()]
+      .find((response) => response.id === TAGS_ID) || indexes.tags;
+    indexes.people = ddbResponse.Responses[getIndexTableName()]
+      .find((response) => response.id === PEOPLE_ID) || indexes.people;
   }
   return indexes;
 }
@@ -95,10 +97,13 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
   }
 }
 
-export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDictionary): DocClient.UpdateItemInput | null {
+export function getDynamoDbUpdateItemParams(
+  indexId: string,
+  indexData: IIndexDictionary,
+): DocClient.UpdateItemInput | null {
   const timestamp = new Date().getTime();
   const validKeys =  Object.keys(indexData).filter((k) => indexData[k] !== undefined);
-  if(validKeys.length > 0){
+  if (validKeys.length > 0) {
     /*
     https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ExpressionAttributeNames.html
     "If an attribute name begins with a number or contains a space, a special character,
@@ -116,15 +121,15 @@ export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDi
       ...accum,
       [`:${idx}`]: indexData[key],
     }), {
-      ":zero": 0,
       ":updatedAt": timestamp,
+      ":zero": 0,
     });
     const updateKeyValues = validKeys.map((key) => `#${key} = if_not_exists(#${key},:zero) + :${key}`).join(", ");
     return {
       ExpressionAttributeNames,
       ExpressionAttributeValues,
       Key: {
-        id: indexId
+        id: indexId,
       },
       ReturnValues: "ALL_NEW",
       TableName: getIndexTableName(),
@@ -135,17 +140,25 @@ export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDi
   }
 }
 
-export function updateIndexRecord(indexId: string, indexData: IIndexDictionary): Promise<DocClient.UpdateItemOutput> | undefined {
+export function updateIndexRecord(
+  indexId: string,
+  indexData: IIndexDictionary,
+): Promise<DocClient.UpdateItemOutput> | undefined {
   const ddbParams: DocClient.UpdateItemInput | null = getDynamoDbUpdateItemParams(indexId, indexData);
   return ddbParams ? dynamodb.update(ddbParams).promise() : undefined ;
 }
 
-
-export function getPutLogFields(updates: IIndexUpdate, tagsUpdateResponse?: DocClient.UpdateItemOutput , peopleUpdateResponse?: DocClient.UpdateItemOutput ) {
+export function getPutLogFields(
+  updates: IIndexUpdate,
+  tagsUpdateResponse?: DocClient.UpdateItemOutput,
+  peopleUpdateResponse?: DocClient.UpdateItemOutput,
+) {
   return {
     indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
     indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
-    indexesPeopleCount: peopleUpdateResponse && peopleUpdateResponse.Attributes && peopleUpdateResponse.Attributes.length,
+    indexesPeopleCount: peopleUpdateResponse
+      && peopleUpdateResponse.Attributes
+      && peopleUpdateResponse.Attributes.length,
     indexesTagCount: tagsUpdateResponse && tagsUpdateResponse.Attributes && tagsUpdateResponse.Attributes.length,
   };
 }
@@ -168,9 +181,15 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
 
   try {
     // update each index - change to batch write item
-    const tagsUpdateResponse: DocClient.UpdateItemOutput | undefined = await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
-    const peopleUpdateResponse: DocClient.UpdateItemOutput | undefined = await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.tags);
-    logger(context, loggerBaseParams, getPutLogFields(requestBody.indexUpdate, tagsUpdateResponse, peopleUpdateResponse));
+    const tagsUpdateResponse: DocClient.UpdateItemOutput | undefined =
+      await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
+    const peopleUpdateResponse: DocClient.UpdateItemOutput | undefined =
+      await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.tags);
+    logger(context, loggerBaseParams, getPutLogFields(
+      requestBody.indexUpdate,
+      tagsUpdateResponse,
+      peopleUpdateResponse,
+    ));
     return callback(null, success(requestBody));
   } catch (err) {
     logger(context, loggerBaseParams, { err, ...getPutLogFields(requestBody.indexUpdate)});
