@@ -16,6 +16,7 @@ import { PromiseResult } from "aws-sdk/lib/request";
 
 export const TAGS_ID = "tags";
 export const PEOPLE_ID = "people";
+export const INDEX_KEYS_PROP = "indexKeys";
 
 const defaultIndex: IIndex = {
   people: {},
@@ -56,10 +57,12 @@ export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): I
     ...defaultIndex,
   };
   if (ddbResponse.Responses) {
-    indexes.tags = ddbResponse.Responses[getIndexTableName()]
-      .find((response) => response.id === TAGS_ID) || indexes.tags;
-    indexes.people = ddbResponse.Responses[getIndexTableName()]
-      .find((response) => response.id === PEOPLE_ID) || indexes.people;
+    const tagsRecord = ddbResponse.Responses[getIndexTableName()]
+      .find((response) => response.id === TAGS_ID);
+    indexes.tags = tagsRecord ? tagsRecord[INDEX_KEYS_PROP] : indexes.tags;
+    const peopleRecord = ddbResponse.Responses[getIndexTableName()]
+      .find((response) => response.id === PEOPLE_ID);
+    indexes.people = peopleRecord ? peopleRecord[INDEX_KEYS_PROP] : indexes.people;
   }
   return indexes;
 }
@@ -114,7 +117,7 @@ export function getDynamoDbUpdateItemParams(
     */
     const ExpressionAttributeNames = validKeys.reduce((accum, key, idx) => ({
       ...accum,
-      [`#${idx}`]: key,
+      [`#${idx}`]: `${INDEX_KEYS_PROP}.${key}`,
     }), {});
 
     const ExpressionAttributeValues = validKeys.reduce((accum, key, idx) => ({

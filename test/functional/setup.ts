@@ -56,8 +56,8 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
       }];
 
       setupData.api = api;
-      setupData.bucket = signedIn.bucket
-      setupData.userIdentityId = signedIn.userIdentityId
+      setupData.bucket = signedIn.bucket;
+      setupData.userIdentityId = signedIn.userIdentityId;
       setupData.upload = uploader && uploader(setupData);
       return setupData;
     })

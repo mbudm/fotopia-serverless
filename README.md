@@ -57,8 +57,8 @@ AWS_ACCESS_KEY_ID=<aws access key>
 AWS_SECRET_ACCESS_KEY=<aws secret key>
 CUSTOM_DOMAIN_DEV=dev-api.yourdomain.com # optional if you don't want to use the serverless-domain-manager plugin
 CUSTOM_DOMAIN_PROD=api.yourdomain.com # optional if you don't want to use the serverless-domain-manager plugin
-TEST_EXISTING_USER=YourTestUserName
-TEST_EXISTING_USER_PWD=Y0urTestP*ssword
+TEST_USER_NAME=YourTestUserName
+TEST_USER_PWD=Y0urTestP*ssword
 FOTOPIA_GROUP=my-group # a string used as dynamodb global index key to allow queries across all users photos. in future this will allow for a simple way to have separate groups in one fotopia instance
 ```
 

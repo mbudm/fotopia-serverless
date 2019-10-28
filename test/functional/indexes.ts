@@ -2,12 +2,12 @@ import * as test from "tape";
 import {
   IImage, IIndex, IQueryBody, IQueryResponse,
 } from "../../fotos/types";
+import { FUNC_TEST_PREFIX } from "./constants";
 import { createIndexChangeTable, MODES } from "./createIndexChangeTable";
 import formatError from "./formatError";
-import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function indexesTests(setupData, api) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX} - indexes.ts`
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - indexes.ts`;
 
   const retryStrategy = [500, 1000, 2000, 5000];
 
@@ -31,9 +31,9 @@ export default function indexesTests(setupData, api) {
         testImages = responseBody.items.filter((img) =>
           img.img_key === setupData.records[1].img_key ||
           img.img_key === setupData.records[0].img_key )
-          .map(dbItem => ({
+          .map((dbItem) => ({
             ...dbItem,
-            birthtime: parseInt(dbItem.birthtime) // IImage expects a numeric birthtime
+            birthtime: parseInt(dbItem.birthtime, 10), // IImage expects a numeric birthtime
           }));
         t.equal(testImages.length >= 2, true, `at least two test images - actual: ${testImages.length}`);
         t.end();

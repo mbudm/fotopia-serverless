@@ -6,16 +6,16 @@ import {
   IIndexUpdate,
   IPerson,
   IQueryBody,
-  IQueryResponse,
   IQueryDBResponseItem,
+  IQueryResponse,
 } from "../../fotos/types";
+import { FUNC_TEST_PREFIX } from "./constants";
 import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
-import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function deleteAllNotJustTestData(setupData, api) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX}- deleteAll.ts`
+  const CLIENT_ID = `${FUNC_TEST_PREFIX}- deleteAll.ts`;
   const retryStrategy = [500, 1000, 2000, 5000];
   let images: IQueryDBResponseItem[];
 
@@ -252,6 +252,8 @@ export default function deleteAllNotJustTestData(setupData, api) {
     const body = {
       indexUpdate,
     };
+    // tslint:disable-next-line:no-console
+    console.log("Index update", JSON.stringify(indexUpdate));
     api
       .put(setupData.apiUrl, "/indexes/update", {
         body,
