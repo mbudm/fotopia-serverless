@@ -89,7 +89,7 @@ export function getIdentityId(response: any, config: any) {
       // and competing aws-sdk dependencies may mean storage looks in the wrong
       // aws-sdk lib version and reverts to tthe creds in the bash profile
       // at least thats my best explanation so far.
-      if(!res.params.IdentityId){
+      if (!res.params.IdentityId) {
         throw new Error(`No IdentityId found ${res.params.IdentityId}`);
       }
       AWS.config.credentials = res;
@@ -116,7 +116,7 @@ export default function auth(config: any) {
   return checkUserExists(config)
     .then((response) => {
       // tslint:disable-next-line:no-console
-      console.log("checkUserExists", response);
+      console.log("checkUserExists", response, config);
       return response!.Users!.length === 1 ?
         authenticateExistingUser(config) :
         authenticateNewUser(config);

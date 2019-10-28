@@ -1,19 +1,20 @@
 import * as test from "tape";
-import { IIndex, IPerson, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
+import { IIndex, IPerson, IQueryBody, IQueryDBResponseItem, IQueryResponse } from "../../fotos/types";
+import { FUNC_TEST_PREFIX } from "./constants";
 import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
-import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function deleteAllTestData(setupData, api) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX} - deleteMocks.ts`
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - deleteMocks.ts`;
 
   const retryStrategy = [500, 1000, 2000, 5000];
   let images: IQueryDBResponseItem[];
 
   test("query all to get all images", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
@@ -84,6 +85,7 @@ export default function deleteAllTestData(setupData, api) {
 
   test("query all should return no results matching test data", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],

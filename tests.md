@@ -28,17 +28,13 @@ packages
  works out people
  updates people indexes and tag indexes
 
-// new index
-sls invoke -f update --data '{"pathParameters":{"id":"locations"},"body":"{\"index\":{\"paris\":1}}"}'
-
-//increment
-sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":1}}"}'
-
-//decrement
-sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":-1}}"}'
-
-//multiple
-sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":-1,\"tag2\":1,\"tag3\":1}}"}'
+// update/add index
+sls invoke -f indexesUpdate -s alpha --data '{"body":"{\"indexUpdate\":{\"tags\":{\"butterfly\":1}}}'
 
 //get 
-sls invoke -f get --data '{"pathParameters":{"id":"tags"}}'
+sls invoke -f indexes -s alpha 
+
+
+// reset the indexes table
+aws dynamodb delete-item --table-name fotopia-web-app-alpha-indexes --key '{"id":{"S":"tags"}}' --region us-east-1
+aws dynamodb delete-item --table-name fotopia-web-app-alpha-indexes --key '{"id":{"S":"people"}}' --region us-east-1

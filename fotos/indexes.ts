@@ -8,14 +8,17 @@ import {
   IIndex, IIndexDictionary, IIndexUpdate, ILoggerBaseParams, IPutIndexRequest, ITraceMeta,
 } from "./types";
 
+import { AWSError } from "aws-sdk";
 import {
   DocumentClient as DocClient,
 } from "aws-sdk/lib/dynamodb/document_client.d";
 import { PromiseResult } from "aws-sdk/lib/request";
-import { AWSError } from "aws-sdk";
+import { getZeroCount } from "./stream";
+import { BatchWriteItemOutput } from "aws-sdk/clients/dynamodb";
 
-export const TAGS_ID = "tags"
-export const PEOPLE_ID = "people"
+export const TAGS_ID = "tags";
+export const PEOPLE_ID = "people";
+export const INDEX_KEYS_PROP = "indexKeys";
 
 const defaultIndex: IIndex = {
   people: {},
@@ -39,9 +42,9 @@ export function getDynamoDbBatchGetItemParams(): DocClient.BatchGetItemInput {
         },
         {
           id: PEOPLE_ID,
-        }]
-      }
-    }
+        }],
+      },
+    },
   };
 }
 
@@ -51,21 +54,87 @@ export function getIndexRecords(
   return dynamodb.batchGet(ddbParams).promise();
 }
 
-export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): IIndex{
+export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): IIndex {
   const indexes: IIndex = {
     ...defaultIndex,
-  }
-  if(ddbResponse.Responses){
-    indexes.tags = ddbResponse.Responses[getIndexTableName()].find((response) => response.id === TAGS_ID) || indexes.tags;
-    indexes.people = ddbResponse.Responses[getIndexTableName()].find((response) => response.id === PEOPLE_ID) || indexes.people;
+  };
+  if (ddbResponse.Responses) {
+    const tagsRecord = ddbResponse.Responses[getIndexTableName()]
+      .find((response) => response.id === TAGS_ID);
+    indexes.tags = tagsRecord && tagsRecord[INDEX_KEYS_PROP] ? tagsRecord[INDEX_KEYS_PROP] : indexes.tags;
+    const peopleRecord = ddbResponse.Responses[getIndexTableName()]
+      .find((response) => response.id === PEOPLE_ID);
+    indexes.people = peopleRecord && peopleRecord[INDEX_KEYS_PROP] ? peopleRecord[INDEX_KEYS_PROP] : indexes.people;
   }
   return indexes;
 }
 
-export function getLogFields(indexesObj: IIndex) {
+export function updateCleanIndexes(indexObject: IIndex): Promise<PromiseResult<BatchWriteItemOutput, AWSError>> {
+  const ddbParams: DocClient.BatchWriteItemInput = {
+    RequestItems: {
+      [getIndexTableName()]: [
+        {
+          PutRequest: {
+            Item: {
+              id: TAGS_ID,
+              [INDEX_KEYS_PROP]: {
+                ...indexObject.tags
+              }
+            }
+          }
+        },
+        {
+          PutRequest: {
+            Item: {
+              id: PEOPLE_ID,
+              [INDEX_KEYS_PROP]: {
+                ...indexObject.people
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+  return dynamodb.batchWrite(ddbParams).promise();
+}
+
+export function cleanZeroIndexes(indexObject: IIndex): Promise<IIndex> | IIndex {
+  const cleanedIndex: IIndex = {
+    ...defaultIndex,
+  };
+  let updateNeeded = false;
+  Object.keys(indexObject.people).forEach((p) => {
+    if (indexObject.people[p] <= 0) {
+      updateNeeded = true;
+    } else {
+      cleanedIndex.people[p] = indexObject.people[p];
+    }
+  });
+
+  Object.keys(indexObject.tags).forEach((t) => {
+    if (indexObject.tags[t] <= 0) {
+      updateNeeded = true;
+    } else {
+      cleanedIndex.tags[t] = indexObject.tags[t];
+    }
+  });
+  return updateNeeded ?
+    updateCleanIndexes(cleanedIndex)
+      .then(() => cleanedIndex) :
+    cleanedIndex;
+}
+
+export function getLogFields(indexesObj: IIndex, cleanIndexesObject: IIndex) {
   return {
     indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
     indexesTagCount: indexesObj && Object.keys(indexesObj.tags).length,
+    indexesZeroPeopleCount: indexesObj && getZeroCount(indexesObj.people),
+    indexesZeroTagCount: indexesObj && getZeroCount(indexesObj.tags),
+    indexesCleanPeopleCount: cleanIndexesObject && Object.keys(cleanIndexesObject.people).length,
+    indexesCleanTagCount: cleanIndexesObject && Object.keys(cleanIndexesObject.tags).length,
+    indexesCleanZeroPeopleCount: cleanIndexesObject && getZeroCount(cleanIndexesObject.people),
+    indexesCleanZeroTagCount: cleanIndexesObject && getZeroCount(cleanIndexesObject.tags),
   };
 }
 
@@ -87,18 +156,22 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
     const ddbParams: DocClient.BatchGetItemInput = getDynamoDbBatchGetItemParams();
     const ddbResponse: DocClient.BatchGetItemOutput = await getIndexRecords(ddbParams);
     const indexesObject: IIndex = parseIndexesObject(ddbResponse);
-    logger(context, loggerBaseParams, getLogFields(indexesObject));
-    return callback(null, success(indexesObject));
+    const cleanZeroIndexesObject: IIndex = await cleanZeroIndexes(indexesObject);
+    logger(context, loggerBaseParams, getLogFields(indexesObject, cleanZeroIndexesObject));
+    return callback(null, success(cleanZeroIndexesObject));
   } catch (err) {
     logger(context, loggerBaseParams, { err });
     return callback(null, failure(err));
   }
 }
 
-export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDictionary): DocClient.UpdateItemInput | null {
+export function getDynamoDbUpdateItemParams(
+  indexId: string,
+  indexData: IIndexDictionary,
+): DocClient.UpdateItemInput | null {
   const timestamp = new Date().getTime();
   const validKeys =  Object.keys(indexData).filter((k) => indexData[k] !== undefined);
-  if(validKeys.length > 0){
+  if (validKeys.length > 0) {
     /*
     https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ExpressionAttributeNames.html
     "If an attribute name begins with a number or contains a space, a special character,
@@ -110,21 +183,22 @@ export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDi
     const ExpressionAttributeNames = validKeys.reduce((accum, key, idx) => ({
       ...accum,
       [`#${idx}`]: key,
+      [`#indexKeysProp`]: INDEX_KEYS_PROP,
     }), {});
 
     const ExpressionAttributeValues = validKeys.reduce((accum, key, idx) => ({
       ...accum,
       [`:${idx}`]: indexData[key],
     }), {
-      ":zero": 0,
       ":updatedAt": timestamp,
+      ":zero": 0,
     });
-    const updateKeyValues = validKeys.map((key) => `#${key} = if_not_exists(#${key},:zero) + :${key}`).join(", ");
+    const updateKeyValues = validKeys.map((key, idx) => `#indexKeysProp.#${idx} = if_not_exists(#indexKeysProp.#${idx},:zero) + :${idx}`).join(", ");
     return {
       ExpressionAttributeNames,
       ExpressionAttributeValues,
       Key: {
-        id: indexId
+        id: indexId,
       },
       ReturnValues: "ALL_NEW",
       TableName: getIndexTableName(),
@@ -135,18 +209,57 @@ export function getDynamoDbUpdateItemParams(indexId: string, indexData: IIndexDi
   }
 }
 
-export function updateIndexRecord(indexId: string, indexData: IIndexDictionary): Promise<DocClient.UpdateItemOutput> | undefined {
-  const ddbParams: DocClient.UpdateItemInput | null = getDynamoDbUpdateItemParams(indexId, indexData);
-  return ddbParams ? dynamodb.update(ddbParams).promise() : undefined ;
+export function updateAndHandleEmptyMap(ddbParams: DocClient.UpdateItemInput): Promise<DocClient.UpdateItemOutput> {
+  return dynamodb.update(ddbParams).promise()
+  .catch((e) => {
+    // this check may be a bit too brittle, but we want to only retry on this very specific error
+    if (e.code === "ValidationException"
+      && e.message === "The document path provided in the update expression is invalid for update"
+    ) {
+      const setMapParams: DocClient.UpdateItemInput = {
+        ConditionExpression: "attribute_not_exists(#indexKeysProp)",
+        ExpressionAttributeNames: {
+          [`#indexKeysProp`]: INDEX_KEYS_PROP,
+        },
+        ExpressionAttributeValues: {
+          ":emptyMap": {},
+        },
+        Key: ddbParams.Key,
+        TableName: ddbParams.TableName,
+        UpdateExpression: "SET #indexKeysProp = :emptyMap",
+      };
+      return dynamodb.update(setMapParams).promise()
+        .then(() => {
+          // now that the map has been created try the update again
+          return dynamodb.update(ddbParams).promise();
+        });
+    } else {
+      throw e;
+    }
+  });
 }
 
+export function updateIndexRecord(
+  indexId: string,
+  indexData: IIndexDictionary,
+): Promise<DocClient.UpdateItemOutput> | undefined {
+  const ddbParams: DocClient.UpdateItemInput | null = getDynamoDbUpdateItemParams(indexId, indexData);
+  return ddbParams ? updateAndHandleEmptyMap(ddbParams) : undefined ;
+}
 
-export function getPutLogFields(updates: IIndexUpdate, tagsUpdateResponse?: DocClient.UpdateItemOutput , peopleUpdateResponse?: DocClient.UpdateItemOutput ) {
+export function getPutLogFields(
+  updates: IIndexUpdate,
+  tagsUpdateResponse?: DocClient.UpdateItemOutput,
+  peopleUpdateResponse?: DocClient.UpdateItemOutput,
+) {
+
+  const indexesPeopleAtts = peopleUpdateResponse && peopleUpdateResponse.Attributes || {};
+  const indexesTagsAtts = tagsUpdateResponse && tagsUpdateResponse.Attributes || {};
   return {
     indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
     indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
-    indexesPeopleCount: peopleUpdateResponse && peopleUpdateResponse.Attributes && peopleUpdateResponse.Attributes.length,
-    indexesTagCount: tagsUpdateResponse && tagsUpdateResponse.Attributes && tagsUpdateResponse.Attributes.length,
+    indexesPeopleCount: Object.keys(indexesPeopleAtts).length,
+    indexesTagCount: Object.keys(indexesTagsAtts).length,
   };
 }
 
@@ -168,9 +281,15 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
 
   try {
     // update each index - change to batch write item
-    const tagsUpdateResponse: DocClient.UpdateItemOutput | undefined = await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
-    const peopleUpdateResponse: DocClient.UpdateItemOutput | undefined = await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.tags);
-    logger(context, loggerBaseParams, getPutLogFields(requestBody.indexUpdate, tagsUpdateResponse, peopleUpdateResponse));
+    const tagsUpdateResponse: DocClient.UpdateItemOutput | undefined =
+      await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
+    const peopleUpdateResponse: DocClient.UpdateItemOutput | undefined =
+      await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.people);
+    logger(context, loggerBaseParams, getPutLogFields(
+      requestBody.indexUpdate,
+      tagsUpdateResponse,
+      peopleUpdateResponse,
+    ));
     return callback(null, success(requestBody));
   } catch (err) {
     logger(context, loggerBaseParams, { err, ...getPutLogFields(requestBody.indexUpdate)});

@@ -1,26 +1,28 @@
 import * as test from "tape";
 
+import { getZeroCount } from "../../fotos/stream";
 import {
   IIndex,
   IIndexDictionary,
   IIndexUpdate,
   IPerson,
   IQueryBody,
-  IQueryResponse,
   IQueryDBResponseItem,
+  IQueryResponse,
 } from "../../fotos/types";
+import { FUNC_TEST_PREFIX } from "./constants";
 import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
-import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function deleteAllNotJustTestData(setupData, api) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX}- deleteAll.ts`
+  const CLIENT_ID = `${FUNC_TEST_PREFIX}- deleteAll.ts`;
   const retryStrategy = [500, 1000, 2000, 5000];
   let images: IQueryDBResponseItem[];
 
   test("query all to get all images", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
@@ -87,6 +89,7 @@ export default function deleteAllNotJustTestData(setupData, api) {
 
   test("query all should return no results matching test data", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
@@ -178,9 +181,9 @@ export default function deleteAllNotJustTestData(setupData, api) {
     };
     const retryableTestThen = (responseBody: IIndex) => {
       const incorrectAdjustmentTags = Object.keys(indexAdjustments.tags)
-          .filter((tag) => responseBody.tags[tag] !==  existingIndexes.tags[tag] + indexAdjustments.tags[tag]);
+          .filter((tag) => responseBody.tags[tag] !== existingIndexes.tags[tag] + indexAdjustments.tags[tag]);
       const incorrectAdjustmentPeople = Object.keys(indexAdjustments.people)
-        .filter((p) => responseBody.people[p] !==  existingIndexes.people[p] + indexAdjustments.people[p]);
+        .filter((p) => responseBody.people[p] !== existingIndexes.people[p] + indexAdjustments.people[p]);
 
       if (incorrectAdjustmentTags.length > 0 || incorrectAdjustmentPeople.length > 0) {
         if (retryCount < retryStrategy.length) {
@@ -252,6 +255,8 @@ export default function deleteAllNotJustTestData(setupData, api) {
     const body = {
       indexUpdate,
     };
+    // tslint:disable-next-line:no-console
+    console.log("Index update", JSON.stringify(indexUpdate));
     api
       .put(setupData.apiUrl, "/indexes/update", {
         body,
@@ -270,7 +275,12 @@ export default function deleteAllNotJustTestData(setupData, api) {
       fn: api.get,
     };
     const retryableTestThen = (responseBody: IIndex) => {
-      if (Object.keys(responseBody.tags).length > 0 || Object.keys(responseBody.people).length > 0) {
+      const peopleZeroCount = getZeroCount(responseBody.people);
+      const tagsZeroCount = getZeroCount(responseBody.tags);
+      if (
+        Object.keys(responseBody.tags).length !== tagsZeroCount ||
+        Object.keys(responseBody.people).length !== peopleZeroCount
+      ) {
         if (retryCount < retryStrategy.length) {
           setTimeout(() => {
             retryCount++;
@@ -279,24 +289,24 @@ export default function deleteAllNotJustTestData(setupData, api) {
           }, retryStrategy[retryCount]);
         } else {
           t.fail(`Failed - index has ${
-            Object.keys(responseBody.tags).length
+            Object.keys(responseBody.tags).length - tagsZeroCount
           } tags and ${
-            Object.keys(responseBody.people).length
+            Object.keys(responseBody.people).length - peopleZeroCount
           } people after ${retryCount} retries`);
           t.end();
         }
       } else {
         t.equal(
           Object.keys(responseBody.tags).length,
-          0,
-          `tags length of ${Object.keys(responseBody.tags).length} - tags from two images`,
+          tagsZeroCount,
+          `tags are all zero - length of ${Object.keys(responseBody.tags).length}`,
         );
         t.equal(
           Object.keys(responseBody.people).length,
-          0,
-          `people length of ${
+          peopleZeroCount,
+          `people are all zero - length of ${
             Object.keys(responseBody.people).length
-          } - at least each person from image one and image with 4 people`,
+          }`,
         );
         t.end();
       }
