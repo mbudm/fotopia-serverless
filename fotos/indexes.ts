@@ -184,7 +184,7 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
     const tagsUpdateResponse: DocClient.UpdateItemOutput | undefined =
       await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
     const peopleUpdateResponse: DocClient.UpdateItemOutput | undefined =
-      await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.tags);
+      await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.people);
     logger(context, loggerBaseParams, getPutLogFields(
       requestBody.indexUpdate,
       tagsUpdateResponse,
