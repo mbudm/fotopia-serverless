@@ -117,7 +117,8 @@ export function getDynamoDbUpdateItemParams(
     */
     const ExpressionAttributeNames = validKeys.reduce((accum, key, idx) => ({
       ...accum,
-      [`#${idx}`]: `${INDEX_KEYS_PROP}.${key}`,
+      [`#${idx}`]: key,
+      [`#indexKeysProp`]: INDEX_KEYS_PROP,
     }), {});
 
     const ExpressionAttributeValues = validKeys.reduce((accum, key, idx) => ({
@@ -127,7 +128,7 @@ export function getDynamoDbUpdateItemParams(
       ":updatedAt": timestamp,
       ":zero": 0,
     });
-    const updateKeyValues = validKeys.map((key, idx) => `#${idx} = if_not_exists(#${idx},:zero) + :${idx}`).join(", ");
+    const updateKeyValues = validKeys.map((key, idx) => `#indexKeysProp.#${idx} = if_not_exists(#indexKeysProp.#${idx},:zero) + :${idx}`).join(", ");
     return {
       ExpressionAttributeNames,
       ExpressionAttributeValues,

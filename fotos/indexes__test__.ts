@@ -39,7 +39,7 @@ test("getDynamoDbUpdateItemParams", (t) => {
     yellow: -2,
   };
   const result = indexes.getDynamoDbUpdateItemParams(indexes.TAGS_ID, tags) as DocClient.UpdateItemInput;
-  t.deepEqual(result.ExpressionAttributeNames, { "#0": `${indexes.INDEX_KEYS_PROP}.yellow` });
+  t.deepEqual(result.ExpressionAttributeNames, { "#0": `yellow`, "#indexKeysProp": indexes.INDEX_KEYS_PROP });
   t.equal(result.ExpressionAttributeValues![":0"], tags.yellow);
   t.deepEqual(result.Key, { id: "tags" });
   t.end();
