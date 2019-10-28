@@ -29,7 +29,7 @@ packages
  updates people indexes and tag indexes
 
 // new index
-sls invoke -f update --data '{"pathParameters":{"id":"locations"},"body":"{\"index\":{\"paris\":1}}"}'
+sls invoke -f indexesUpdate -s alpha --data '{"body":"{\"indexUpdate\":{\"tags\":{\"butterfly\":1}}}}'
 
 //increment
 sls invoke -f update --data '{"pathParameters":{"id":"tags"},"body":"{\"index\":{\"tag1\":1}}"}'

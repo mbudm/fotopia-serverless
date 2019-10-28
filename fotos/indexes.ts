@@ -124,7 +124,7 @@ export function getDynamoDbUpdateItemParams(
       ":updatedAt": timestamp,
       ":zero": 0,
     });
-    const updateKeyValues = validKeys.map((key) => `#${key} = if_not_exists(#${key},:zero) + :${key}`).join(", ");
+    const updateKeyValues = validKeys.map((key, idx) => `#${idx} = if_not_exists(#${idx},:zero) + :${idx}`).join(", ");
     return {
       ExpressionAttributeNames,
       ExpressionAttributeValues,
