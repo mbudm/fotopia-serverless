@@ -125,12 +125,16 @@ export function cleanZeroIndexes(indexObject: IIndex): Promise<IIndex> | IIndex 
     cleanedIndex;
 }
 
-export function getLogFields(indexesObj: IIndex) {
+export function getLogFields(indexesObj: IIndex, cleanIndexesObject: IIndex) {
   return {
     indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
     indexesTagCount: indexesObj && Object.keys(indexesObj.tags).length,
     indexesZeroPeopleCount: indexesObj && getZeroCount(indexesObj.people),
     indexesZeroTagCount: indexesObj && getZeroCount(indexesObj.tags),
+    indexesCleanPeopleCount: cleanIndexesObject && Object.keys(cleanIndexesObject.people).length,
+    indexesCleanTagCount: cleanIndexesObject && Object.keys(cleanIndexesObject.tags).length,
+    indexesCleanZeroPeopleCount: cleanIndexesObject && getZeroCount(cleanIndexesObject.people),
+    indexesCleanZeroTagCount: cleanIndexesObject && getZeroCount(cleanIndexesObject.tags),
   };
 }
 
@@ -153,7 +157,7 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
     const ddbResponse: DocClient.BatchGetItemOutput = await getIndexRecords(ddbParams);
     const indexesObject: IIndex = parseIndexesObject(ddbResponse);
     const cleanZeroIndexesObject: IIndex = await cleanZeroIndexes(indexesObject);
-    logger(context, loggerBaseParams, getLogFields(cleanZeroIndexesObject));
+    logger(context, loggerBaseParams, getLogFields(indexesObject, cleanZeroIndexesObject));
     return callback(null, success(cleanZeroIndexesObject));
   } catch (err) {
     logger(context, loggerBaseParams, { err });
