@@ -59,7 +59,8 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
       setupData.bucket = signedIn.bucket;
       setupData.userIdentityId = signedIn.userIdentityId;
       setupData.upload = uploader && uploader(setupData);
-      return setupData;
+      return api.get(setupData.apiUrl, "/indexes")
     })
+    .then((existingIndexes) => ({ ...setupData, existingIndexes}))
     .catch(formatError);
 }

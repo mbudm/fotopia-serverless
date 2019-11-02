@@ -1,4 +1,4 @@
-import { ICreateBody } from "../fotos/types";
+import { ICreateBody, IIndex } from "../fotos/types";
 
 export interface ISetupData {
   apiUrl: string;
@@ -13,6 +13,7 @@ export interface ISetupData {
   upload?: any;
   bucket?: string;
   userIdentityId?: string;
+  existingIndexes?: IIndex;
 }
 
 export interface ITestImage {
