@@ -20,10 +20,10 @@ export const TAGS_ID = "tags";
 export const PEOPLE_ID = "people";
 export const INDEX_KEYS_PROP = "indexKeys";
 
-const defaultIndex: IIndex = {
+const defaultIndex = (): IIndex  => ({
   people: {},
   tags: {},
-};
+});
 
 const getIndexTableName = (): string => {
   if (process.env.DYNAMODB_TABLE_INDEXES) {
@@ -56,7 +56,7 @@ export function getIndexRecords(
 
 export function parseIndexesObject(ddbResponse: DocClient.BatchGetItemOutput): IIndex {
   const indexes: IIndex = {
-    ...defaultIndex,
+    ...defaultIndex(),
   };
   if (ddbResponse.Responses) {
     const tagsRecord = ddbResponse.Responses[getIndexTableName()]
@@ -101,7 +101,7 @@ export function updateCleanIndexes(indexObject: IIndex): Promise<PromiseResult<B
 
 export function cleanZeroIndexes(indexObject: IIndex): Promise<IIndex> | IIndex {
   const cleanedIndex: IIndex = {
-    ...defaultIndex,
+    ...defaultIndex(),
   };
   let updateNeeded = false;
   Object.keys(indexObject.people).forEach((p) => {
@@ -268,7 +268,7 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
 
   const requestBody: IPutIndexRequest = event.body ?
     JSON.parse(event.body) :
-    { indexUpdate: defaultIndex as IIndexUpdate};
+    { indexUpdate: defaultIndex() as IIndexUpdate};
   const traceMeta = requestBody!.traceMeta;
 
   const loggerBaseParams: ILoggerBaseParams = {
