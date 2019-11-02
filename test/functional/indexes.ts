@@ -42,11 +42,8 @@ export default function indexesTests(setupData, api) {
   });
 
   test("get indexes, should have at least tags and people of test images", (t) => {
-    // need to replace this with baseline index that we grab before tests start
-    const existingIndexes = {
-      people: {},
-      tags: {},
-    };
+    // need to use the baseline index that we grab before tests start
+    const existingIndexes: IIndex = setupData.existingIndexes;
 
     let retryCount = 0;
     const retryableTest = {
