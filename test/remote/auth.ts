@@ -61,8 +61,6 @@ function authenticateNewUser(config: any) {
       if (err) {
         reject(err);
       } else {
-        // tslint:disable-next-line:no-console
-        console.log(JSON.stringify(data, null, 2));
         configureAmplify(config);
         Amplify.Auth.signIn(username, tempPassword)
           .then((user: string) => Amplify.Auth.completeNewPassword(user, process.env.TEST_USER_PWD))
@@ -115,8 +113,6 @@ export function checkUserExists(config: any) {
 export default function auth(config: any) {
   return checkUserExists(config)
     .then((response) => {
-      // tslint:disable-next-line:no-console
-      console.log("checkUserExists", response, config);
       return response!.Users!.length === 1 ?
         authenticateExistingUser(config) :
         authenticateNewUser(config);
