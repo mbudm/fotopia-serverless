@@ -57,7 +57,7 @@ function authenticateNewUser(config: any) {
       UserPoolId: config.UserPoolId,
       Username: username,
     };
-    cognitoISP.adminCreateUser(params, (err, data) => {
+    cognitoISP.adminCreateUser(params, (err) => {
       if (err) {
         reject(err);
       } else {
