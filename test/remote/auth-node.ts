@@ -2,7 +2,6 @@ import "isomorphic-fetch";
 
 import * as AmazonCognitoIdentity from "amazon-cognito-identity-js";
 import * as AWS from "aws-sdk";
-import { CognitoIdentityServiceProvider } from "aws-sdk";
 
 function authenticateExistingUser(config: any) {
   return new Promise((resolve, reject) => {
@@ -41,22 +40,57 @@ function authenticateExistingUser(config: any) {
   });
 }
 
-export function checkUserExists(config: any) {
-  const username = process.env.TEST_USER_NAME;
-  const cognitoISP = new CognitoIdentityServiceProvider({
-    region: config.Region,
+function getCurrentUser(config) {
+  const userPool = new  AmazonCognitoIdentity.CognitoUserPool({
+    ClientId : config.UserPoolClientId,
+    UserPoolId : config.UserPoolId,
   });
-  return cognitoISP.listUsers({
-    Filter: `username = "${username}"`,
-    UserPoolId: config.UserPoolId,
-  }).promise();
+  return userPool.getCurrentUser();
+}
+
+function getUserToken(currentUser) {
+  return new Promise((resolve, reject) => {
+    currentUser.getSession((err, session) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      // tslint:disable-next-line:no-console
+      console.log("getUserToken", session);
+
+      resolve(session.getIdToken().getJwtToken());
+    });
+  });
+}
+
+function getAwsCredentials(config: any, userToken) {
+  const authenticator = `cognito-idp.${config.Region}.amazonaws.com/${config.UserPoolId}`;
+
+  AWS.config.update({ region: config.Region});
+  AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+    IdentityPoolId: config.IdentityPoolId,
+    Logins: {
+      [authenticator]: userToken,
+    },
+  });
+
+  // tslint:disable-next-line:no-console
+  console.log("getAwsCredentials", authenticator, config.IdentityPoolId, userToken);
+  // tslint:disable-next-line:no-console
+
+  // tslint:disable-next-line:no-string-literal
+  return AWS.config.credentials["getPromise"]()
+  .then((creds) => {
+    // tslint:disable-next-line:no-console
+    console.log("creds", AWS.config.credentials, creds);
+  });
 }
 
 export default function auth(config: any) {
-  return checkUserExists(config)
-    .then((response) => {
-      return authenticateExistingUser(config);
-    })
+  return authenticateExistingUser(config)
+    .then(() => getCurrentUser(config))
+    .then(getUserToken)
+    .then((userToken) => getAwsCredentials(config, userToken))
     .catch((err) => {
       // tslint:disable-next-line:no-console
       console.error("check user err", err);

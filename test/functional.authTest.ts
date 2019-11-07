@@ -1,13 +1,13 @@
 import { config } from "dotenv";
 
-import setup from "./functional/setup";
-import * as api from "./remote/api";
+import setup from "./functional/setup-node";
+import api from "./remote/api-node";
 import auth from "./remote/auth-node";
 import uploader from "./remote/upload";
 
 config();
 
-setup(auth, null, null)
+setup(auth, uploader, api)
   .then((setupData: any) => {
     // tslint:disable-next-line:no-console
     console.log("setupData:", setupData);
