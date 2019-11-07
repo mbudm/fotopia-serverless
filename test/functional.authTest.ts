@@ -7,6 +7,9 @@ import uploader from "./remote/upload";
 
 config();
 
+// Yay
+// https://serverless-stack.com/chapters/connect-to-api-gateway-with-iam-auth.html
+
 setup(auth, uploader, api)
   .then((setupData: any) => {
     // tslint:disable-next-line:no-console
