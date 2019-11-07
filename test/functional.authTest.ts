@@ -1,14 +1,14 @@
 import { config } from "dotenv";
 
-import deleteAllNotJustTestData from "./functional/deleteAll";
 import setup from "./functional/setup";
 import * as api from "./remote/api";
-import auth from "./remote/auth";
+import auth from "./remote/auth-node";
 import uploader from "./remote/upload";
 
 config();
 
-setup(auth, uploader, api)
+setup(auth, null, null)
   .then((setupData: any) => {
-    deleteAllNotJustTestData(setupData, api);
+    // tslint:disable-next-line:no-console
+    console.log("setupData:", setupData);
   });

@@ -22,6 +22,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
     })
     .then((signedIn) => {
       // eslint-disable-next-line prefer-destructuring
+      setupData.signedIn = signedIn;
       setupData.username = signedIn.username;
       setupData.images = [{
         key: `${setupData.username}/one.jpg`,
@@ -59,7 +60,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
       setupData.bucket = signedIn.bucket;
       setupData.userIdentityId = signedIn.userIdentityId;
       setupData.upload = uploader && uploader(setupData);
-      return api.get(setupData.apiUrl, "/indexes")
+      return api && api.get(setupData.apiUrl, "/indexes");
     })
     .then((existingIndexes) => ({ ...setupData, existingIndexes}))
     .catch(formatError);
