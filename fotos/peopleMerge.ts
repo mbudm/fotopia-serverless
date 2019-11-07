@@ -19,9 +19,9 @@ import {
   IPathParameters,
   IPerson,
   IQueryBody,
-  IUpdateBody,
-  IQueryResponse,
   IQueryDBResponseItem,
+  IQueryResponse,
+  IUpdateBody,
 } from "./types";
 
 export function mergePeopleObjects(mergePeopleIds: string[], existingPeople: IPerson[]): IPerson {
@@ -80,6 +80,7 @@ export function getInvokeQueryParams(
   context: Context,
 ): InvocationRequest {
   const body: IQueryBody = {
+    breakDateRestriction: true,
     clientId: context.functionName,
     criteria: {
       people: deletedPeople.map((person) => person.id).concat(mergedPerson.id),
@@ -87,7 +88,6 @@ export function getInvokeQueryParams(
     },
     from: 0,
     to: Date.now(),
-    breakDateRestriction: true
   };
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}query`,
