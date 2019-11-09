@@ -20,10 +20,9 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
       setupData.region = config.Region;
       return auth(config);
     })
-    .then((signedIn) => {
-      // eslint-disable-next-line prefer-destructuring
-      // setupData.signedIn = signedIn;
-      setupData.username = signedIn.username;
+    .then((configCreds) => {
+      setupData.credentials = configCreds.credentials;
+      setupData.username = process.env.TEST_USER_NAME || ""
       setupData.images = [{
         key: `${setupData.username}/one.jpg`,
         path: path.resolve(__dirname, "../mock/one.jpg"),
@@ -42,7 +41,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
           width: 1024,
         },
         tags: ["blue", "red", setupData.uniqueTag],
-        userIdentityId: signedIn.userIdentityId,
+        userIdentityId: configCreds.userIdentityId,
         username: setupData.username,
       }, {
         birthtime: setupData.startTime + Math.round((Date.now() - setupData.startTime) / 2),
@@ -52,15 +51,15 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
           width: 1359,
         },
         tags: ["xlabs", "Melbourne University"],
-        userIdentityId: signedIn.userIdentityId,
+        userIdentityId: configCreds.userIdentityId,
         username: setupData.username,
       }];
-
-      setupData.api = api;
-      setupData.bucket = signedIn.bucket;
-      setupData.userIdentityId = signedIn.userIdentityId;
+      const apiClient = api(setupData.region, configCreds.credentials);
+      setupData.api = apiClient;
+      setupData.bucket = configCreds.bucket;
+      setupData.userIdentityId = configCreds.userIdentityId;
       setupData.upload = uploader && uploader(setupData);
-      return api && api.get(setupData.apiUrl, "/indexes");
+      return apiClient.get(setupData.apiUrl, "/indexes");
     })
     .then((existingIndexes) => ({ ...setupData, existingIndexes}))
     .catch(formatError);

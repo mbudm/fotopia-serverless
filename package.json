@@ -22,6 +22,7 @@
   ],
   "dependencies": {
     "@types/sharp": "^0.22.2",
+    "amazon-cognito-identity-js": "^3.2.0",
     "babel-runtime": "^6.26.0",
     "bunyan": "^1.8.12",
     "crypto-js": "^3.1.9-1",
@@ -43,7 +44,6 @@
     "@types/tape": "^4.2.33",
     "@typescript-eslint/eslint-plugin": "^2.3.1",
     "@typescript-eslint/parser": "^2.3.1",
-    "aws-amplify": "^1.1.35",
     "aws-sdk": "2.474.0",
     "babel-core": "^6.26.3",
     "babel-loader": "^8.0.6",
@@ -69,9 +69,5 @@
     "tslint": "^5.18.0",
     "webpack": "^4.39.1",
     "webpack-node-externals": "^1.7.2"
-  },
-  "resolutions": {
-    "serverless-domain-manager/aws-sdk": "2.518.0",
-    "serverless-s3-sync/**/aws-sdk": "2.518.0"
   }
 }

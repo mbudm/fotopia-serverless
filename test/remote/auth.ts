@@ -1,123 +1,101 @@
 import "isomorphic-fetch";
 
-import Amplify from "aws-amplify";
+import * as AmazonCognitoIdentity from "amazon-cognito-identity-js";
 import * as AWS from "aws-sdk";
-import { CognitoIdentityServiceProvider } from "aws-sdk";
-
-// Amplify.Logger.LOG_LEVEL = "DEBUG";
-
-function configureAmplify(config: any) {
-  Amplify.configure({
-    API: {
-      endpoints: [
-        {
-          endpoint: config.ServiceEndpoint,
-          name: "fotos",
-          region: config.Region,
-        },
-      ],
-    },
-    Auth: {
-      identityPoolId: config.IdentityPoolId,
-      region: config.Region,
-      userPoolId: config.UserPoolId,
-      userPoolWebClientId: config.UserPoolClientId,
-    },
-    Storage: {
-      bucket: config.Bucket,
-      identityPoolId: config.IdentityPoolId,
-      level: "protected",
-      region: config.Region,
-    },
-  });
-}
-function authenticateNewUser(config: any) {
-  return new Promise((resolve, reject) => {
-    const cognitoISP = new CognitoIdentityServiceProvider({
-      region: config.Region,
-    });
-
-    const username: string = process.env.TEST_USER_NAME || "";
-
-    const tempPassword = "@This1sChanged";
-
-    const params = {
-      DesiredDeliveryMediums: [
-        "EMAIL",
-      ],
-      ForceAliasCreation: true,
-      MessageAction: "SUPPRESS",
-      TemporaryPassword: tempPassword,
-      UserAttributes: [
-        {
-          Name: "email",
-          Value: process.env.TEST_USER_EMAIL,
-        },
-      ],
-      UserPoolId: config.UserPoolId,
-      Username: username,
-    };
-    cognitoISP.adminCreateUser(params, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        configureAmplify(config);
-        Amplify.Auth.signIn(username, tempPassword)
-          .then((user: string) => Amplify.Auth.completeNewPassword(user, process.env.TEST_USER_PWD))
-          .then(resolve)
-          .catch(reject);
-      }
-    });
-  });
-}
+import { CognitoIdentityCredentials } from "aws-sdk";
 
 function authenticateExistingUser(config: any) {
   return new Promise((resolve, reject) => {
-    configureAmplify(config);
-    Amplify.Auth.signIn(process.env.TEST_USER_NAME, process.env.TEST_USER_PWD)
-      .then(resolve)
-      .catch(reject);
-  });
-}
-export function getIdentityId(response: any, config: any) {
-  return Amplify.Auth.currentUserCredentials()
-    .then((res: any) => {
-      // forcibly assign the cognito credentials to aws-sdk
-      // storage doesnt pick up the creds from auth, probably because amplify isnt designed for node.js
-      // and competing aws-sdk dependencies may mean storage looks in the wrong
-      // aws-sdk lib version and reverts to tthe creds in the bash profile
-      // at least thats my best explanation so far.
-      if (!res.params.IdentityId) {
-        throw new Error(`No IdentityId found ${res.params.IdentityId}`);
-      }
-      AWS.config.credentials = res;
-      return {
-        bucket: config.Bucket,
-        userIdentityId: res.params.IdentityId,
-        ...response,
-      };
+    const authenticationData = {
+      Password : process.env.TEST_USER_PWD || "",
+      Username : process.env.TEST_USER_NAME || "",
+    };
+    const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+    const poolData = {
+      ClientId : config.UserPoolClientId,
+      UserPoolId : config.UserPoolId,
+    };
+    const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+    const userData = {
+        Pool : userPool,
+        Username : authenticationData.Username,
+    };
+    const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+    cognitoUser.authenticateUser(authenticationDetails, {
+      onSuccess(result) {
+        const accessToken = result.getAccessToken().getJwtToken();
+
+        /* Use the idToken for Logins Map when Federating User Pools
+        with identity pools or when passing through an Authorization
+        Header to an API Gateway Authorizer*/
+        const idToken = result.getIdToken().getJwtToken();
+        resolve({
+          accessToken,
+          idToken,
+        });
+      },
+      onFailure(err) {
+        reject(err);
+      },
     });
+  });
 }
 
-export function checkUserExists(config: any) {
-  const username = process.env.TEST_USER_NAME;
-  const cognitoISP = new CognitoIdentityServiceProvider({
-    region: config.Region,
+function getCurrentUser(config) {
+  const userPool = new  AmazonCognitoIdentity.CognitoUserPool({
+    ClientId : config.UserPoolClientId,
+    UserPoolId : config.UserPoolId,
   });
-  return cognitoISP.listUsers({
-    Filter: `username = "${username}"`,
-    UserPoolId: config.UserPoolId,
-  }).promise();
+  return userPool.getCurrentUser();
+}
+
+function getUserToken(currentUser) {
+  return new Promise((resolve, reject) => {
+    currentUser.getSession((err, session) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      // tslint:disable-next-line:no-console
+      // console.log("getUserToken", session);
+
+      resolve(session.getIdToken().getJwtToken());
+    });
+  });
+}
+
+function getAwsCredentials(config: any, userToken) {
+  const authenticator = `cognito-idp.${config.Region}.amazonaws.com/${config.UserPoolId}`;
+
+  AWS.config.update({ region: config.Region});
+  AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+    IdentityPoolId: config.IdentityPoolId,
+    Logins: {
+      [authenticator]: userToken,
+    },
+  });
+
+  // tslint:disable-next-line:no-string-literal
+  return AWS.config.credentials["getPromise"]()
+  .then(() => {
+    const cognitoCreds: CognitoIdentityCredentials = AWS.config.credentials as CognitoIdentityCredentials;
+    return {
+      bucket: config.Bucket,
+      userIdentityId: cognitoCreds.identityId,
+      credentials: {
+        accessKeyId: AWS.config.credentials!.accessKeyId,
+        sessionToken: AWS.config.credentials!.sessionToken,
+        secretAccessKey: AWS.config.credentials!.secretAccessKey,
+      }
+    };
+  });
 }
 
 export default function auth(config: any) {
-  return checkUserExists(config)
-    .then((response) => {
-      return response!.Users!.length === 1 ?
-        authenticateExistingUser(config) :
-        authenticateNewUser(config);
-    })
-    .then((response: any) => getIdentityId(response, config))
+  return authenticateExistingUser(config)
+    .then(() => getCurrentUser(config))
+    .then(getUserToken)
+    .then((userToken) => getAwsCredentials(config, userToken))
     .catch((err) => {
       // tslint:disable-next-line:no-console
       console.error("check user err", err);

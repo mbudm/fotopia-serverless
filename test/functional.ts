@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 
-import api from "./remote/api-node";
-import auth from "./remote/auth-node";
+import api from "./remote/api";
+import auth from "./remote/auth";
 import uploader from "./remote/upload";
 
 import createTests from "./functional/create";
@@ -11,7 +11,7 @@ import getTests from "./functional/get";
 import indexesTests from "./functional/indexes";
 import peopleTests from "./functional/people";
 import queryTests from "./functional/query";
-import setup from "./functional/setup-node";
+import setup from "./functional/setup";
 import updateTests from "./functional/update";
 import uploadTests from "./functional/upload";
 
