@@ -56,7 +56,7 @@ function getUserToken(currentUser) {
         return;
       }
       // tslint:disable-next-line:no-console
-      console.log("getUserToken", session);
+      // console.log("getUserToken", session);
 
       resolve(session.getIdToken().getJwtToken());
     });
@@ -74,15 +74,14 @@ function getAwsCredentials(config: any, userToken) {
     },
   });
 
-  // tslint:disable-next-line:no-console
-  console.log("getAwsCredentials", authenticator, config.IdentityPoolId, userToken);
-  // tslint:disable-next-line:no-console
-
   // tslint:disable-next-line:no-string-literal
   return AWS.config.credentials["getPromise"]()
-  .then((creds) => {
-    // tslint:disable-next-line:no-console
-    console.log("creds", AWS.config.credentials, creds);
+  .then(() => {
+    return {
+      accessKeyId: AWS.config.credentials!.accessKeyId,
+      sessionToken: AWS.config.credentials!.sessionToken,
+      secretAccessKey: AWS.config.credentials!.secretAccessKey,
+    };
   });
 }
 

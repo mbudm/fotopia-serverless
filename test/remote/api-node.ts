@@ -2,7 +2,7 @@ import "isomorphic-fetch";
 import sigV4Client from "./sigV4Client";
 
 export default function api(region: string, credentials) {
-
+  console.log('credentials', credentials)
   return {
     del: (endpoint: string, route: string) => invokeApig({
       credentials,
@@ -67,6 +67,7 @@ async function invokeApig({
   const bodyString: string = body ? JSON.stringify(body) : "";
   headers = signedRequest.headers;
 
+  console.log("signed request", signedRequest.url, headers, method)
   const results = await fetch(signedRequest.url, {
     body: bodyString,
     headers,

@@ -1,7 +1,7 @@
 
-import encHex from "crypto-js/enc-hex";
-import HmacSHA256 from "crypto-js/hmac-sha256";
-import SHA256 from "crypto-js/sha256";
+import * as encHex from "crypto-js/enc-hex";
+import * as HmacSHA256 from "crypto-js/hmac-sha256";
+import * as SHA256 from "crypto-js/sha256";
 
 const sigV4Client: any = {};
 sigV4Client.newClient = (config) => {

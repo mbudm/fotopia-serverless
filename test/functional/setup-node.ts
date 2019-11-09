@@ -59,9 +59,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
       // setupData.bucket = signedIn.bucket;
       // setupData.userIdentityId = signedIn.userIdentityId;
       // setupData.upload = uploader && uploader(setupData);
-      // tslint:disable-next-line:no-console
-      console.log("credentials", credentials);
-      return setupData.api && apiClient.get(setupData.apiUrl, "/indexes");
+      return apiClient.get(setupData.apiUrl, "/indexes");
     })
     .then((existingIndexes) => ({ ...setupData, existingIndexes}))
     .catch(formatError);
