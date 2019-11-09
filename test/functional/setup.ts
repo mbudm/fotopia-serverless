@@ -22,7 +22,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
     })
     .then((signedIn) => {
       // eslint-disable-next-line prefer-destructuring
-      setupData.signedIn = signedIn;
+      // setupData.signedIn = signedIn;
       setupData.username = signedIn.username;
       setupData.images = [{
         key: `${setupData.username}/one.jpg`,
