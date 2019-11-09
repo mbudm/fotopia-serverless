@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 
-import * as api from "./remote/api";
+import api from "./remote/api";
 import auth from "./remote/auth";
 import uploader from "./remote/upload";
 
@@ -20,15 +20,15 @@ config();
 export default function functional() {
   setup(auth, uploader, api)
     .then((setupData: any) => {
-      deleteAllTestData(setupData, api);
+      deleteAllTestData(setupData, setupData.api);
       uploadTests(setupData, setupData.upload);
-      createTests(setupData, api);
-      queryTests(setupData, api);
-      getTests(setupData, api);
-      indexesTests(setupData, api);
-      updateTests(setupData, api);
-      peopleTests(setupData, api);
-      deleteTests(setupData, api);
+      createTests(setupData, setupData.api);
+      queryTests(setupData, setupData.api);
+      getTests(setupData, setupData.api);
+      indexesTests(setupData, setupData.api);
+      updateTests(setupData, setupData.api);
+      peopleTests(setupData, setupData.api);
+      deleteTests(setupData, setupData.api);
     });
 }
 

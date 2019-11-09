@@ -181,10 +181,17 @@ export default function deleteAllNotJustTestData(setupData, api) {
     };
     const retryableTestThen = (responseBody: IIndex) => {
       const incorrectAdjustmentTags = Object.keys(indexAdjustments.tags)
-          .filter((tag) => responseBody.tags[tag] !== existingIndexes.tags[tag] + indexAdjustments.tags[tag]);
+          .filter((tag) => {
+            const expectedCount = existingIndexes.tags[tag] + indexAdjustments.tags[tag];
+            const actualCount = responseBody.tags[tag] ? responseBody.tags[tag] : 0;
+            return expectedCount !== actualCount;
+          });
       const incorrectAdjustmentPeople = Object.keys(indexAdjustments.people)
-        .filter((p) => responseBody.people[p] !== existingIndexes.people[p] + indexAdjustments.people[p]);
-
+        .filter((p) => {
+          const expectedCount = existingIndexes.people[p] + indexAdjustments.people[p];
+          const actualCount = responseBody.people[p] ? responseBody.people[p] : 0;
+          return expectedCount !== actualCount;
+        });
       if (incorrectAdjustmentTags.length > 0 || incorrectAdjustmentPeople.length > 0) {
         if (retryCount < retryStrategy.length) {
           setTimeout(() => {

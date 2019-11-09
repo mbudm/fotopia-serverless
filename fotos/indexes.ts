@@ -9,12 +9,12 @@ import {
 } from "./types";
 
 import { AWSError } from "aws-sdk";
+import { BatchWriteItemOutput } from "aws-sdk/clients/dynamodb";
 import {
   DocumentClient as DocClient,
 } from "aws-sdk/lib/dynamodb/document_client.d";
 import { PromiseResult } from "aws-sdk/lib/request";
 import { getZeroCount } from "./stream";
-import { BatchWriteItemOutput } from "aws-sdk/clients/dynamodb";
 
 export const TAGS_ID = "tags";
 export const PEOPLE_ID = "people";
@@ -78,24 +78,24 @@ export function updateCleanIndexes(indexObject: IIndex): Promise<PromiseResult<B
             Item: {
               id: TAGS_ID,
               [INDEX_KEYS_PROP]: {
-                ...indexObject.tags
-              }
-            }
-          }
+                ...indexObject.tags,
+              },
+            },
+          },
         },
         {
           PutRequest: {
             Item: {
               id: PEOPLE_ID,
               [INDEX_KEYS_PROP]: {
-                ...indexObject.people
-              }
-            }
-          }
-        }
-      ]
-    }
-  }
+                ...indexObject.people,
+              },
+            },
+          },
+        },
+      ],
+    },
+  };
   return dynamodb.batchWrite(ddbParams).promise();
 }
 
@@ -127,14 +127,14 @@ export function cleanZeroIndexes(indexObject: IIndex): Promise<IIndex> | IIndex 
 
 export function getLogFields(indexesObj: IIndex, cleanIndexesObject: IIndex) {
   return {
-    indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
-    indexesTagCount: indexesObj && Object.keys(indexesObj.tags).length,
-    indexesZeroPeopleCount: indexesObj && getZeroCount(indexesObj.people),
-    indexesZeroTagCount: indexesObj && getZeroCount(indexesObj.tags),
     indexesCleanPeopleCount: cleanIndexesObject && Object.keys(cleanIndexesObject.people).length,
     indexesCleanTagCount: cleanIndexesObject && Object.keys(cleanIndexesObject.tags).length,
     indexesCleanZeroPeopleCount: cleanIndexesObject && getZeroCount(cleanIndexesObject.people),
     indexesCleanZeroTagCount: cleanIndexesObject && getZeroCount(cleanIndexesObject.tags),
+    indexesPeopleCount: indexesObj && Object.keys(indexesObj.people).length,
+    indexesTagCount: indexesObj && Object.keys(indexesObj.tags).length,
+    indexesZeroPeopleCount: indexesObj && getZeroCount(indexesObj.people),
+    indexesZeroTagCount: indexesObj && getZeroCount(indexesObj.tags),
   };
 }
 

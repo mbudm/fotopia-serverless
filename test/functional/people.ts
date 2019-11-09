@@ -2,11 +2,11 @@ import * as test from "tape";
 import {
   IImage,
   IPerson,
-  IPersonMergeBody,
   IPersonUpdateBody,
   IQueryBody,
   IQueryResponse,
   IQueryDBResponseItem,
+  IPeopleMergeRequestBody,
 } from "../../fotos/types";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
@@ -197,9 +197,8 @@ export default function peopleTests(setupData, api) {
   });
 
   test("peopleMerge - merge first two people in image with 4 people", (t) => {
-    const body: IPersonMergeBody = [updatedIimageWithFourPeople!.people![0], updatedIimageWithFourPeople!.people![1]];
-    api
-      .post(setupData.apiUrl, "/people/merge", {
+    const body: IPeopleMergeRequestBody = { people: [updatedIimageWithFourPeople!.people![0], updatedIimageWithFourPeople!.people![1]]};
+    api.post(setupData.apiUrl, "/people/merge", {
         body,
       })
       .then((responseBody) => {

@@ -11,7 +11,7 @@ export function createIndexChangeTable(mode: string, images: IImage[], existingI
     return {
       actual: actualIndex.people[p],
       existing,
-      expected: mode === MODES.ADD ? existing + imagesWithPerson.length : existing - imagesWithPerson.length,
+      expected: mode === MODES.ADD ? existing + imagesWithPerson.length : Math.max(0, existing - imagesWithPerson.length),
       id: p,
       images: imagesWithPerson.map((img) => img.img_key),
     };
@@ -22,7 +22,7 @@ export function createIndexChangeTable(mode: string, images: IImage[], existingI
     return {
       actual: actualIndex.tags[t],
       existing,
-      expected: mode === MODES.ADD ? existing + imagesWithTag.length : existing - imagesWithTag.length ,
+      expected: mode === MODES.ADD ? existing + imagesWithTag.length : Math.max(0, existing - imagesWithTag.length),
       id: t,
       images: imagesWithTag.map((img) => img.img_key),
     };
