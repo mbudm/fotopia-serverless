@@ -22,6 +22,7 @@ import {
   IQueryDBResponseItem,
   IQueryResponse,
   IUpdateBody,
+  IPeopleMergeRequestBody,
 } from "./types";
 
 export function mergePeopleObjects(mergePeopleIds: string[], existingPeople: IPerson[]): IPerson {
@@ -206,7 +207,8 @@ export function getLogFields({
 
 export async function mergePeople(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime = Date.now();
-  const mergePeopleIds: string[] = event.body ? JSON.parse(event.body) : [];
+  const eventBodyParsed: IPeopleMergeRequestBody | undefined = event.body && JSON.parse(event.body);
+  const mergePeopleIds: string[] = eventBodyParsed ? eventBodyParsed.people : [];
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "mergePeople",

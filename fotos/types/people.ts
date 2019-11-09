@@ -28,8 +28,6 @@ export interface IPersonPathParameters {
   id: string;
 }
 
-export type IPersonMergeBody = string[];
-
 export interface IPersonWithImages {
   id: string;
   imageIds: string[];
@@ -45,4 +43,8 @@ export interface IBounds {
   left: number;
   right: number;
   top: number;
+}
+
+export interface IPeopleMergeRequestBody {
+  people: string[];
 }

@@ -12,8 +12,8 @@ config();
 
 setup(auth, uploader, api)
   .then((setupData: any) => {
-    const body = {param1:"fakeid1", param2:"fakeid2"};
-    // const body = ["fakeid1", "fakeid2"];
+    // const body = {param1:"fakeid1", param2:"fakeid2"};
+    const body = {peopleIds:["fakeid1", "fakeid2"]};
     setupData.api.post(setupData.apiUrl, "/people/merge", {
         body,
       })

@@ -64,7 +64,7 @@ async function invokeApig({
     });
 
   const bodyString: string = body ? JSON.stringify(body) : "";
-  console.log("bodyString", bodyString)
+
   const results = await fetch(signedRequest.url, {
     body: bodyString,
     headers: signedRequest.headers,
