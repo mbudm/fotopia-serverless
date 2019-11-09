@@ -12,6 +12,15 @@ config();
 
 setup(auth, uploader, api)
   .then((setupData: any) => {
-    // tslint:disable-next-line:no-console
-    console.log("setupData:", setupData);
+    const body = {param1:"fakeid1", param2:"fakeid2"};
+    // const body = ["fakeid1", "fakeid2"];
+    setupData.api.post(setupData.apiUrl, "/people/merge", {
+        body,
+      })
+      .then((responseBody) => {
+        console.log(responseBody)
+      })
+      .catch(err => {
+        console.log(err)
+      });
   });

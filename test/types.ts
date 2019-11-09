@@ -14,7 +14,7 @@ export interface ISetupData {
   bucket?: string;
   userIdentityId?: string;
   existingIndexes?: IIndex;
-  signedIn?: any;
+  credentials?: any;
 }
 
 export interface ITestImage {

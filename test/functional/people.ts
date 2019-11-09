@@ -196,109 +196,108 @@ export default function peopleTests(setupData, api) {
       .catch(formatError);
   });
 
-  test("peopleMerge - merge first two people in image with 4 people", (t) => {
-    const body: IPersonMergeBody = [updatedIimageWithFourPeople!.people![0], updatedIimageWithFourPeople!.people![1]];
-    api
-      .post(setupData.apiUrl, "/people/merge", {
-        body,
-      })
-      .then((responseBody) => {
-        t.ok(responseBody, "peopleMerge person ok");
-        t.end();
-      })
-      .catch(formatError);
-  });
+  // test("peopleMerge - merge first two people in image with 4 people", (t) => {
+  //   const body: IPersonMergeBody = [updatedIimageWithFourPeople!.people![0], updatedIimageWithFourPeople!.people![1]];
+  //   api.post(setupData.apiUrl, "/people/merge", {
+  //       body,
+  //     })
+  //     .then((responseBody) => {
+  //       t.ok(responseBody, "peopleMerge person ok");
+  //       t.end();
+  //     })
+  //     .catch(formatError);
+  // });
 
-  test("getPeople - check peopleMerge has removed person 1", (t) => {
+  // test("getPeople - check peopleMerge has removed person 1", (t) => {
 
-    let retryCount = 0;
-    const retryableTest = {
-      args: [setupData.apiUrl, "/people"],
-      fn: api.get,
-    };
-    const retryableTestThen = (responseBody: IPerson[]) => {
-      if (responseBody.length !== people.length - 1) {
-        if (retryCount < retryStrategy.length) {
-          setTimeout(() => {
-            retryCount++;
-            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
-            retry();
-          }, retryStrategy[retryCount]);
-        } else {
-          t.fail(`Failed - ${responseBody.length} people after ${retryCount} retries`);
-          t.end();
-        }
-      } else {
-        t.equal(responseBody.length, people.length - 1, "one less person");
-        t.ok(responseBody.find(
-          (person) => person.id === updatedIimageWithFourPeople!.people![0],
-        ), "person 0 is still in the people object");
-        t.notOk(responseBody.find(
-          (person) => person.id === updatedIimageWithFourPeople!.people![1],
-        ), "person 1 is not in the people object");
-        t.end();
-      }
-    };
-    const retry = () => {
-      retryableTest.fn.apply(this, retryableTest.args)
-        .then(retryableTestThen)
-        .catch(formatError);
-    };
+  //   let retryCount = 0;
+  //   const retryableTest = {
+  //     args: [setupData.apiUrl, "/people"],
+  //     fn: api.get,
+  //   };
+  //   const retryableTestThen = (responseBody: IPerson[]) => {
+  //     if (responseBody.length !== people.length - 1) {
+  //       if (retryCount < retryStrategy.length) {
+  //         setTimeout(() => {
+  //           retryCount++;
+  //           t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+  //           retry();
+  //         }, retryStrategy[retryCount]);
+  //       } else {
+  //         t.fail(`Failed - ${responseBody.length} people after ${retryCount} retries`);
+  //         t.end();
+  //       }
+  //     } else {
+  //       t.equal(responseBody.length, people.length - 1, "one less person");
+  //       t.ok(responseBody.find(
+  //         (person) => person.id === updatedIimageWithFourPeople!.people![0],
+  //       ), "person 0 is still in the people object");
+  //       t.notOk(responseBody.find(
+  //         (person) => person.id === updatedIimageWithFourPeople!.people![1],
+  //       ), "person 1 is not in the people object");
+  //       t.end();
+  //     }
+  //   };
+  //   const retry = () => {
+  //     retryableTest.fn.apply(this, retryableTest.args)
+  //       .then(retryableTestThen)
+  //       .catch(formatError);
+  //   };
 
-    retry();
+  //   retry();
 
-  });
+  // });
 
-  test("after merge image that had person 1 now has person 0", (t) => {
-    const apiPath = getEndpointPath(updatedIimageWithFourPeople);
-    let retryCount = 0;
-    const retryableTest = {
-      args: [setupData.apiUrl, apiPath],
-      fn: api.get,
-    };
-    const retryableTestThen = (responseBody: IImage) => {
-      if (responseBody!.people!.length !== 3) {
-        if (retryCount < retryStrategy.length) {
-          setTimeout(() => {
-            retryCount++;
-            t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
-            retry();
-          }, retryStrategy[retryCount]);
-        } else {
-          t.fail(`Failed - image has ${responseBody!.people!.length} people after ${retryCount} retries`);
-          t.end();
-        }
-      } else {
-        t.equal(
-          responseBody.img_key,
-          updatedIimageWithFourPeople!.img_key,
-          "response has same img_key",
-        );
-        t.equal(responseBody.id, updatedIimageWithFourPeople!.id, "response has same id");
-        t.equal(
-          responseBody.people!.length,
-          3,
-          "image has only 3 people",
-        );
-        t.equal(
-          responseBody.people!.includes(updatedIimageWithFourPeople!.people![1]),
-          false,
-          "image doesnt have person 1",
-        );
-        t.equal(
-          responseBody.people!.includes(updatedIimageWithFourPeople!.people![0]),
-          true,
-          "image has person 0",
-        );
-        t.end();
-      }
-    };
-    const retry = () => {
-      retryableTest.fn.apply(this, retryableTest.args)
-        .then(retryableTestThen)
-        .catch(formatError);
-    };
+  // test("after merge image that had person 1 now has person 0", (t) => {
+  //   const apiPath = getEndpointPath(updatedIimageWithFourPeople);
+  //   let retryCount = 0;
+  //   const retryableTest = {
+  //     args: [setupData.apiUrl, apiPath],
+  //     fn: api.get,
+  //   };
+  //   const retryableTestThen = (responseBody: IImage) => {
+  //     if (responseBody!.people!.length !== 3) {
+  //       if (retryCount < retryStrategy.length) {
+  //         setTimeout(() => {
+  //           retryCount++;
+  //           t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
+  //           retry();
+  //         }, retryStrategy[retryCount]);
+  //       } else {
+  //         t.fail(`Failed - image has ${responseBody!.people!.length} people after ${retryCount} retries`);
+  //         t.end();
+  //       }
+  //     } else {
+  //       t.equal(
+  //         responseBody.img_key,
+  //         updatedIimageWithFourPeople!.img_key,
+  //         "response has same img_key",
+  //       );
+  //       t.equal(responseBody.id, updatedIimageWithFourPeople!.id, "response has same id");
+  //       t.equal(
+  //         responseBody.people!.length,
+  //         3,
+  //         "image has only 3 people",
+  //       );
+  //       t.equal(
+  //         responseBody.people!.includes(updatedIimageWithFourPeople!.people![1]),
+  //         false,
+  //         "image doesnt have person 1",
+  //       );
+  //       t.equal(
+  //         responseBody.people!.includes(updatedIimageWithFourPeople!.people![0]),
+  //         true,
+  //         "image has person 0",
+  //       );
+  //       t.end();
+  //     }
+  //   };
+  //   const retry = () => {
+  //     retryableTest.fn.apply(this, retryableTest.args)
+  //       .then(retryableTestThen)
+  //       .catch(formatError);
+  //   };
 
-    retry();
-  });
+  //   retry();
+  // });
 }

@@ -2,6 +2,7 @@ import "isomorphic-fetch";
 
 import * as AmazonCognitoIdentity from "amazon-cognito-identity-js";
 import * as AWS from "aws-sdk";
+import { CognitoIdentityCredentials } from "aws-sdk";
 
 function authenticateExistingUser(config: any) {
   return new Promise((resolve, reject) => {
@@ -77,10 +78,15 @@ function getAwsCredentials(config: any, userToken) {
   // tslint:disable-next-line:no-string-literal
   return AWS.config.credentials["getPromise"]()
   .then(() => {
+    const cognitoCreds: CognitoIdentityCredentials = AWS.config.credentials as CognitoIdentityCredentials;
     return {
-      accessKeyId: AWS.config.credentials!.accessKeyId,
-      sessionToken: AWS.config.credentials!.sessionToken,
-      secretAccessKey: AWS.config.credentials!.secretAccessKey,
+      bucket: config.Bucket,
+      userIdentityId: cognitoCreds.identityId,
+      credentials: {
+        accessKeyId: AWS.config.credentials!.accessKeyId,
+        sessionToken: AWS.config.credentials!.sessionToken,
+        secretAccessKey: AWS.config.credentials!.secretAccessKey,
+      }
     };
   });
 }
