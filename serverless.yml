@@ -335,7 +335,6 @@ resources:
                 - "meta"
                 - "userIdentityId"
               ProjectionType: "INCLUDE"
-            BillingMode: PAY_PER_REQUEST
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
     IndexesDynamoDbTable:
