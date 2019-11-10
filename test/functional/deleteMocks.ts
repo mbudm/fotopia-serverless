@@ -102,7 +102,7 @@ export default function deleteAllTestData(setupData, api) {
         const matchingResults = responseBody.items.filter((img) => {
           return setupData.records.includes((rec) => rec.img_key === img.img_key);
         });
-        t.equal(matchingResults.length, 0, `No results match test images - len ${responseBody.items}`);
+        t.equal(matchingResults.length, 0, `No results match test images - len ${responseBody.items.length}`);
         t.end();
       })
       .catch(formatError);

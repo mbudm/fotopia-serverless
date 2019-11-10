@@ -38,9 +38,29 @@ test("getDynamoDbUpdateItemParams", (t) => {
   const tags: IIndexDictionary = {
     yellow: -2,
   };
-  const result = indexes.getDynamoDbUpdateItemParams(indexes.TAGS_ID, tags) as DocClient.UpdateItemInput;
+  const result = indexes.getDynamoDbUpdateItemParams(tags, indexes.TAGS_ID, ["yellow"]) as DocClient.UpdateItemInput;
   t.deepEqual(result.ExpressionAttributeNames, { "#0": `yellow`, "#indexKeysProp": indexes.INDEX_KEYS_PROP });
   t.equal(result.ExpressionAttributeValues![":0"], tags.yellow);
   t.deepEqual(result.Key, { id: "tags" });
+  t.end();
+});
+
+test("getDynamoDbUpdateItemParamsBatch", (t) => {
+  const tags: IIndexDictionary = {
+    yellow: -2,
+    a: -1,
+    b: -1,
+    c: -1,
+    d: -1,
+    e: -1,
+    f: -1,
+    g: -1,
+    h: -1,
+    i: -1,
+    j: -1,
+    k: -1,
+  };
+  const result = indexes.getDynamoDbUpdateItemParamsBatch(indexes.TAGS_ID, tags) as DocClient.UpdateItemInput[];
+  t.equal(result.length, 2, "two batches");
   t.end();
 });

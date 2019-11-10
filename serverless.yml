@@ -131,6 +131,7 @@ functions:
   query:
     handler: fotos/query.queryItems
     memorySize: 128
+    timeout: 20
     events:
       - http:
           path: query
@@ -297,9 +298,7 @@ resources:
             KeyType: HASH
           - AttributeName: id
             KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+        BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.DYNAMODB_TABLE}
         LocalSecondaryIndexes:
           -
@@ -336,9 +335,6 @@ resources:
                 - "meta"
                 - "userIdentityId"
               ProjectionType: "INCLUDE"
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
     IndexesDynamoDbTable:
@@ -351,9 +347,7 @@ resources:
         KeySchema:
           - AttributeName: id
             KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+        BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.DYNAMODB_TABLE_INDEXES}
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
