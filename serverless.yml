@@ -131,6 +131,7 @@ functions:
   query:
     handler: fotos/query.queryItems
     memorySize: 128
+    timeout: 20
     events:
       - http:
           path: query
