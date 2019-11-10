@@ -166,46 +166,64 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
 }
 
 export function getDynamoDbUpdateItemParams(
-  indexId: string,
   indexData: IIndexDictionary,
-): DocClient.UpdateItemInput | null {
+  indexId: string,
+  validKeys: string[],
+): DocClient.UpdateItemInput {
   const timestamp = new Date().getTime();
-  const validKeys =  Object.keys(indexData).filter((k) => indexData[k] !== undefined);
-  if (validKeys.length > 0) {
-    /*
+  /*
     https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ExpressionAttributeNames.html
     "If an attribute name begins with a number or contains a space, a special character,
     or a reserved word, you must use an expression attribute name to replace that attribute's
     name in the expression."
 
     So because tags could be anything, we use idx
-    */
-    const ExpressionAttributeNames = validKeys.reduce((accum, key, idx) => ({
-      ...accum,
-      [`#${idx}`]: key,
-      [`#indexKeysProp`]: INDEX_KEYS_PROP,
-    }), {});
+  */
+  const ExpressionAttributeNames = validKeys.reduce((accum, key, idx) => ({
+    ...accum,
+    [`#${idx}`]: key,
+    [`#indexKeysProp`]: INDEX_KEYS_PROP,
+  }), {});
 
-    const ExpressionAttributeValues = validKeys.reduce((accum, key, idx) => ({
-      ...accum,
-      [`:${idx}`]: indexData[key],
-    }), {
-      ":updatedAt": timestamp,
-      ":zero": 0,
-    });
-    const updateKeyValues = validKeys.map((key, idx) => `#indexKeysProp.#${idx} = if_not_exists(#indexKeysProp.#${idx},:zero) + :${idx}`).join(", ");
-    return {
-      ExpressionAttributeNames,
-      ExpressionAttributeValues,
-      Key: {
-        id: indexId,
-      },
-      ReturnValues: "ALL_NEW",
-      TableName: getIndexTableName(),
-      UpdateExpression: `SET ${updateKeyValues}, updatedAt = :updatedAt`,
-    };
+  const ExpressionAttributeValues = validKeys.reduce((accum, key, idx) => ({
+    ...accum,
+    [`:${idx}`]: indexData[key],
+  }), {
+    ":updatedAt": timestamp,
+    ":zero": 0,
+  });
+  const updateKeyValues = validKeys.map((key, idx) => `#indexKeysProp.#${idx} = if_not_exists(#indexKeysProp.#${idx},:zero) + :${idx}`).join(", ");
+  return {
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    Key: {
+      id: indexId,
+    },
+    ReturnValues: "ALL_NEW",
+    TableName: getIndexTableName(),
+    UpdateExpression: `SET ${updateKeyValues}, updatedAt = :updatedAt`,
+  };
+}
+
+export function getDynamoDbUpdateItemParamsBatch(
+  indexId: string,
+  indexData: IIndexDictionary,
+): DocClient.UpdateItemInput[] {
+  const validKeys =  Object.keys(indexData).filter((k) => indexData[k] !== undefined);
+  if (validKeys.length > 0) {
+    const maxKeysPerBatch = 10;
+    const batchedParams: DocClient.UpdateItemInput[] = [];
+    for(let i = 0; i < validKeys.length; i += maxKeysPerBatch) {
+      const params: DocClient.UpdateItemInput = getDynamoDbUpdateItemParams(
+        indexData,
+        indexId,
+        validKeys.slice(i, i + maxKeysPerBatch),
+      );
+      batchedParams.push(params)
+    }
+    return batchedParams
   } else {
-    return null;
+    return [];
   }
 }
 
@@ -242,24 +260,32 @@ export function updateAndHandleEmptyMap(ddbParams: DocClient.UpdateItemInput): P
 export function updateIndexRecord(
   indexId: string,
   indexData: IIndexDictionary,
-): Promise<DocClient.UpdateItemOutput> | undefined {
-  const ddbParams: DocClient.UpdateItemInput | null = getDynamoDbUpdateItemParams(indexId, indexData);
-  return ddbParams ? updateAndHandleEmptyMap(ddbParams) : undefined ;
+): Promise<DocClient.UpdateItemOutput[]> {
+  const ddbParamsBatches: DocClient.UpdateItemInput[] = getDynamoDbUpdateItemParamsBatch(indexId, indexData);
+  return Promise.all(ddbParamsBatches.map((batch) => updateAndHandleEmptyMap(batch)));
 }
 
 export function getPutLogFields(
   updates: IIndexUpdate,
-  tagsUpdateResponse?: DocClient.UpdateItemOutput,
-  peopleUpdateResponse?: DocClient.UpdateItemOutput,
+  tagsUpdateResponses?: DocClient.UpdateItemOutput[],
+  peopleUpdateResponses?: DocClient.UpdateItemOutput[],
 ) {
 
-  const indexesPeopleAtts = peopleUpdateResponse && peopleUpdateResponse.Attributes || {};
-  const indexesTagsAtts = tagsUpdateResponse && tagsUpdateResponse.Attributes || {};
+  const indexesPeopleAtts: string[] = peopleUpdateResponses &&
+    peopleUpdateResponses.reduce((accum, response) => {
+      return accum.concat(Object.keys(response.Attributes!))
+    }, [] as string[]) || [];
+  const indexesTagsAtts: string[] = tagsUpdateResponses &&
+    tagsUpdateResponses.reduce((accum, response) => {
+      return accum.concat(Object.keys(response.Attributes!))
+    }, [] as string[]) || [];
   return {
     indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
     indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
-    indexesPeopleCount: Object.keys(indexesPeopleAtts).length,
-    indexesTagCount: Object.keys(indexesTagsAtts).length,
+    indexesPeopleCount: indexesPeopleAtts.length,
+    indexesTagCount: indexesTagsAtts.length,
+    indexesTagBatchCount: tagsUpdateResponses ? tagsUpdateResponses.length : 0,
+    indexesPeopleBatchCount: peopleUpdateResponses ? peopleUpdateResponses.length : 0,
   };
 }
 
@@ -281,14 +307,14 @@ export async function putItem(event: APIGatewayProxyEvent, context: Context, cal
 
   try {
     // update each index - change to batch write item
-    const tagsUpdateResponse: DocClient.UpdateItemOutput | undefined =
+    const tagsUpdateResponses: DocClient.UpdateItemOutput[] =
       await updateIndexRecord(TAGS_ID, requestBody.indexUpdate.tags);
-    const peopleUpdateResponse: DocClient.UpdateItemOutput | undefined =
+    const peopleUpdateResponses: DocClient.UpdateItemOutput[] =
       await updateIndexRecord(PEOPLE_ID, requestBody.indexUpdate.people);
     logger(context, loggerBaseParams, getPutLogFields(
       requestBody.indexUpdate,
-      tagsUpdateResponse,
-      peopleUpdateResponse,
+      tagsUpdateResponses,
+      peopleUpdateResponses,
     ));
     return callback(null, success(requestBody));
   } catch (err) {
