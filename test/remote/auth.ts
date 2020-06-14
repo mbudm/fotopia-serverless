@@ -81,12 +81,12 @@ function getAwsCredentials(config: any, userToken) {
     const cognitoCreds: CognitoIdentityCredentials = AWS.config.credentials as CognitoIdentityCredentials;
     return {
       bucket: config.Bucket,
-      userIdentityId: cognitoCreds.identityId,
       credentials: {
         accessKeyId: AWS.config.credentials!.accessKeyId,
-        sessionToken: AWS.config.credentials!.sessionToken,
         secretAccessKey: AWS.config.credentials!.secretAccessKey,
-      }
+        sessionToken: AWS.config.credentials!.sessionToken,
+      },
+      userIdentityId: cognitoCreds.identityId,
     };
   });
 }

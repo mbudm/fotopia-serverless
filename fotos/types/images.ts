@@ -1,4 +1,5 @@
 import { FaceMatch, FaceRecord } from "aws-sdk/clients/rekognition";
+import { IccTags, Tags, XmpTags } from "exifreader";
 
 export interface IImage {
   birthtime: number;
@@ -28,5 +29,5 @@ export interface IImageMeta {
   name?: string;
   size?: number;
   type?: string;
-  [name: string]: string | number | undefined;
+  [name: string]: string | number | undefined | Tags | XmpTags | IccTags;
 }

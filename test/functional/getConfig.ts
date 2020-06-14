@@ -31,7 +31,7 @@ export default function getConfig() {
     const stage = process.env.STAGE || "dev";
     const useCustomDomain = process.env[`USE_CUSTOM_DOMAIN_${stage.toUpperCase()}`];
     // tslint:disable-next-line:no-console
-    console.log(stage, useCustomDomain);
+    console.log("stage, useCustomDomain", stage, useCustomDomain);
     const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
     if (useCustomDomain === "true" && customDomain) {
       fetchConfig(customDomain)

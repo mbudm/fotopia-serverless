@@ -122,6 +122,7 @@ export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> 
 
 export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta, context: Context): InvocationRequest {
   const request: IQueryBody = {
+    breakDateRestriction: true,
     clientId: context.functionName,
     criteria: {
       people: image.people!,
@@ -129,7 +130,6 @@ export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta, conte
     },
     from: 0,
     to: Date.now(),
-    breakDateRestriction: true,
   };
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}query`,

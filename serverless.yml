@@ -122,6 +122,15 @@ functions:
           method: post
           cors: true
           authorizer: aws_iam
+  fotoEvents:
+    handler: fotos/fotoEvents.handler
+    events:
+      - s3:
+          bucket: S3BucketFotos
+          event: s3:ObjectCreated:*
+      - s3:
+          bucket: S3BucketFotos
+          event: s3:ObjectRemoved:*
   collectionCreate:
     handler: fotos/collection.createCollection
     memorySize: 128
@@ -532,3 +541,4 @@ package:
     - '!node_modules/babel-runtime/**'
     - '!node_modules/sharp/**'
     - '!node_modules/dynamodb-data-types/**'
+    - '!node_modules/exifreader/**'

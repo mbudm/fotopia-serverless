@@ -22,7 +22,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
     })
     .then((configCreds) => {
       setupData.credentials = configCreds.credentials;
-      setupData.username = process.env.TEST_USER_NAME || ""
+      setupData.username = process.env.TEST_USER_NAME || "";
       setupData.images = [{
         key: `${setupData.username}/one.jpg`,
         path: path.resolve(__dirname, "../mock/one.jpg"),
