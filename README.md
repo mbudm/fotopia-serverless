@@ -19,7 +19,7 @@ Currently the fotopia serverless project includes:
 
 ## Requires
 
-- Node 8.10.0 (matches AWS Lambda env)
+- Node 12.x (matches AWS Lambda env)
 - yarn (or npm)
 - serverless framework `yarn global add serverless`
 - AWS account with credentials (https://serverless.com/framework/docs/providers/aws/guide/credentials/)

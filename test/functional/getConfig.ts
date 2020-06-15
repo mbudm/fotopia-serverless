@@ -1,46 +1,24 @@
-import * as fs from "fs";
+import { CloudFormation } from "aws-sdk"
 
-export function fetchConfig(domain: string) {
-  const configEndpoint = `https://${domain}/config`;
-  // eslint-disable-next-line no-undef
-  return fetch(configEndpoint)
-    .then((response) => response.json());
-}
-
-export function readOutputConfig() {
-  return new Promise((resolve, reject) => {
-    fs.readFile("./output/config.json", (err, buffer) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      try {
-        const data = JSON.parse(buffer.toString());
-        // tslint:disable-next-line:no-console
-        console.log("output", data);
-        resolve(data);
-      } catch (exception) {
-        reject(exception);
-      }
-    });
-  });
-}
-
-export default function getConfig() {
-  return new Promise((res, rej) => {
-    const stage = process.env.STAGE || "dev";
-    const useCustomDomain = process.env[`USE_CUSTOM_DOMAIN_${stage.toUpperCase()}`];
+export default function getConfig(stackname) {
+  const cf = new CloudFormation({region: "us-east-1"});
+  const params = {
+    StackName: stackname,
+  };
+  return cf.describeStacks(params).promise()
+  .then((response: CloudFormation.DescribeStacksOutput) => {
+    const outputsList = response.Stacks && response.Stacks[0].Outputs || [];
+    return outputsList.reduce((accum: any, output: CloudFormation.Output) => {
+      return output.OutputKey ?
+        {
+          ...accum,
+          [output.OutputKey]: output.OutputValue,
+        } :
+        accum;
+      }, {});
+  })
+  .catch((err) => {
     // tslint:disable-next-line:no-console
-    console.log("stage, useCustomDomain", stage, useCustomDomain);
-    const customDomain = process.env[`CUSTOM_DOMAIN_${stage.toUpperCase()}`];
-    if (useCustomDomain === "true" && customDomain) {
-      fetchConfig(customDomain)
-        .then(res)
-        .catch(rej);
-    } else {
-      readOutputConfig()
-        .then(res)
-        .catch(rej);
-    }
+    console.log(err);
   });
 }

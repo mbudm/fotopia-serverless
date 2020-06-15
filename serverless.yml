@@ -3,10 +3,8 @@ service: fotopia-web-app
 frameworkVersion: ">=1.1.0 <2.0.0"
 
 plugins:
-  - serverless-stack-output
   - serverless-domain-manager
   - serverless-webpack
-  - serverless-s3-sync
   - serverless-s3-remover
 
 custom:
@@ -15,14 +13,8 @@ custom:
       forceExclude:
         - aws-sdk
         - tape
-  output:
-    file: output/${self:provider.environment.S3_OUTPUT_FILENAME}
-  s3Sync:
-    - bucketName: ${self:provider.environment.S3_OUTPUT_BUCKET}
-      localDir: output
   remover:
      buckets:
-       - ${self:provider.environment.S3_OUTPUT_BUCKET}
        - ${self:provider.environment.S3_BUCKET}
   customDomain:
     domainName: ${self:provider.environment.CUSTOM_DOMAIN}
@@ -178,14 +170,7 @@ functions:
           method: delete
           cors: true
           authorizer: aws_iam
-  config:
-    handler: fotos/config.getItem
-    memorySize: 128
-    events:
-      - http:
-          path: config
-          method: get
-          cors: true
+
   thumbs:
     handler: fotos/thumbs.createThumb
     memorySize: 128

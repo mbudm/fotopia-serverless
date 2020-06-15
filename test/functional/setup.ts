@@ -14,7 +14,8 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
     uniqueTag: `_${Math.random().toString(36).substr(2, 9)}`,
     username: "",
   };
-  return getConfig()
+  const stackName = `fotopia-web-app-${process.env.STAGE}`;
+  return getConfig(stackName)
     .then((config: any) => {
       setupData.apiUrl = config.ServiceEndpoint;
       setupData.region = config.Region;
