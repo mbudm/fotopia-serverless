@@ -57,6 +57,7 @@ export function getLogFields(request, dbItem?, faces?, labels?: DetectLabelsResp
     imageHeight: request.meta && request.meta.height,
     imageId: dbItem && dbItem.id,
     imageKey: request.img_key,
+    imageMetaRaw: request.meta && JSON.stringify(request.meta),
     imageTagCount: safeLength(dbItem.tags),
     imageUpdatedAt: dbItem && dbItem.updatedAt,
     imageUserIdentityId: request.userIdentityId,

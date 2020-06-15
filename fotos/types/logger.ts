@@ -46,6 +46,7 @@ export interface ILoggerCreateParams extends ILoggerImageParams {
   createIdentifiedFacesCount: number;
   createIdentifiedLabelsCount: number;
   createPayloadTagCount: number;
+  imageMetaRaw: string;
 }
 
 export interface ILoggerPeopleMergeParams {
