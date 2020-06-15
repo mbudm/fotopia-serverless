@@ -35,7 +35,7 @@ custom:
     resourcePrefix: ${self:service}-${self:custom.fotopia.nameSpace}-${opt:stage, self:provider.stage}
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
   region: us-east-1
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
