@@ -40,7 +40,6 @@ export default function logger(context, base: ILoggerBaseParams, fields) {
     functionName: "",
     functionVersion: "",
     isOffline: false,
-    requestId: "",
     serviceName: context && context.functionName,
     ...base,
     time: startDate.toISOString(),
