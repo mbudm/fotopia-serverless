@@ -163,7 +163,7 @@ export function checkUserExists(config: any) {
     return e;
   });
 }
-function getAWSCredentialsFromProfile(){
+function getAWSCredentialsFromProfile() {
   return new Promise((resolve, reject) => {
     AWS.config.getCredentials((err) => {
       if (err) {

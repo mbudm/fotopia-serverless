@@ -1,4 +1,4 @@
-import { CloudFormation } from "aws-sdk"
+import { CloudFormation } from "aws-sdk";
 
 export default function getConfig(stackname) {
   const cf = new CloudFormation({region: "us-east-1"});

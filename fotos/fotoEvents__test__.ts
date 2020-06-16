@@ -1,9 +1,8 @@
 import { S3EventRecord } from "aws-lambda";
-import {
-  InvocationRequest,
-} from "aws-sdk/clients/lambda";
 import * as test from "tape";
+import * as uuidv5 from "uuid/v5";
 import * as fotoEventsFns from "./fotoEvents";
+import { ITraceMeta } from "./types";
 
 test("parseUserIdentityIdFromKey", (t) => {
   const uid = "xyz123";
@@ -120,5 +119,17 @@ test("removeCreateRecordsIfDeletePresent, create after remove still reduces to j
   }];
   const result: S3EventRecord[] = fotoEventsFns.removeCreateRecordsIfDeletePresent(records);
   t.equal(result.length, 1);
+  t.end();
+});
+
+test("getInvokeDeleteRequest contains a uuid v5 namespace id", (t) => {
+  const traceMeta: ITraceMeta = {
+    parentId: "abc",
+    traceId: "123",
+  };
+  const id = uuidv5(baseS3EventRecord.s3.object.key, uuidv5.DNS);
+  const result = fotoEventsFns.getInvokeDeleteRequest(baseS3EventRecord, traceMeta);
+  const parsedPayload = JSON.parse(result.Payload as string);
+  t.equal(parsedPayload.pathParameters.id, id);
   t.end();
 });

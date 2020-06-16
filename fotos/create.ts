@@ -13,6 +13,7 @@ import {
   DocumentClient as DocClient,
 } from "aws-sdk/lib/dynamodb/document_client.d";
 import * as uuid from "uuid";
+import * as uuidv5 from "uuid/v5";
 import getTableName from "./common/getTableName";
 import { getTraceMeta } from "./common/getTraceMeta";
 import { failure, success } from "./common/responses";
@@ -196,7 +197,6 @@ export function getInvokeFacesParams(
 
 export async function createItem(event: APIGatewayProxyEvent, context: Context, callback: Callback) {
   const startTime = Date.now();
-  const id = uuid.v1();
   const data: ICreateBody = event.body ? JSON.parse(event.body) : undefined;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
@@ -206,6 +206,8 @@ export async function createItem(event: APIGatewayProxyEvent, context: Context, 
     traceId: uuid.v1(),
   };
   try {
+
+    const id = uuidv5(data.img_key, uuidv5.DNS);
     const invokeParams = getInvokeThumbnailsParams(data, loggerBaseParams);
     const thumbPromise = lambda.invoke(invokeParams).promise();
     const facesPromise = getRekognitionFaceData(data, id);
@@ -224,7 +226,7 @@ export async function createItem(event: APIGatewayProxyEvent, context: Context, 
     logger(context, loggerBaseParams, getLogFields(data, ddbParams.Item, faces, labels));
     return callback(null, success(ddbParams.Item));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(data, { id }) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(data) });
     return callback(null, failure(err));
   }
 }

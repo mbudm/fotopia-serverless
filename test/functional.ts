@@ -22,7 +22,6 @@ export default function functional() {
     .then((setupData: any) => {
       deleteAllTestData(setupData, setupData.api);
       uploadTests(setupData, setupData.upload);
-      createTests(setupData, setupData.api);
       queryTests(setupData, setupData.api);
       getTests(setupData, setupData.api);
       indexesTests(setupData, setupData.api);

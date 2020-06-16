@@ -8,10 +8,8 @@ import { S3 } from "aws-sdk";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import { GetObjectOutput } from "aws-sdk/clients/s3";
 import * as ExifReader from "exifreader";
-import {
-  v4 as uuidv4,
-  v5 as uuidv5,
-} from "uuid";
+import { v4 as uuidv4 } from "uuid";
+import * as uuidv5 from "uuid/v5";
 
 import getS3Bucket from "./common/getS3Bucket";
 import { getTraceMeta } from "./common/getTraceMeta";
@@ -96,7 +94,7 @@ export function getInvokeDeleteRequest(
       traceMeta,
     };
     const pathParameters: IPathParameters = {
-      id: uuidv5(record.s3.object.key),
+      id: uuidv5(record.s3.object.key, uuidv5.DNS),
       username: parseUsernameFromKey(record.s3.object.key),
     };
     return {
