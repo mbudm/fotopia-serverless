@@ -10,6 +10,7 @@ import { GetObjectOutput } from "aws-sdk/clients/s3";
 import * as ExifReader from "exifreader";
 import { v4 as uuidv4 } from "uuid";
 import * as uuidv5 from "uuid/v5";
+import * as querystring from "querystring";
 
 import getS3Bucket from "./common/getS3Bucket";
 import { getTraceMeta } from "./common/getTraceMeta";
@@ -39,6 +40,10 @@ export function getObject(key): Promise<GetObjectOutput> {
     });
 }
 
+export function getKeyFromRecord(record: S3EventRecord){
+  return querystring.unescape(record.s3.object.key);
+}
+
 export function parseUserIdentityIdFromKey(key) {
   return key.split("/")[1];
 }
@@ -49,7 +54,7 @@ export function parseUsernameFromKey(key) {
 
 export async function getImageBody(record: S3EventRecord): Promise<ICreateBody> {
   // tslint:disable-next-line:variable-name
-  const key = record.s3.object.key;
+  const key = getKeyFromRecord(record);
   const userIdentityId = parseUserIdentityIdFromKey(key);
   const username = parseUsernameFromKey(key);
   const s3Object = await getObject(key);

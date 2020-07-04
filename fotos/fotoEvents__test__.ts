@@ -47,6 +47,7 @@ test("isCreateRecord", (t) => {
   );
   t.end();
 });
+
 test("isDeleteRecord", (t) => {
   const result = fotoEventsFns.isDeleteRecord(exampleCreateRecord);
   t.equal(
@@ -55,7 +56,17 @@ test("isDeleteRecord", (t) => {
     "example is not a delete record",
   );
   t.end();
-})
+});
+
+test("getKeyFromRecord", (t) => {
+  const result = fotoEventsFns.getKeyFromRecord(exampleCreateRecord);
+  t.equal(
+    result,
+    "protected/us-east-1:6120a90c-ae88-4421-9c9a-7bc6c5ad7cab/tester/four_people.jpg",
+    "converts encoded colon in useridentityid",
+  );
+  t.end();
+});
 
 test("parseUserIdentityIdFromKey", (t) => {
   const uid = "xyz123";
