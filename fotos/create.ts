@@ -27,6 +27,7 @@ import {
   ICreateBody,
   ILoggerBaseParams,
   ILoggerCreateParams,
+  ITraceMeta,
 } from "./types";
 
 const fotopiaGroup: string = process.env.FOTOPIA_GROUP || "";
@@ -198,12 +199,13 @@ export function getInvokeFacesParams(
 export async function createItem(event: APIGatewayProxyEvent, context: Context, callback: Callback) {
   const startTime = Date.now();
   const data: ICreateBody = event.body ? JSON.parse(event.body) : undefined;
+  const traceMeta: ITraceMeta | undefined = data ? data.traceMeta : undefined;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "createItem",
-    parentId: "",
+    parentId: traceMeta && traceMeta!.parentId || "",
     startTime,
-    traceId: uuid.v1(),
+    traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {
 
