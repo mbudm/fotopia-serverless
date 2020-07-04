@@ -64,9 +64,9 @@ export async function getImageBody(record: S3EventRecord): Promise<ICreateBody> 
     birthtime: Date.now(),
     img_key: key,
     meta: {
-      height: imageMetaData.ImageLength.value,
+      height: imageMetaData.ImageLength && imageMetaData.ImageLength.value || 0,
       tags: imageMetaData,
-      width: imageMetaData.ImageWidth.value,
+      width: imageMetaData.ImageLength && imageMetaData.ImageWidth.value || 0,
     },
     userIdentityId,
     username,
