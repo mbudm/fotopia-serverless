@@ -139,6 +139,7 @@ export function invokeLambdas(invocations) {
 export function getLogFields(records: S3EventRecord[], recordsToInvoke?, invocations?) {
   return {
     invocationsCount: safeLength(invocations),
+    invocationsRaw: JSON.stringify(invocations),
     recordsCount: safeLength(records),
     recordsToInvokeCount: safeLength(recordsToInvoke),
   };
