@@ -4,6 +4,59 @@ import * as uuidv5 from "uuid/v5";
 import * as fotoEventsFns from "./fotoEvents";
 import { ITraceMeta } from "./types";
 
+const exampleCreateRecord: S3EventRecord = {
+  eventVersion: "2.1",
+  eventSource: "aws:s3",
+  awsRegion: "us-east-1",
+  eventTime: "2020-07-04T10:42:08.568Z",
+  eventName: "ObjectCreated:Put",
+  userIdentity: {
+    principalId: "AWS:AROAVKTYX5RREW4A6WV26:CognitoIdentityCredentials",
+  },
+  requestParameters: { sourceIPAddress: "35.231.58.0" },
+  responseElements: {
+    "x-amz-request-id": "9599B8598CE84656",
+    "x-amz-id-2":
+      "PtMZZYoSPX+puRBVCuWzv4Z5aNdQkp8gh8u2CA6txgGb00NNZg/nmDvAhkFhQ3/dNwb1ZH5omgX9zM0ilf/Gaw7qBtPdID59E0/v0cQbCD0=",
+  },
+  s3: {
+    s3SchemaVersion: "1.0",
+    configurationId:
+      "fotopia-web-app-alpha-fotoEvents-68a737133cefb25bff959852b8f04754",
+    bucket: {
+      name: "fotopia-web-app-mbudm-alpha",
+      ownerIdentity: { principalId: "AVA4PR7F8OFAJ" },
+      arn: "arn:aws:s3:::fotopia-web-app-mbudm-alpha",
+    },
+    object: {
+      key:
+        "protected/us-east-1%3A6120a90c-ae88-4421-9c9a-7bc6c5ad7cab/tester/four_people.jpg",
+      size: 205647,
+      eTag: "52cfca717f38feb3ed22d9ed86aacfcb",
+      sequencer: "005F005D03E28E7274",
+    },
+  },
+};
+
+test("isCreateRecord", (t) => {
+  const result = fotoEventsFns.isCreateRecord(exampleCreateRecord);
+  t.equal(
+    result,
+    true,
+    "example is a create record",
+  );
+  t.end();
+});
+test("isDeleteRecord", (t) => {
+  const result = fotoEventsFns.isDeleteRecord(exampleCreateRecord);
+  t.equal(
+    result,
+    false,
+    "example is not a delete record",
+  );
+  t.end();
+})
+
 test("parseUserIdentityIdFromKey", (t) => {
   const uid = "xyz123";
   const key = `protected/${uid}/username/path/to/file.jpg`;

@@ -108,12 +108,15 @@ export function getInvokeDeleteRequest(
     };
   }
 
+export const isCreateRecord = (record: S3EventRecord) => record.eventName.includes(S3_EVENT_MATCHER_CREATED);
+export const isDeleteRecord = (record: S3EventRecord) => record.eventName.includes(S3_EVENT_MATCHER_REMOVED);
+
 export async function getInvocations(records: S3EventRecord[], traceMeta) {
   return Promise.all(records.map(async (record) => {
-    if (record.eventName.indexOf(S3_EVENT_MATCHER_CREATED)) {
+    if (isCreateRecord(record)) {
       const imageBody = await getImageBody(record);
       return getInvokeCreateRequest(imageBody, traceMeta);
-    } else if (record.eventName.indexOf(S3_EVENT_MATCHER_REMOVED)) {
+    } else if (isDeleteRecord(record)) {
       return getInvokeDeleteRequest(record, traceMeta);
     }
   }));
