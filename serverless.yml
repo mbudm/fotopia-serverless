@@ -94,7 +94,7 @@ provider:
         - "s3:PutObject"
         - "s3:DeleteObject"
         - "s3:ListBucket"
-      Resource: "arn:aws:s3:::${self:provider.environment.S3_THUMB_BUCKET}/*"
+      Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET_GENERATED}/*"
     - Effect: "Allow"
       Action:
         - "rekognition:IndexFaces"
@@ -370,7 +370,7 @@ resources:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
       Properties:
-        BucketName: ${self:provider.environment.S3_THUMB_BUCKET}
+        BucketName: ${self:provider.environment.S3_BUCKET_GENERATED}
     UserPool:
       Type: "AWS::Cognito::UserPool"
       Properties:
