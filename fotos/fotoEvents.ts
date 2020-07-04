@@ -141,7 +141,9 @@ export function getLogFields(records: S3EventRecord[], recordsToInvoke?, invocat
     invocationsCount: safeLength(invocations),
     invocationsRaw: JSON.stringify(invocations),
     recordsCount: safeLength(records),
+    recordsRaw: JSON.stringify(records),
     recordsToInvokeCount: safeLength(recordsToInvoke),
+    recordsToInvokeRaw: JSON.stringify(recordsToInvoke),
   };
 }
 
