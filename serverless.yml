@@ -33,8 +33,7 @@ provider:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
     DYNAMODB_TABLE_INDEXES: ${self:service}-${opt:stage, self:provider.stage}-indexes
     S3_BUCKET: ${self:custom.fotopia.resourcePrefix}
-    S3_OUTPUT_BUCKET: ${self:custom.fotopia.resourcePrefix}-output
-    S3_OUTPUT_FILENAME: config.json
+    S3_BUCKET_GENERATED: ${self:custom.fotopia.resourcePrefix}-generated
     LAMBDA_PREFIX: ${self:service}-${opt:stage, self:provider.stage}-
     USER_POOL_NAME: ${self:service}-${opt:stage, self:provider.stage}-user-pool
     USER_POOL_APP_CLIENT: ${self:service}-${opt:stage, self:provider.stage}-user-pool-client
@@ -92,7 +91,10 @@ provider:
     - Effect: "Allow"
       Action:
         - "s3:GetObject"
-      Resource: "arn:aws:s3:::${self:provider.environment.S3_OUTPUT_BUCKET}/*"
+        - "s3:PutObject"
+        - "s3:DeleteObject"
+        - "s3:ListBucket"
+      Resource: "arn:aws:s3:::${self:provider.environment.S3_THUMB_BUCKET}/*"
     - Effect: "Allow"
       Action:
         - "rekognition:IndexFaces"
@@ -364,11 +366,11 @@ resources:
                 - DELETE
               AllowedOrigins:
                 - "*"
-    FotopiaOutput:
+    S3BucketFotosThumbs:
       Type: AWS::S3::Bucket
       DeletionPolicy: Delete
       Properties:
-        BucketName: ${self:provider.environment.S3_OUTPUT_BUCKET}
+        BucketName: ${self:provider.environment.S3_THUMB_BUCKET}
     UserPool:
       Type: "AWS::Cognito::UserPool"
       Properties:

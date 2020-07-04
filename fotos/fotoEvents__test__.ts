@@ -5,36 +5,35 @@ import * as fotoEventsFns from "./fotoEvents";
 import { ITraceMeta } from "./types";
 
 const exampleCreateRecord: S3EventRecord = {
-  eventVersion: "2.1",
-  eventSource: "aws:s3",
   awsRegion: "us-east-1",
-  eventTime: "2020-07-04T10:42:08.568Z",
   eventName: "ObjectCreated:Put",
-  userIdentity: {
-    principalId: "AWS:AROAVKTYX5RREW4A6WV26:CognitoIdentityCredentials",
-  },
+  eventSource: "aws:s3",
+  eventTime: "2020-07-04T10:42:08.568Z",
+  eventVersion: "2.1",
   requestParameters: { sourceIPAddress: "35.231.58.0" },
   responseElements: {
-    "x-amz-request-id": "9599B8598CE84656",
     "x-amz-id-2":
       "PtMZZYoSPX+puRBVCuWzv4Z5aNdQkp8gh8u2CA6txgGb00NNZg/nmDvAhkFhQ3/dNwb1ZH5omgX9zM0ilf/Gaw7qBtPdID59E0/v0cQbCD0=",
+      "x-amz-request-id": "9599B8598CE84656",
   },
   s3: {
-    s3SchemaVersion: "1.0",
-    configurationId:
-      "fotopia-web-app-alpha-fotoEvents-68a737133cefb25bff959852b8f04754",
     bucket: {
+      arn: "arn:aws:s3:::fotopia-web-app-mbudm-alpha",
       name: "fotopia-web-app-mbudm-alpha",
       ownerIdentity: { principalId: "AVA4PR7F8OFAJ" },
-      arn: "arn:aws:s3:::fotopia-web-app-mbudm-alpha",
     },
+    configurationId: "fotopia-web-app-alpha-fotoEvents-68a737133cefb25bff959852b8f04754",
     object: {
+      eTag: "52cfca717f38feb3ed22d9ed86aacfcb",
       key:
         "protected/us-east-1%3A6120a90c-ae88-4421-9c9a-7bc6c5ad7cab/tester/four_people.jpg",
-      size: 205647,
-      eTag: "52cfca717f38feb3ed22d9ed86aacfcb",
       sequencer: "005F005D03E28E7274",
+      size: 205647,
     },
+    s3SchemaVersion: "1.0",
+  },
+  userIdentity: {
+    principalId: "AWS:AROAVKTYX5RREW4A6WV26:CognitoIdentityCredentials",
   },
 };
 

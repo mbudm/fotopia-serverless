@@ -4,6 +4,7 @@ import * as uuid from "uuid";
 
 import { PutObjectRequest } from "aws-sdk/clients/s3";
 import getS3Bucket from "./common/getS3Bucket";
+import getS3BucketGenerated from "./common/getS3BucketGenerated";
 import { failure, success } from "./common/responses";
 import { safeLength } from "./create";
 import logger from "./lib/logger";
@@ -22,7 +23,7 @@ export function getPutObjectParams({
 }: IPutObjectParams): PutObjectRequest {
   return {
     Body: buffer,
-    Bucket: getS3Bucket(),
+    Bucket: getS3BucketGenerated(),
     ContentType: "image/jpg",
     Key: key,
   };

@@ -8,9 +8,9 @@ import { S3 } from "aws-sdk";
 import { InvocationRequest } from "aws-sdk/clients/lambda";
 import { GetObjectOutput } from "aws-sdk/clients/s3";
 import * as ExifReader from "exifreader";
+import * as querystring from "querystring";
 import { v4 as uuidv4 } from "uuid";
 import * as uuidv5 from "uuid/v5";
-import * as querystring from "querystring";
 
 import getS3Bucket from "./common/getS3Bucket";
 import { getTraceMeta } from "./common/getTraceMeta";
@@ -40,7 +40,7 @@ export function getObject(key): Promise<GetObjectOutput> {
     });
 }
 
-export function getKeyFromRecord(record: S3EventRecord){
+export function getKeyFromRecord(record: S3EventRecord) {
   return querystring.unescape(record.s3.object.key);
 }
 

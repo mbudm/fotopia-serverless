@@ -1,8 +1,8 @@
 import { PutObjectRequest } from "aws-sdk/clients/s3";
-import getS3Bucket from "./getS3Bucket";
+import getS3BucketGenerated from "./getS3BucketGenerated";
 
 export function getS3PutParams(data: any, Key: string): PutObjectRequest {
-  const Bucket = getS3Bucket();
+  const Bucket = getS3BucketGenerated();
   return {
     Body: JSON.stringify(data),
     Bucket,
