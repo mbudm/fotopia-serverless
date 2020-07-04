@@ -30,8 +30,8 @@ test("getS3Params parses the invocation response", (t) => {
 
   t.equal(
     result.Key,
-    `protected/${img.userIdentityId}/${img.img_key}`,
-    "key is combination of img_key and userIdentityId",
+    img.img_key,
+    "key is same as img_key",
   );
   t.end();
 });

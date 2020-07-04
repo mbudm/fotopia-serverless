@@ -18,7 +18,7 @@ import { getTraceMeta } from "./common/getTraceMeta";
 import invokeGetPeople from "./common/invokeGetPeople";
 import invokePutPeople from "./common/invokePutPeople";
 import { failure, success } from "./common/responses";
-import { replicateAuthKey, safeLength } from "./create";
+import { safeLength } from "./create";
 import { DeleteObjectError } from "./errors/deleteObject";
 import { DeleteRecordError } from "./errors/deleteRecord";
 import { JSONParseError } from "./errors/jsonParse";
@@ -42,7 +42,7 @@ export function getS3Params(imageRecord: IImage): GetObjectRequest  {
   if (imageRecord && imageRecord.img_key) {
     return {
       Bucket: getS3Bucket(),
-      Key: replicateAuthKey(imageRecord.img_key, imageRecord.userIdentityId),
+      Key: imageRecord.img_key,
     };
   } else {
     throw new Error(`No img_key in imageRecord: ${JSON.stringify(imageRecord)}`);

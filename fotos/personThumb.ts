@@ -3,7 +3,7 @@ import * as Sharp from "sharp";
 import * as uuid from "uuid";
 
 import { failure, success } from "./common/responses";
-import { replicateAuthKey, safeLength } from "./create";
+import { safeLength } from "./create";
 import { GetObjectError } from "./errors/getObject";
 import { PutObjectError} from "./errors/putObject";
 import logger from "./lib/logger";
@@ -27,7 +27,7 @@ import {
 let s3: S3;
 
 export function getObject(request: IPerson): Promise<GetObjectOutput> {
-  const key: string = replicateAuthKey(request.img_key, request.userIdentityId);
+  const key: string = request.img_key;
   return s3.getObject({
     Bucket: getS3Bucket(),
     Key: key,
@@ -178,7 +178,7 @@ export function cropAndUpload(
 ): Promise<PutObjectOutput> {
   return crop(dims, s3Object)
     .then((buffer) => putObject({
-      buffer, key: replicateAuthKey(person.thumbnail, person.userIdentityId),
+      buffer, key: person.thumbnail,
     }));
 }
 
