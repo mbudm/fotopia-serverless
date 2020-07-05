@@ -96,7 +96,10 @@ export function getDynamoDbParams(
   labels: DetectLabelsResponse,
 ): DocClient.PutItemInput {
   const timestamp: number = new Date().getTime();
-  const tags: string[] = [...data.tags, ...getTagsFromRekognitionLabels(labels)];
+  const rekLabels: string[] = getTagsFromRekognitionLabels(labels);
+  const tags: string[] = Array.isArray(data.tags) ?
+    [...data.tags, ...rekLabels] :
+    [...rekLabels];
   return {
     Item: {
       birthtime: new Date(data.birthtime).getTime(),
