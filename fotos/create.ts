@@ -49,7 +49,7 @@ export function getLogFields(request, dbItem?, faces?, labels?: DetectLabelsResp
     createPayloadTagCount: safeLength(request.tags),
     imageBirthtime: dbItem && dbItem.birthtime || request.birthtime,
     imageCreatedAt: dbItem && dbItem.createdAt,
-    imageFacesCount: safeLength(dbItem.faces),
+    imageFacesCount: dbItem && safeLength(dbItem.faces) || 0,
     imageFacesRaw: dbItem && JSON.stringify(dbItem.faces),
     imageFamilyGroup: fotopiaGroup,
     imageHeight: request.meta && request.meta.height,
