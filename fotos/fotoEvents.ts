@@ -60,13 +60,17 @@ export async function getImageBody(record: S3EventRecord): Promise<ICreateBody> 
   const s3Object = await getObject(key);
   const imageMetaData = ExifReader.load(s3Object.Body as Buffer);
 
+  const birthtime = imageMetaData["Date Created"] && imageMetaData["Time Created"] ?
+    new Date(`${imageMetaData["Date Created"].description} ${imageMetaData["Time Created"].description}`) :
+    new Date();
+
   return {
-    birthtime: Date.now(),
+    birthtime: birthtime.getTime(),
     img_key: key,
     meta: {
-      height: imageMetaData.ImageLength && imageMetaData.ImageLength.value || 0,
+      height: imageMetaData["Image Height"] && imageMetaData["Image Height"].value as unknown as number || 0,
       tags: imageMetaData,
-      width: imageMetaData.ImageLength && imageMetaData.ImageWidth.value || 0,
+      width: imageMetaData["Image Width"] && imageMetaData["Image Width"].value as unknown as number || 0,
     },
     userIdentityId,
     username,
