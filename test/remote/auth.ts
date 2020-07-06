@@ -70,7 +70,7 @@ function authenticateNewUser(config: any) {
       UserPoolId: config.UserPoolId,
       Username: username,
     };
-    cognitoISP.adminCreateUser(params, (err, d) => {
+    cognitoISP.adminCreateUser(params, (err) => {
       if (err) {
         reject(err);
       } else {
@@ -89,7 +89,7 @@ function authenticateNewUser(config: any) {
               }
             });
           })
-          .then((response: any) => {
+          .then(() => {
             return resolve(authenticateUser(config, username, setPwParams.Password));
           })
           .catch(reject);

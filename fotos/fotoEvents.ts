@@ -44,12 +44,16 @@ export function getKeyFromRecord(record: S3EventRecord) {
   return querystring.unescape(record.s3.object.key);
 }
 
-export function parseUserIdentityIdFromKey(key) {
+export function parseUserIdentityIdFromKey(key: string) {
   return key.split("/")[1];
 }
 
-export function parseUsernameFromKey(key) {
+export function parseUsernameFromKey(key: string) {
   return key.split("/")[2];
+}
+
+export function getBasicKey(authKey: string) {
+  return authKey.split("/").slice(2).join("/");
 }
 
 export async function getImageBody(record: S3EventRecord): Promise<ICreateBody> {
@@ -66,7 +70,7 @@ export async function getImageBody(record: S3EventRecord): Promise<ICreateBody> 
 
   return {
     birthtime: birthtime.getTime(),
-    img_key: key,
+    img_key: getBasicKey(key),
     meta: {
       height: imageMetaData["Image Height"] && imageMetaData["Image Height"].value as unknown as number || 0,
       tags: imageMetaData,

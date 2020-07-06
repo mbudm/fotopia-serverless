@@ -91,6 +91,18 @@ test("parseUsernameFromKey", (t) => {
   t.end();
 });
 
+test("getBasicKey", (t) => {
+  const basicKey = "tester/sub/folder/xyz123.png";
+  const key = `protected/uid/${basicKey}`;
+  const result = fotoEventsFns.getBasicKey(key);
+  t.equal(
+    result,
+    basicKey,
+    "basicKey doesn't include amplify folder and user identity id",
+  );
+  t.end();
+});
+
 const baseS3EventRecord: S3EventRecord = {
   awsRegion: "us-west-2",
   eventName: "ObjectCreated:Put",
