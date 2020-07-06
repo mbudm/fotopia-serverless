@@ -33,6 +33,10 @@ import {
 const fotopiaGroup: string = process.env.FOTOPIA_GROUP || "";
 export const THUMB_SUFFIX = "-thumbnail";
 
+export function replicateAuthKey(imgKey: string, userIdentityId: string): string {
+  return `protected/${userIdentityId}/${imgKey}`;
+}
+
 export function safeLength(arr?: any[]): number {
   return Array.isArray(arr) ? arr.length : 0;
 }
@@ -71,7 +75,7 @@ export function createThumbKey(key: string): string {
 }
 
 export function getInvokeThumbnailsParams(data: ICreateBody, loggerBaseParams: ILoggerBaseParams): InvocationRequest {
-  const authKey = data.img_key;
+  const authKey = replicateAuthKey(data.img_key, data.userIdentityId);
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}thumbs`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
@@ -151,7 +155,7 @@ export function getRekognitionFaceData(
     Image: {
       S3Object: {
         Bucket: process.env.S3_BUCKET,
-        Name: data.img_key,
+        Name: replicateAuthKey(data.img_key, data.userIdentityId),
       },
     },
   };
@@ -168,7 +172,7 @@ export function getRekognitionLabelData(data): Promise<DetectLabelsResponse> {
     Image: {
       S3Object: {
         Bucket: process.env.S3_BUCKET,
-        Name: data.img_key,
+        Name: replicateAuthKey(data.img_key, data.userIdentityId),
       },
     },
     MaxLabels: 30,

@@ -4,6 +4,7 @@ import api from "./remote/api";
 import auth from "./remote/auth";
 import uploader from "./remote/upload";
 
+import createTests from "./functional/create";
 import deleteTests from "./functional/del";
 import deleteAllTestData from "./functional/deleteMocks";
 import getTests from "./functional/get";
