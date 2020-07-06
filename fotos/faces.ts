@@ -251,7 +251,7 @@ export function getLogFields({
   newPeopleThatAreOkSize,
 }: ILoggerFacesParams) {
   return {
-    facesWithPeopleRaw: facesWithPeople,
+    facesWithPeopleCount: safeLength(facesWithPeople),
     imageBirthtime: newImage.birthtime,
     imageCreatedAt: newImage.createdAt,
     imageFaceMatchCount: updateBody && safeLength(updateBody.faceMatches),
