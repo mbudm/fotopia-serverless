@@ -14,7 +14,7 @@
     "functional-prod": "STAGE=prod tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
     "functional-dev": "STAGE=dev tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
     "functional-alpha": "STAGE=alpha tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
-    "functional-reset-prod": "STAGE=prod tape -r ts-node/register -r babel-register ./test/functional.remoteReset.ts | tap-spec",
+    "functional-reset-alpha": "STAGE=alpha tape -r ts-node/register -r babel-register ./test/functional.remoteReset.ts | tap-spec",
     "lint": "eslint 'fotos/**/*.ts' 'test/**/*.ts'"
   },
   "pre-commit": [
