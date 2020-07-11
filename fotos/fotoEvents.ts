@@ -71,9 +71,9 @@ export function getMeta(imageMetaData) {
   const widthTag = imageMetaData["Image Width"] || imageMetaData.ImageLength || imageMetaData.ImageWidth;
   const width = widthTag && widthTag.value as unknown as number || 0;
 
-  const city = imageMetaData.City.value;
-  const country = imageMetaData.Country.value;
-  const countryCode = imageMetaData.CountryCode.value;
+  const city = imageMetaData.City && imageMetaData.City.value;
+  const country = imageMetaData.Country && imageMetaData.Country.value;
+  const countryCode = imageMetaData.CountryCode && imageMetaData.CountryCode.value;
 
   return {
     birthtime: birthtimeDate.getTime(),
