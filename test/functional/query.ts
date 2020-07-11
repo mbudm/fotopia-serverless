@@ -41,7 +41,7 @@ export default function queryTests(setupData, api) {
             retry();
           }, retryStrategy[retryCount]);
         } else {
-          t.fail(`Failed - both test images are not queried after ${retryCount} retries - ${responseBody.message}`);
+          t.fail(`Failed - both test images are not queried after ${retryCount} retries - ${JSON.stringify(responseBody.items.map((item) => item.img_key), null, 2)}`);
           t.end();
         }
       } else {
