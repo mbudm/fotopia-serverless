@@ -98,7 +98,10 @@ export async function getImageBody(record: S3EventRecord): Promise<ICreateBody> 
   return {
     birthtime: meta.birthtime,
     img_key: getBasicKey(key),
-    meta,
+    meta: {
+      ...meta,
+      raw: imageMetaData, // for testing until exif variations are known
+    },
     userIdentityId,
     username,
   };
