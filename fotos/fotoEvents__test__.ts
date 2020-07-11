@@ -208,3 +208,66 @@ test("getInvokeDeleteRequest contains a uuid v5 namespace id", (t) => {
   t.equal(parsedPayload.pathParameters.id, id);
   t.end();
 });
+
+// collected tag types - may test
+
+// const tags1 = {
+//   "CountryCode": { value: "AUS", attributes: {}, description: "AUS" },
+//   "DateTimeOriginal": {
+//     value: "2019-03-03T14:24:50",
+//     attributes: {},
+//     description: "2019-03-03T14:24:50",
+//   },
+//   "TimeCreated": {
+//     value: "14:24:50+11:00",
+//     attributes: {},
+//     description: "14:24:50+11:00",
+//   },
+//   "City": { value: "Melbourne", attributes: {}, description: "Melbourne" },
+//   "Country": { value: "Australia", attributes: {}, description: "Australia" },
+//   "DateCreated": {
+//     value: "2019-03-03T14:24:50.610+11:00",
+//     attributes: {},
+//     description: "2019-03-03T14:24:50.610+11:00",
+//   },
+//   "ImageLength": { value: "600", attributes: {}, description: "600" },
+//   "ImageWidth": { value: "600", attributes: {}, description: "600" },
+//   "Orientation": {
+//     value: "1",
+//     attributes: {},
+//     description: "Horizontal (normal)",
+//   },
+//   "CreateDate": {
+//     value: "2019-03-03T14:24:50",
+//     description: "2019-03-03T14:24:50",
+//   },
+//   "Image Width": { value: 600, description: "600px" },
+//   "Image Height": { value: 600, description: "600px" },
+// };
+
+// const tags2 = {
+//   "Image Height": { value: 1346, description: "1346px" },
+//   "Image Width": { value: 2028, description: "2028px" },
+//   "Orientation": { id: 274, value: 1, description: "top-left" },
+// };
+
+// const tags3 = {
+//   "Image Height": { value: 683, description: "683px" },
+//   "Image Width": { value: 1024, description: "1024px" },
+//   "Date Created": {
+//     id: 567,
+//     value: [50, 48, 49, 48, 48, 53, 50, 57],
+//     description: "2010-05-29",
+//   },
+//   "Time Created": {
+//     id: 572,
+//     value: [49, 53, 53, 55, 51, 55, 43, 48, 48, 48, 48],
+//     description: "15:57:37+00:00",
+//   },
+// };
+
+// const tag4 = {
+//   "Image Height": { value: 1096, description: "1096px" },
+//   "Image Width": { value: 1650, description: "1650px" },
+//   Orientation: { id: 274, value: 1, description: "top-left" },
+// };

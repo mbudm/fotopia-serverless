@@ -17,12 +17,12 @@ import {
   ILoggerBaseParams,
   ILoggerPeopleMergeParams,
   IPathParameters,
+  IPeopleMergeRequestBody,
   IPerson,
   IQueryBody,
   IQueryDBResponseItem,
   IQueryResponse,
   IUpdateBody,
-  IPeopleMergeRequestBody,
 } from "./types";
 
 export function mergePeopleObjects(mergePeopleIds: string[], existingPeople: IPerson[]): IPerson {

@@ -56,6 +56,36 @@ export function getBasicKey(authKey: string) {
   return authKey.split("/").slice(2).join("/");
 }
 
+export function getMeta(imageMetaData) {
+
+  const birthtimeDateTag = imageMetaData.DateCreated ||
+    imageMetaData.DateTimeOriginal ||
+    imageMetaData.CreateDate ||
+    imageMetaData["Date Created"];
+  const birthtimeDate = birthtimeDateTag ?
+   new Date(birthtimeDateTag.value) :
+   new Date();
+  const orientation = imageMetaData.Orientation ? imageMetaData.Orientation.value : 1 ;
+
+  const height = imageMetaData["Image Height"] && imageMetaData["Image Height"].value as unknown as number || 0;
+  const widthTag = imageMetaData["Image Width"] || imageMetaData.ImageLength || imageMetaData.ImageWidth;
+  const width = widthTag && widthTag.value as unknown as number || 0;
+
+  const city = imageMetaData.City.value;
+  const country = imageMetaData.Country.value;
+  const countryCode = imageMetaData.CountryCode.value;
+
+  return {
+    birthtime: birthtimeDate.getTime(),
+    city,
+    country,
+    countryCode,
+    height,
+    orientation,
+    width,
+  };
+}
+
 export async function getImageBody(record: S3EventRecord): Promise<ICreateBody> {
   // tslint:disable-next-line:variable-name
   const key = getKeyFromRecord(record);
@@ -63,19 +93,12 @@ export async function getImageBody(record: S3EventRecord): Promise<ICreateBody> 
   const username = parseUsernameFromKey(key);
   const s3Object = await getObject(key);
   const imageMetaData = ExifReader.load(s3Object.Body as Buffer);
-
-  const birthtime = imageMetaData["Date Created"] && imageMetaData["Time Created"] ?
-    new Date(`${imageMetaData["Date Created"].description} ${imageMetaData["Time Created"].description}`) :
-    new Date();
+  const meta = getMeta(imageMetaData);
 
   return {
-    birthtime: birthtime.getTime(),
+    birthtime: meta.birthtime,
     img_key: getBasicKey(key),
-    meta: {
-      height: imageMetaData["Image Height"] && imageMetaData["Image Height"].value as unknown as number || 0,
-      tags: imageMetaData,
-      width: imageMetaData["Image Width"] && imageMetaData["Image Width"].value as unknown as number || 0,
-    },
+    meta,
     userIdentityId,
     username,
   };
