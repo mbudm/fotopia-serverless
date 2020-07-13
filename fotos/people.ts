@@ -62,12 +62,14 @@ export function getLogFields(people: IPerson[]) {
 export async function getItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime = Date.now();
   const s3 = createS3Client();
+  const traceMetaParentId: string | null = event.headers && event.headers["x-trace-meta-parent-id"];
+  const traceMetaTraceId: string | null = event.headers && event.headers["x-trace-meta-trace-id"];
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
-    parentId: "",
+    parentId: traceMetaParentId || "",
     startTime,
-    traceId: uuid.v1(),
+    traceId: traceMetaTraceId || uuid.v1(),
   };
   try {
     const existingPeople = await getExistingPeople(s3);

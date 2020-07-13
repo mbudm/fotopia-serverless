@@ -1,3 +1,4 @@
+import { IQueryDBResponseItem } from ".";
 import { IFaceWithPeople } from "./faces";
 import {
   IImage,
@@ -6,7 +7,6 @@ import { IPerson } from "./people";
 import {
   IUpdateBody,
 } from "./update";
-import { IQueryDBResponseItem } from ".";
 
 export interface ILoggerBaseParams {
   id: string; // A unique ID for each span

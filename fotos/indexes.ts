@@ -141,15 +141,16 @@ export function getLogFields(indexesObj: IIndex, cleanIndexesObject: IIndex) {
 // get each index (if no record then create one)
 export async function getItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime: number = Date.now();
-  const eventBody = event.body ? JSON.parse(event.body) : null;
-  const traceMeta: ITraceMeta | undefined = eventBody && eventBody.traceMeta;
+
+  const traceMetaParentId: string | null = event.headers && event.headers["x-trace-meta-parent-id"];
+  const traceMetaTraceId: string | null = event.headers && event.headers["x-trace-meta-trace-id"];
 
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
-    parentId: traceMeta && traceMeta.parentId || "",
+    parentId: traceMetaParentId || "",
     startTime,
-    traceId: traceMeta && traceMeta.traceId || uuid.v1(),
+    traceId: traceMetaTraceId || uuid.v1(),
   };
   // change to batch get items
   try {
@@ -213,15 +214,15 @@ export function getDynamoDbUpdateItemParamsBatch(
   if (validKeys.length > 0) {
     const maxKeysPerBatch = 10;
     const batchedParams: DocClient.UpdateItemInput[] = [];
-    for(let i = 0; i < validKeys.length; i += maxKeysPerBatch) {
+    for (let i = 0; i < validKeys.length; i += maxKeysPerBatch) {
       const params: DocClient.UpdateItemInput = getDynamoDbUpdateItemParams(
         indexData,
         indexId,
         validKeys.slice(i, i + maxKeysPerBatch),
       );
-      batchedParams.push(params)
+      batchedParams.push(params);
     }
-    return batchedParams
+    return batchedParams;
   } else {
     return [];
   }
@@ -273,19 +274,19 @@ export function getPutLogFields(
 
   const indexesPeopleAtts: string[] = peopleUpdateResponses &&
     peopleUpdateResponses.reduce((accum, response) => {
-      return accum.concat(Object.keys(response.Attributes!))
+      return accum.concat(Object.keys(response.Attributes!));
     }, [] as string[]) || [];
   const indexesTagsAtts: string[] = tagsUpdateResponses &&
     tagsUpdateResponses.reduce((accum, response) => {
-      return accum.concat(Object.keys(response.Attributes!))
+      return accum.concat(Object.keys(response.Attributes!));
     }, [] as string[]) || [];
   return {
     indexesModifiedPeopleCount: updates && Object.keys(updates.people).length,
     indexesModifiedTagCount: updates && Object.keys(updates.tags).length,
-    indexesPeopleCount: indexesPeopleAtts.length,
-    indexesTagCount: indexesTagsAtts.length,
-    indexesTagBatchCount: tagsUpdateResponses ? tagsUpdateResponses.length : 0,
     indexesPeopleBatchCount: peopleUpdateResponses ? peopleUpdateResponses.length : 0,
+    indexesPeopleCount: indexesPeopleAtts.length,
+    indexesTagBatchCount: tagsUpdateResponses ? tagsUpdateResponses.length : 0,
+    indexesTagCount: indexesTagsAtts.length,
   };
 }
 

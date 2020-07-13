@@ -154,6 +154,11 @@ functions:
           method: get
           cors: true
           authorizer: aws_iam
+          request:
+            parameters:
+              headers:
+                x-trace-meta-parent-id: false
+                x-trace-meta-trace-id: false
 
   update:
     handler: fotos/update.updateItem
@@ -195,6 +200,11 @@ functions:
           method: get
           cors: true
           authorizer: aws_iam
+          request:
+            parameters:
+              headers:
+                x-trace-meta-parent-id: false
+                x-trace-meta-trace-id: false
 
   indexesUpdate:
     handler: fotos/indexes.putItem
@@ -215,6 +225,11 @@ functions:
           method: get
           cors: true
           authorizer: aws_iam
+          request:
+            parameters:
+              headers:
+                x-trace-meta-parent-id: false
+                x-trace-meta-trace-id: false
 
   peopleUpdate:
     handler: fotos/people.putItem
@@ -267,6 +282,7 @@ functions:
             Fn::GetAtt:
               - FotopiaDynamoDbTable
               - StreamArn
+
   faces:
     handler: fotos/faces.addToPerson
     memorySize: 128
@@ -277,6 +293,7 @@ functions:
           method: post
           cors: true
           authorizer: aws_iam
+
 resources:
   Resources:
     FotopiaDynamoDbTable:

@@ -6,10 +6,10 @@ import { JSONParseError } from "../errors/jsonParse";
 import { INVOCATION_REQUEST_RESPONSE } from "../lib/constants";
 import lambda from "../lib/lambda";
 import {
-  IPerson,
+  IPerson, ITraceMeta,
 } from "../types";
 
-export function getInvokeGetPeopleParams(traceMeta?): InvocationRequest {
+export function getInvokeGetPeopleParams(traceMeta?: ITraceMeta): InvocationRequest {
   const Payload = traceMeta && JSON.stringify({
     body: JSON.stringify({
       traceMeta,
