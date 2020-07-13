@@ -67,12 +67,12 @@ export function getInvokeGetParams(request: IPathParameters | null, traceMeta): 
   }
 }
 
-export function invokeGetImageRecord(params): Promise<IImage> {
+export function invokeGetImageRecord(params: InvocationRequest): Promise<IImage> {
   return lambda.invoke(params).promise()
     .then((invocationResponse: InvocationResponse) => {
       try {
         const payload = JSON.parse(invocationResponse.Payload as string);
-        const imageRecord: IImage = JSON.parse(payload.body);
+        const imageRecord: IImage = payload.body && JSON.parse(payload.body);
         return imageRecord;
       } catch (e) {
         // tslint:disable-next-line:max-line-length
