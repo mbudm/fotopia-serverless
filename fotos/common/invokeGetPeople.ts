@@ -9,16 +9,22 @@ import {
   IPerson,
 } from "../types";
 
-export function getInvokeGetPeopleParams(): InvocationRequest {
+export function getInvokeGetPeopleParams(traceMeta?): InvocationRequest {
+  const Payload = traceMeta && JSON.stringify({
+    body: JSON.stringify({
+      traceMeta,
+    }),
+  });
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}people`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
+    Payload,
   };
 }
 
-export default function invokeGetPeople() {
-  const params = getInvokeGetPeopleParams();
+export default function invokeGetPeople(traceMeta?) {
+  const params = getInvokeGetPeopleParams(traceMeta);
   return lambda.invoke(params).promise()
     .then((invocationResponse: InvocationResponse) => {
       try {

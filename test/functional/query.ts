@@ -19,7 +19,7 @@ export default function queryTests(setupData, api) {
         tags: [],
       },
       from: 0,
-      to: Date.now(),
+      to: Date.now() + (1000 * 60 * 60),
       username: setupData.username,
     };
     let retryCount = 0;
@@ -67,7 +67,7 @@ export default function queryTests(setupData, api) {
       clientId: CLIENT_ID,
       criteria: {
         people: [],
-        tags: [setupData.uniqueTag],
+        tags: ["Desk"],
       },
       from: 0,
       to: Date.now(),

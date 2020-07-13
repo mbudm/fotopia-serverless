@@ -49,7 +49,7 @@ export function getS3Params(imageRecord: IImage): GetObjectRequest  {
   }
 }
 
-export function getInvokeGetParams(request: IPathParameters | null): InvocationRequest {
+export function getInvokeGetParams(request: IPathParameters | null, traceMeta): InvocationRequest {
   if (request === null ) {
     throw new Error("No path parameters provided");
   } else {
@@ -58,6 +58,9 @@ export function getInvokeGetParams(request: IPathParameters | null): InvocationR
       InvocationType: INVOCATION_REQUEST_RESPONSE,
       LogType: "Tail",
       Payload: JSON.stringify({
+        body: JSON.stringify({
+          traceMeta,
+        }),
         pathParameters: request,
       }),
     };
@@ -229,9 +232,9 @@ export async function deleteItem(event: APIGatewayProxyEvent, context: Context, 
   };
   const request: IPathParameters | null = event.pathParameters && event.pathParameters! as unknown as IPathParameters;
   try {
-    const params: InvocationRequest = getInvokeGetParams(request);
+    const params: InvocationRequest = getInvokeGetParams(request, getTraceMeta(loggerBaseParams));
     const imageRecord: IImage = await invokeGetImageRecord(params);
-    const existingPeople: IPerson[] = await invokeGetPeople();
+    const existingPeople: IPerson[] = await invokeGetPeople(getTraceMeta(loggerBaseParams));
     const s3Params: GetObjectRequest = getS3Params(imageRecord);
     const deleteS3ObjectPromise: Promise<DeleteObjectOutput> = deleteObject(s3, s3Params);
     const ddbParams: DocClient.GetItemInput = getDynamoDbParams(request);
