@@ -233,6 +233,8 @@ export async function deleteItem(event: APIGatewayProxyEvent, context: Context, 
   const request: IPathParameters | null = event.pathParameters && event.pathParameters! as unknown as IPathParameters;
   try {
     const params: InvocationRequest = getInvokeGetParams(request, getTraceMeta(loggerBaseParams));
+    // tslint:disable-next-line:no-console
+    console.log("Headers?", JSON.stringify(params, null, 2));
     const imageRecord: IImage = await invokeGetImageRecord(params);
     const existingPeople: IPerson[] = await invokeGetPeople(getTraceMeta(loggerBaseParams));
     const s3Params: GetObjectRequest = getS3Params(imageRecord);

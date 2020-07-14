@@ -72,6 +72,8 @@ export async function getItem(event: APIGatewayProxyEvent, context: Context, cal
   const startTime: number = Date.now();
   const traceMetaParentId: string | null = event.headers && event.headers["x-trace-meta-parent-id"];
   const traceMetaTraceId: string | null = event.headers && event.headers["x-trace-meta-trace-id"];
+  // tslint:disable-next-line:no-console
+  console.log("headers?", JSON.stringify(event, null, 2));
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
