@@ -11,9 +11,10 @@ import {
 
 export function getInvokeGetPeopleParams(traceMeta?: ITraceMeta): InvocationRequest {
   const Payload = traceMeta && JSON.stringify({
-    body: JSON.stringify({
-      traceMeta,
-    }),
+    headers: {
+      ["x-trace-meta-parent-id"]: traceMeta.parentId,
+      ["x-trace-meta-trace-id"]: traceMeta.traceId,
+    },
   });
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}people`,
