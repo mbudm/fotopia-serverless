@@ -4,7 +4,7 @@ import getConfig from "./getConfig";
 
 import { ISetupData } from "../types";
 
-export default function setupTests(auth: any, uploader?: any, api?: any) {
+export default function setupTests(auth: any, uploader?: any, api?: any, remover?: any) {
   const setupData: ISetupData = {
     apiUrl: "",
     collectionId: `${process.env.FOTOPIA_GROUP}-${process.env.STAGE}`,
@@ -60,6 +60,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
       setupData.bucket = configCreds.bucket;
       setupData.userIdentityId = configCreds.userIdentityId;
       setupData.upload = uploader && uploader(setupData);
+      setupData.remove = remover && remover(setupData);
       return apiClient.get(setupData.apiUrl, "/indexes");
     })
     .then((existingIndexes) => ({ ...setupData, existingIndexes}))

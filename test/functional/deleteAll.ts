@@ -15,7 +15,7 @@ import { createIndexSubtract } from "./createIndexAdjustment";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 
-export default function deleteAllNotJustTestData(setupData, api) {
+export default function deleteAllNotJustTestData(setupData, api, remove) {
   const CLIENT_ID = `${FUNC_TEST_PREFIX}- deleteAll.ts`;
   const retryStrategy = [500, 1000, 2000, 5000];
   let images: IQueryDBResponseItem[];
@@ -73,8 +73,8 @@ export default function deleteAllNotJustTestData(setupData, api) {
       deleteImages.forEach((image, idx, arr) => {
         let retryCount = 0;
         const retryableTest = {
-          args: [setupData.apiUrl, getEndpointPath(image)],
-          fn: api.del,
+          args: [image.img_key],
+          fn: remove,
         };
         const retryableTestThen = (responseBody: any) => {
           if (!responseBody.id) {

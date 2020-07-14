@@ -1,6 +1,7 @@
 import { ICreateBody, IIndex } from "../fotos/types";
 
 export interface ISetupData {
+  remove?: any;
   apiUrl: string;
   collectionId: string;
   images: ITestImage[];

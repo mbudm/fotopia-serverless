@@ -3,14 +3,12 @@ import { ISetupData } from "../types";
 
 export default function init(setupData: ISetupData) {
   const client = new S3();
-  const uploader = (key: string, object: any, options: any) => {
+  const remover = (key: string) => {
     const params = {
-      Body: object,
       Bucket: setupData.bucket!,
-      ContentType: options.contentType,
       Key: `protected/${setupData.userIdentityId!}/${key}`,
     };
-    return client.putObject(params).promise();
+    return client.deleteObject(params).promise();
   };
-  return uploader;
+  return remover;
 }

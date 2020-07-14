@@ -6,7 +6,7 @@ import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 import { getIncorrectIndexUpdates } from "./getIncorrectIndexUpdates";
 
-export default function deleteAllTestData(setupData, api) {
+export default function deleteAllTestData(setupData, api, remove) {
   const CLIENT_ID = `${FUNC_TEST_PREFIX} - deleteMocks.ts`;
 
   const retryStrategy = [500, 1000, 2000, 5000];
@@ -67,8 +67,9 @@ export default function deleteAllTestData(setupData, api) {
 
     if (deleteImages.length > 0) {
       Promise.all(deleteImages.map((img) => {
-        const apiPath = getEndpointPath(img);
-        return api.del(setupData.apiUrl, apiPath);
+        // tslint:disable-next-line:no-console
+        console.log("deleting", img.img_key);
+        return remove(img.img_key);
       }))
         .then((responseBodies) => {
           t.equal(
