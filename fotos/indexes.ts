@@ -5,7 +5,7 @@ import { failure, success } from "./common/responses";
 import dynamodb from "./lib/dynamodb";
 import logger from "./lib/logger";
 import {
-  IIndex, IIndexDictionary, IIndexUpdate, ILoggerBaseParams, IPutIndexRequest, ITraceMeta,
+  IIndex, IIndexDictionary, IIndexUpdate, ILoggerBaseParams, IPutIndexRequest,
 } from "./types";
 
 import { AWSError } from "aws-sdk";

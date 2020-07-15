@@ -37,26 +37,6 @@ const exampleCreateRecord: S3EventRecord = {
   },
 };
 
-test("isCreateRecord", (t) => {
-  const result = fotoEventsFns.isCreateRecord(exampleCreateRecord);
-  t.equal(
-    result,
-    true,
-    "example is a create record",
-  );
-  t.end();
-});
-
-test("isDeleteRecord", (t) => {
-  const result = fotoEventsFns.isDeleteRecord(exampleCreateRecord);
-  t.equal(
-    result,
-    false,
-    "example is not a delete record",
-  );
-  t.end();
-});
-
 test("getKeyFromRecord", (t) => {
   const result = fotoEventsFns.getKeyFromRecord(exampleCreateRecord);
   t.equal(
@@ -138,76 +118,6 @@ const baseS3EventRecord: S3EventRecord = {
     principalId: "AIDAJDPLRKLG7UEXAMPLE",
   },
 };
-
-test("removeCreateRecordsIfDeletePresent, single remove record unchanged", (t) => {
-  const records: S3EventRecord[] = [{
-    ...baseS3EventRecord,
-    eventName: "ObjectRemoved:Delete",
-  }];
-  const result: S3EventRecord[] = fotoEventsFns.removeCreateRecordsIfDeletePresent(records);
-  t.equal(result.length, 1);
-  t.end();
-});
-
-test("removeCreateRecordsIfDeletePresent, single delete record unchanged", (t) => {
-  const records: S3EventRecord[] = [{
-    ...baseS3EventRecord,
-  }];
-  const result: S3EventRecord[] = fotoEventsFns.removeCreateRecordsIfDeletePresent(records);
-  t.equal(result.length, 1);
-  t.end();
-});
-
-test("removeCreateRecordsIfDeletePresent, multiple remove records unchanged", (t) => {
-  const records: S3EventRecord[] = [{
-    ...baseS3EventRecord,
-    eventName: "ObjectRemoved:Delete",
-  }, {
-    ...baseS3EventRecord,
-    eventName: "ObjectRemoved:Delete",
-  }];
-  const result: S3EventRecord[] = fotoEventsFns.removeCreateRecordsIfDeletePresent(records);
-  t.equal(result.length, 2);
-  t.end();
-});
-
-test("removeCreateRecordsIfDeletePresent, create and remove reduced to just remove record", (t) => {
-  const records: S3EventRecord[] = [{
-    ...baseS3EventRecord,
-    eventName: "ObjectCreated:Put",
-  }, {
-    ...baseS3EventRecord,
-    eventName: "ObjectRemoved:Delete",
-  }];
-  const result: S3EventRecord[] = fotoEventsFns.removeCreateRecordsIfDeletePresent(records);
-  t.equal(result.length, 1);
-  t.end();
-});
-
-test("removeCreateRecordsIfDeletePresent, create after remove still reduces to just remove record", (t) => {
-  const records: S3EventRecord[] = [{
-    ...baseS3EventRecord,
-    eventName: "ObjectRemoved:Put",
-  }, {
-    ...baseS3EventRecord,
-    eventName: "ObjectCreated:Delete",
-  }];
-  const result: S3EventRecord[] = fotoEventsFns.removeCreateRecordsIfDeletePresent(records);
-  t.equal(result.length, 1);
-  t.end();
-});
-
-test("getInvokeDeleteRequest contains a uuid v5 namespace id", (t) => {
-  const traceMeta: ITraceMeta = {
-    parentId: "abc",
-    traceId: "123",
-  };
-  const id = uuidv5(baseS3EventRecord.s3.object.key, uuidv5.DNS);
-  const result = fotoEventsFns.getInvokeDeleteRequest(baseS3EventRecord, traceMeta);
-  const parsedPayload = JSON.parse(result.Payload as string);
-  t.equal(parsedPayload.pathParameters.id, id);
-  t.end();
-});
 
 // collected tag types - may test
 

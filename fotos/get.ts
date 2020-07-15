@@ -8,7 +8,6 @@ import {
   IImage,
   ILoggerBaseParams,
   IPathParameters,
-  ITraceMeta,
 } from "./types";
 
 import {

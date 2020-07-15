@@ -10,7 +10,6 @@ import { GetObjectOutput } from "aws-sdk/clients/s3";
 import * as ExifReader from "exifreader";
 import * as querystring from "querystring";
 import { v4 as uuidv4 } from "uuid";
-import * as uuidv5 from "uuid/v5";
 
 import getS3Bucket from "./common/getS3Bucket";
 import { getTraceMeta } from "./common/getTraceMeta";
@@ -22,13 +21,10 @@ import lambda from "./lib/lambda";
 import logger from "./lib/logger";
 import createS3Client from "./lib/s3";
 import {
-  ICreateBody, ILoggerBaseParams, IPathParameters, ITraceMeta, IUpdateBody,
+  ICreateBody, ILoggerBaseParams, ITraceMeta,
 } from "./types";
 
 let s3: S3;
-
-export const S3_EVENT_MATCHER_CREATED = "ObjectCreated";
-export const S3_EVENT_MATCHER_REMOVED = "ObjectRemoved";
 
 export function getObject(key): Promise<GetObjectOutput> {
   return s3.getObject({
@@ -125,67 +121,23 @@ export function getInvokeCreateRequest(
   };
 }
 
-export function getInvokeDeleteRequest(
-  record: S3EventRecord,
-  traceMeta: ITraceMeta,
-): InvocationRequest {
-    const bodyWithMeta: IUpdateBody = {
-      traceMeta,
-    };
-    const pathParameters: IPathParameters = {
-      id: uuidv5(record.s3.object.key, uuidv5.DNS),
-      username: parseUsernameFromKey(record.s3.object.key),
-    };
-    return {
-      FunctionName: `${process.env.LAMBDA_PREFIX}delete`,
-      InvocationType: INVOCATION_EVENT,
-      LogType: "Tail",
-      Payload: JSON.stringify({
-        body: JSON.stringify(bodyWithMeta),
-        pathParameters,
-      }),
-    };
-  }
-
-export const isCreateRecord = (record: S3EventRecord) => record.eventName.includes(S3_EVENT_MATCHER_CREATED);
-export const isDeleteRecord = (record: S3EventRecord) => record.eventName.includes(S3_EVENT_MATCHER_REMOVED);
-
 export async function getInvocations(records: S3EventRecord[], traceMeta) {
   return Promise.all(records.map(async (record) => {
-    if (isCreateRecord(record)) {
-      const imageBody = await getImageBody(record);
-      return getInvokeCreateRequest(imageBody, traceMeta);
-    } else if (isDeleteRecord(record)) {
-      return getInvokeDeleteRequest(record, traceMeta);
-    }
+    const imageBody = await getImageBody(record);
+    return getInvokeCreateRequest(imageBody, traceMeta);
   }));
-}
-
-export function removeCreateRecordsIfDeletePresent(records: S3EventRecord[]) {
-  const deleteRecordsByKey = records.filter((record) => {
-    return record.eventName.indexOf(S3_EVENT_MATCHER_REMOVED);
-  }).map((record) => record.s3.object.key);
-  return records.filter((record) => {
-    return record.eventName.indexOf(S3_EVENT_MATCHER_REMOVED) ||
-      (
-        record.eventName.indexOf(S3_EVENT_MATCHER_CREATED)
-        && !deleteRecordsByKey.includes(record.s3.object.key)
-      );
-  });
 }
 
 export function invokeLambdas(invocations) {
   return Promise.all(invocations.map((invocation) => lambda.invoke(invocation).promise()));
 }
 
-export function getLogFields(records: S3EventRecord[], recordsToInvoke?, invocations?) {
+export function getLogFields(records: S3EventRecord[], invocations?) {
   return {
     invocationsCount: safeLength(invocations),
     invocationsRaw: JSON.stringify(invocations),
     recordsCount: safeLength(records),
     recordsRaw: JSON.stringify(records),
-    recordsToInvokeCount: safeLength(recordsToInvoke),
-    recordsToInvokeRaw: JSON.stringify(recordsToInvoke),
   };
 }
 
@@ -201,10 +153,9 @@ export async function handler(event: S3Event, context: Context, callback: Callba
   const traceMeta = getTraceMeta(loggerBaseParams);
   s3 = createS3Client();
   try {
-    const recordsToInvoke = removeCreateRecordsIfDeletePresent(event.Records);
-    const invocations = await getInvocations(recordsToInvoke, traceMeta);
+    const invocations = await getInvocations(event.Records, traceMeta);
     invokeLambdas(invocations);
-    logger(context, loggerBaseParams, getLogFields(event.Records, recordsToInvoke, invocations ));
+    logger(context, loggerBaseParams, getLogFields(event.Records, invocations ));
     return callback(null, success(true));
   } catch (err) {
     logger(context, loggerBaseParams, { err, ...getLogFields(event.Records) });
