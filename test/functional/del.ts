@@ -1,13 +1,14 @@
 import * as test from "tape";
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
-import { FUNC_TEST_PREFIX } from "./constants";
 import { createIndexSubtract } from "./createIndexAdjustment";
 import { createIndexChangeTable, MODES } from "./createIndexChangeTable";
 import formatError from "./formatError";
+import getEndpointPath from "./getEndpointPath";
 import { getItemsInImages } from "./getItemsInImages";
+import { FUNC_TEST_PREFIX } from "./constants";
 
-export default function deleteTests(setupData, api, remove) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX}- del.ts`;
+export default function deleteTests(setupData, api) {
+  const CLIENT_ID = `${FUNC_TEST_PREFIX}- del.ts`
 
   const retryStrategy = [500, 1000, 2000, 5000];
   let existingIndexes: IIndex;
@@ -48,7 +49,8 @@ export default function deleteTests(setupData, api, remove) {
   });
 
   test("delete imageOne", (t) => {
-    remove(imageOne.img_key)
+    const apiPath = getEndpointPath(imageOne);
+    api.del(setupData.apiUrl, apiPath)
       .then((responseBody) => {
         t.equal(responseBody.username, setupData.username);
         t.equal(responseBody.id, imageOne.id);
@@ -83,7 +85,8 @@ export default function deleteTests(setupData, api, remove) {
   test("delete all images w 4 people", (t) => {
     if (Array.isArray(imagesWithFourPeople) && imagesWithFourPeople.length > 0) {
       Promise.all(imagesWithFourPeople.map((img) => {
-        return remove(img.img_key);
+        const apiPath = getEndpointPath(img);
+        return api.del(setupData.apiUrl, apiPath);
       }))
         .then((responseBodies) => {
           t.equal(responseBodies.length, imagesWithFourPeople.length, "resolved promises same length as images");

@@ -234,8 +234,12 @@ export async function deleteItem(event: APIGatewayProxyEvent, context: Context, 
   const request: IPathParameters | null = event.pathParameters && event.pathParameters! as unknown as IPathParameters;
   try {
     const params: InvocationRequest = getInvokeGetParams(request, getTraceMeta(loggerBaseParams));
+    // tslint:disable-next-line:no-console
+    console.log("Headers?", JSON.stringify(params, null, 2));
     const imageRecord: IImage = await invokeGetImageRecord(params);
     const existingPeople: IPerson[] = await invokeGetPeople(getTraceMeta(loggerBaseParams));
+    const s3Params: GetObjectRequest = getS3Params(imageRecord);
+    const deleteS3ObjectPromise: Promise<DeleteObjectOutput> = deleteObject(s3, s3Params);
     const ddbParams: DocClient.GetItemInput = getDynamoDbParams(request);
     const deleteImageRecordPromise: Promise<DocClient.DeleteItemOutput> = deleteImageRecord(ddbParams);
     const deleteFacesInImagePromise: Promise<DeleteFacesResponse> = deleteFacesInImage(imageRecord);
@@ -250,6 +254,7 @@ export async function deleteItem(event: APIGatewayProxyEvent, context: Context, 
     await Promise.all([
       deleteFacesInImagePromise,
       deleteImageRecordPromise,
+      deleteS3ObjectPromise,
     ]);
     logger(
       context,
