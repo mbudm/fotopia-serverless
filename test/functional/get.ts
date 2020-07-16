@@ -15,13 +15,14 @@ export default function getTests(setupData: ISetupData, api: any) {
     t.plan(2);
 
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
-      to: Date.now(),
+      from: 0,
+      to: Date.now() + (1000 * 60 * 60),
       username: setupData.username,
     };
 

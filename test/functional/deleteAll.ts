@@ -29,7 +29,7 @@ export default function deleteAllNotJustTestData(setupData, api) {
         tags: [],
       },
       from: 0,
-      to: Date.now(),
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {
@@ -119,7 +119,7 @@ export default function deleteAllNotJustTestData(setupData, api) {
         tags: [],
       },
       from: 0,
-      to: Date.now(),
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {

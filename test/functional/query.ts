@@ -67,7 +67,7 @@ export default function queryTests(setupData, api) {
       clientId: CLIENT_ID,
       criteria: {
         people: [],
-        tags: ["Desk"],
+        tags: [setupData.uniqueTag],
       },
       from: 0,
       to: Date.now(),

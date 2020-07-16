@@ -1,19 +1,19 @@
 import * as test from "tape";
 import {
   IImage,
+  IPeopleMergeRequestBody,
   IPerson,
   IPersonUpdateBody,
   IQueryBody,
-  IQueryResponse,
   IQueryDBResponseItem,
-  IPeopleMergeRequestBody,
+  IQueryResponse,
 } from "../../fotos/types";
+import { FUNC_TEST_PREFIX } from "./constants";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
-import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function peopleTests(setupData, api) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX} - people.ts`
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - people.ts`;
   let people: IPerson[];
   let imageWithFourPeople: IQueryDBResponseItem | undefined;
   let imageWithOnePerson: IQueryDBResponseItem | undefined;
@@ -59,14 +59,14 @@ export default function peopleTests(setupData, api) {
 
   test("query all to get the test image records", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
-      to: Date.now(),
-      username: setupData.username,
+      from: 0,
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {
@@ -197,7 +197,9 @@ export default function peopleTests(setupData, api) {
   });
 
   test("peopleMerge - merge first two people in image with 4 people", (t) => {
-    const body: IPeopleMergeRequestBody = { people: [updatedIimageWithFourPeople!.people![0], updatedIimageWithFourPeople!.people![1]]};
+    const body: IPeopleMergeRequestBody = {
+      people: [updatedIimageWithFourPeople!.people![0], updatedIimageWithFourPeople!.people![1]],
+    };
     api.post(setupData.apiUrl, "/people/merge", {
         body,
       })

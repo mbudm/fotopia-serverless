@@ -1,14 +1,14 @@
 import * as test from "tape";
 import { IImage, IIndex, IPerson, IQueryBody } from "../../fotos/types";
+import { FUNC_TEST_PREFIX } from "./constants";
 import { createIndexSubtract } from "./createIndexAdjustment";
 import { createIndexChangeTable, MODES } from "./createIndexChangeTable";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
 import { getItemsInImages } from "./getItemsInImages";
-import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function deleteTests(setupData, api) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX}- del.ts`
+  const CLIENT_ID = `${FUNC_TEST_PREFIX}- del.ts`;
 
   const retryStrategy = [500, 1000, 2000, 5000];
   let existingIndexes: IIndex;
@@ -28,13 +28,14 @@ export default function deleteTests(setupData, api) {
 
   test("query image one by unique tag", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [setupData.uniqueTag],
       },
-      from: setupData.startTime,
-      to: Date.now(),
+      from: 0,
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {
@@ -62,13 +63,14 @@ export default function deleteTests(setupData, api) {
   let imagesWithFourPeople: IImage[];
   test("query image w four people by querying all", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
-      to: Date.now(),
+      from: 0,
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {
@@ -100,13 +102,14 @@ export default function deleteTests(setupData, api) {
 
   test("query all should return no results", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
-      to: Date.now(),
+      from: 0,
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {

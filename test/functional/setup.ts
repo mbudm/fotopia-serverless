@@ -11,7 +11,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
     images: [],
     records: [],
     startTime: Date.now(),
-    uniqueTag: `_${Math.random().toString(36).substr(2, 9)}`,
+    uniqueTag: "Desk", // known tag rekognition finds in image one
     username: "",
   };
   const stackName = `fotopia-web-app-${process.env.STAGE}`;

@@ -14,13 +14,14 @@ export default function indexesTests(setupData, api) {
   let testImages: IImage[];
   test("query images to get testimages", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
-      to: Date.now(),
+      from: 0,
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {
