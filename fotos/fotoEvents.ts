@@ -59,7 +59,7 @@ export function getMeta(imageMetaData) {
     imageMetaData.CreateDate ||
     imageMetaData["Date Created"];
   const birthtimeDate = birthtimeDateTag ?
-   new Date(birthtimeDateTag.value) :
+   new Date(birthtimeDateTag.description) :
    new Date();
   const orientation = imageMetaData.Orientation ? imageMetaData.Orientation.value : 1 ;
 
