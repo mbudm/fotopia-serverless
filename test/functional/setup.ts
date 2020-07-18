@@ -60,8 +60,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
       setupData.bucket = configCreds.bucket;
       setupData.userIdentityId = configCreds.userIdentityId;
       setupData.upload = uploader && uploader(setupData);
-      return apiClient.get(setupData.apiUrl, "/indexes");
+      return setupData;
     })
-    .then((existingIndexes) => ({ ...setupData, existingIndexes}))
     .catch(formatError);
 }
