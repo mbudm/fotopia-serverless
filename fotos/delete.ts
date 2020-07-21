@@ -49,7 +49,7 @@ export function getS3Params(imageRecord: IImage): GetObjectRequest  {
   }
 }
 
-export function getInvokeGetParams(request: IPathParameters | null): InvocationRequest {
+export function getInvokeGetParams(request: IPathParameters | null, traceMeta): InvocationRequest {
   if (request === null ) {
     throw new Error("No path parameters provided");
   } else {
@@ -58,18 +58,22 @@ export function getInvokeGetParams(request: IPathParameters | null): InvocationR
       InvocationType: INVOCATION_REQUEST_RESPONSE,
       LogType: "Tail",
       Payload: JSON.stringify({
+        headers: {
+          ["x-trace-meta-parent-id"]: traceMeta.parentId,
+          ["x-trace-meta-trace-id"]: traceMeta.traceId,
+        },
         pathParameters: request,
       }),
     };
   }
 }
 
-export function invokeGetImageRecord(params): Promise<IImage> {
+export function invokeGetImageRecord(params: InvocationRequest): Promise<IImage> {
   return lambda.invoke(params).promise()
     .then((invocationResponse: InvocationResponse) => {
       try {
         const payload = JSON.parse(invocationResponse.Payload as string);
-        const imageRecord: IImage = JSON.parse(payload.body);
+        const imageRecord: IImage = payload.body && JSON.parse(payload.body);
         return imageRecord;
       } catch (e) {
         // tslint:disable-next-line:max-line-length
@@ -122,6 +126,7 @@ export function deleteFacesInImage(image: IImage): Promise<DeleteFacesResponse> 
 
 export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta, context: Context): InvocationRequest {
   const request: IQueryBody = {
+    breakDateRestriction: true,
     clientId: context.functionName,
     criteria: {
       people: image.people!,
@@ -129,7 +134,6 @@ export function getInvokeQueryParams(image: IImage, traceMeta: ITraceMeta, conte
     },
     from: 0,
     to: Date.now(),
-    breakDateRestriction: true,
   };
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}query`,
@@ -229,9 +233,11 @@ export async function deleteItem(event: APIGatewayProxyEvent, context: Context, 
   };
   const request: IPathParameters | null = event.pathParameters && event.pathParameters! as unknown as IPathParameters;
   try {
-    const params: InvocationRequest = getInvokeGetParams(request);
+    const params: InvocationRequest = getInvokeGetParams(request, getTraceMeta(loggerBaseParams));
+    // tslint:disable-next-line:no-console
+    console.log("Headers?", JSON.stringify(params, null, 2));
     const imageRecord: IImage = await invokeGetImageRecord(params);
-    const existingPeople: IPerson[] = await invokeGetPeople();
+    const existingPeople: IPerson[] = await invokeGetPeople(getTraceMeta(loggerBaseParams));
     const s3Params: GetObjectRequest = getS3Params(imageRecord);
     const deleteS3ObjectPromise: Promise<DeleteObjectOutput> = deleteObject(s3, s3Params);
     const ddbParams: DocClient.GetItemInput = getDynamoDbParams(request);

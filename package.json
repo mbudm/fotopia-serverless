@@ -14,6 +14,7 @@
     "functional-prod": "STAGE=prod tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
     "functional-dev": "STAGE=dev tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
     "functional-alpha": "STAGE=alpha tape -r ts-node/register -r babel-register ./test/functional.ts | tap-spec",
+    "functional-reset-alpha": "STAGE=alpha tape -r ts-node/register -r babel-register ./test/functional.remoteReset.ts | tap-spec",
     "lint": "eslint 'fotos/**/*.ts' 'test/**/*.ts'"
   },
   "pre-commit": [
@@ -28,6 +29,7 @@
     "crypto-js": "^3.1.9-1",
     "dotenv": "^8.0.0",
     "dynamodb-data-types": "^3.0.1",
+    "exifreader": "^3.12.0",
     "serverless-domain-manager": "^3.2.6",
     "serverless-s3-remover": "^0.6.0",
     "serverless-stack-output": "^0.2.3",

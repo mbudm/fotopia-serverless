@@ -1,3 +1,5 @@
+
+import { ITraceMeta } from "./common";
 import { IImageMeta } from "./images";
 
 export interface ICreateBody {
@@ -7,4 +9,5 @@ export interface ICreateBody {
   img_key: string;
   birthtime: number;
   tags?: string[];
+  traceMeta?: ITraceMeta;
 }

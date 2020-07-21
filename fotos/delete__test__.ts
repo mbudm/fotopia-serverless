@@ -38,7 +38,7 @@ test("getS3Params parses the invocation response", (t) => {
 
 test("getInvokeGetParams, puts the request params into pathParameters", (t) => {
   process.env.LAMBDA_PREFIX = "functional-";
-  const result: InvocationRequest = deleteFns.getInvokeGetParams(request);
+  const result: InvocationRequest = deleteFns.getInvokeGetParams(request, {});
   const payload = JSON.parse(result.Payload as string);
   t.deepEqual(payload.pathParameters, request);
   t.end();

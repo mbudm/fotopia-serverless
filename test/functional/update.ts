@@ -1,26 +1,26 @@
 import * as test from "tape";
-import { IImage, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
+import { IImage, IQueryBody, IQueryDBResponseItem, IQueryResponse } from "../../fotos/types";
 import { ISetupData } from "../types";
+import { FUNC_TEST_PREFIX } from "./constants";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
-import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function updateTests(setupData: ISetupData, api) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX} - query.ts`
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - query.ts`;
   let imageWithFourPeople: IQueryDBResponseItem | undefined;
 
   // should remove this - no updates really doable from api as wipes out existing meta
 
   test("query all to get img with four people", (t) => {
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
-      to: Date.now(),
-      username: setupData.username,
+      from: 0,
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {

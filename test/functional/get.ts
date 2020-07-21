@@ -1,12 +1,12 @@
 import * as test from "tape";
-import { IImage, IQueryBody, IQueryResponse, IQueryDBResponseItem } from "../../fotos/types";
+import { IImage, IQueryBody, IQueryDBResponseItem, IQueryResponse } from "../../fotos/types";
 import { ISetupData } from "../types";
+import { FUNC_TEST_PREFIX } from "./constants";
 import formatError from "./formatError";
 import getEndpointPath from "./getEndpointPath";
-import { FUNC_TEST_PREFIX } from "./constants";
 
 export default function getTests(setupData: ISetupData, api: any) {
-  const CLIENT_ID = `${FUNC_TEST_PREFIX} - get.ts`
+  const CLIENT_ID = `${FUNC_TEST_PREFIX} - get.ts`;
 
   const retryStrategy = [300, 500, 1000, 2000, 5000];
   let imagesWithFourPeople: IQueryDBResponseItem[];
@@ -15,13 +15,14 @@ export default function getTests(setupData: ISetupData, api: any) {
     t.plan(2);
 
     const query: IQueryBody = {
+      breakDateRestriction: true,
       clientId: CLIENT_ID,
       criteria: {
         people: [],
         tags: [],
       },
-      from: setupData.startTime,
-      to: Date.now(),
+      from: 0,
+      to: Date.now() + (1000 * 60 * 60),
       username: setupData.username,
     };
 

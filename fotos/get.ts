@@ -8,7 +8,6 @@ import {
   IImage,
   ILoggerBaseParams,
   IPathParameters,
-  ITraceMeta,
 } from "./types";
 
 import {
@@ -70,13 +69,16 @@ export function getLogFields(pathParams?: IPathParameters, responseBody?: IImage
 }
 export async function getItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime: number = Date.now();
-  const traceMeta: ITraceMeta | null = event.body ? JSON.parse(event.body) : null;
+  const traceMetaParentId: string | null = event.headers && event.headers["x-trace-meta-parent-id"];
+  const traceMetaTraceId: string | null = event.headers && event.headers["x-trace-meta-trace-id"];
+  // tslint:disable-next-line:no-console
+  console.log("headers?", JSON.stringify(event, null, 2));
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
-    parentId: traceMeta && traceMeta!.parentId || "",
+    parentId: traceMetaParentId || "",
     startTime,
-    traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
+    traceId: traceMetaTraceId || uuid.v1(),
   };
   try {
     const request: IPathParameters = validatePathParameters(event.pathParameters);

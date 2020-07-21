@@ -15,9 +15,10 @@ export function getInvokeGetIndexParams(traceMeta: ITraceMeta): InvocationReques
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
     Payload: JSON.stringify({
-      body: JSON.stringify({
-        traceMeta,
-      }),
+      headers: {
+        ["x-trace-meta-parent-id"]: traceMeta.parentId,
+        ["x-trace-meta-trace-id"]: traceMeta.traceId,
+      },
     }),
   };
 }

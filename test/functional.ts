@@ -4,10 +4,10 @@ import api from "./remote/api";
 import auth from "./remote/auth";
 import uploader from "./remote/upload";
 
-import createTests from "./functional/create";
 import deleteTests from "./functional/del";
 import deleteAllTestData from "./functional/deleteMocks";
 import getTests from "./functional/get";
+import getBaselines from "./functional/getBaselines";
 import indexesTests from "./functional/indexes";
 import peopleTests from "./functional/people";
 import queryTests from "./functional/query";
@@ -21,14 +21,16 @@ export default function functional() {
   setup(auth, uploader, api)
     .then((setupData: any) => {
       deleteAllTestData(setupData, setupData.api);
-      uploadTests(setupData, setupData.upload);
-      createTests(setupData, setupData.api);
-      queryTests(setupData, setupData.api);
-      getTests(setupData, setupData.api);
-      indexesTests(setupData, setupData.api);
-      updateTests(setupData, setupData.api);
-      peopleTests(setupData, setupData.api);
-      deleteTests(setupData, setupData.api);
+      return getBaselines(setupData);
+    })
+    .then((setupDataUpdated) => {
+      uploadTests(setupDataUpdated, setupDataUpdated.upload);
+      queryTests(setupDataUpdated, setupDataUpdated.api);
+      getTests(setupDataUpdated, setupDataUpdated.api);
+      indexesTests(setupDataUpdated, setupDataUpdated.api);
+      updateTests(setupDataUpdated, setupDataUpdated.api);
+      peopleTests(setupDataUpdated, setupDataUpdated.api);
+      deleteTests(setupDataUpdated, setupDataUpdated.api);
     });
 }
 

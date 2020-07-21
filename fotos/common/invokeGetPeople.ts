@@ -6,19 +6,26 @@ import { JSONParseError } from "../errors/jsonParse";
 import { INVOCATION_REQUEST_RESPONSE } from "../lib/constants";
 import lambda from "../lib/lambda";
 import {
-  IPerson,
+  IPerson, ITraceMeta,
 } from "../types";
 
-export function getInvokeGetPeopleParams(): InvocationRequest {
+export function getInvokeGetPeopleParams(traceMeta?: ITraceMeta): InvocationRequest {
+  const Payload = traceMeta && JSON.stringify({
+    headers: {
+      ["x-trace-meta-parent-id"]: traceMeta.parentId,
+      ["x-trace-meta-trace-id"]: traceMeta.traceId,
+    },
+  });
   return {
     FunctionName: `${process.env.LAMBDA_PREFIX}people`,
     InvocationType: INVOCATION_REQUEST_RESPONSE,
     LogType: "Tail",
+    Payload,
   };
 }
 
-export default function invokeGetPeople() {
-  const params = getInvokeGetPeopleParams();
+export default function invokeGetPeople(traceMeta?) {
+  const params = getInvokeGetPeopleParams(traceMeta);
   return lambda.invoke(params).promise()
     .then((invocationResponse: InvocationResponse) => {
       try {

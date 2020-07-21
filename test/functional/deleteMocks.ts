@@ -21,7 +21,7 @@ export default function deleteAllTestData(setupData, api) {
         tags: [],
       },
       from: 0,
-      to: Date.now(),
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {
@@ -36,6 +36,7 @@ export default function deleteAllTestData(setupData, api) {
       })
       .catch(formatError);
   });
+
   let existingIndexes: IIndex;
   test("get existing indexes", (t) => {
     api
@@ -92,7 +93,7 @@ export default function deleteAllTestData(setupData, api) {
         tags: [],
       },
       from: 0,
-      to: Date.now(),
+      to: Date.now() + (1000 * 60 * 60),
     };
 
     api.post(setupData.apiUrl, "/query", {

@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, Callback, Context } from "aws-lambda";
 import { S3 } from "aws-sdk/clients/all";
 import { GetObjectRequest, PutObjectOutput, PutObjectRequest } from "aws-sdk/clients/s3";
 import * as uuid from "uuid";
-import getS3Bucket from "./common/getS3Bucket";
+import getS3BucketGenerated from "./common/getS3BucketGenerated";
 import { getS3Params } from "./common/getS3Params";
 import { getS3PutParams } from "./common/getS3PutParams";
 import { failure, success } from "./common/responses";
@@ -26,7 +26,7 @@ export function putPeople(s3: S3, people: IPerson[]): Promise<PutObjectOutput> {
 }
 
 export function getExistingPeople(s3: S3): Promise<IPerson[]> {
-  const bucket = getS3Bucket();
+  const bucket = getS3BucketGenerated();
   const key = PEOPLE_KEY;
   const s3Params: GetObjectRequest = getS3Params(bucket, key);
   return s3.getObject(s3Params).promise()
@@ -62,12 +62,14 @@ export function getLogFields(people: IPerson[]) {
 export async function getItem(event: APIGatewayProxyEvent, context: Context, callback: Callback): Promise<void> {
   const startTime = Date.now();
   const s3 = createS3Client();
+  const traceMetaParentId: string | null = event.headers && event.headers["x-trace-meta-parent-id"];
+  const traceMetaTraceId: string | null = event.headers && event.headers["x-trace-meta-trace-id"];
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "getItem",
-    parentId: "",
+    parentId: traceMetaParentId || "",
     startTime,
-    traceId: uuid.v1(),
+    traceId: traceMetaTraceId || uuid.v1(),
   };
   try {
     const existingPeople = await getExistingPeople(s3);

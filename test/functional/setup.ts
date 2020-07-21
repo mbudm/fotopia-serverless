@@ -11,10 +11,11 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
     images: [],
     records: [],
     startTime: Date.now(),
-    uniqueTag: `_${Math.random().toString(36).substr(2, 9)}`,
+    uniqueTag: "Desk", // known tag rekognition finds in image one
     username: "",
   };
-  return getConfig()
+  const stackName = `fotopia-web-app-${process.env.STAGE}`;
+  return getConfig(stackName)
     .then((config: any) => {
       setupData.apiUrl = config.ServiceEndpoint;
       setupData.region = config.Region;
@@ -22,7 +23,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
     })
     .then((configCreds) => {
       setupData.credentials = configCreds.credentials;
-      setupData.username = process.env.TEST_USER_NAME || ""
+      setupData.username = process.env.TEST_USER_NAME || "";
       setupData.images = [{
         key: `${setupData.username}/one.jpg`,
         path: path.resolve(__dirname, "../mock/one.jpg"),
@@ -59,8 +60,7 @@ export default function setupTests(auth: any, uploader?: any, api?: any) {
       setupData.bucket = configCreds.bucket;
       setupData.userIdentityId = configCreds.userIdentityId;
       setupData.upload = uploader && uploader(setupData);
-      return apiClient.get(setupData.apiUrl, "/indexes");
+      return setupData;
     })
-    .then((existingIndexes) => ({ ...setupData, existingIndexes}))
     .catch(formatError);
 }

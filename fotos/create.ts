@@ -13,6 +13,7 @@ import {
   DocumentClient as DocClient,
 } from "aws-sdk/lib/dynamodb/document_client.d";
 import * as uuid from "uuid";
+import * as uuidv5 from "uuid/v5";
 import getTableName from "./common/getTableName";
 import { getTraceMeta } from "./common/getTraceMeta";
 import { failure, success } from "./common/responses";
@@ -26,6 +27,7 @@ import {
   ICreateBody,
   ILoggerBaseParams,
   ILoggerCreateParams,
+  ITraceMeta,
 } from "./types";
 
 const fotopiaGroup: string = process.env.FOTOPIA_GROUP || "";
@@ -51,13 +53,14 @@ export function getLogFields(request, dbItem?, faces?, labels?: DetectLabelsResp
     createPayloadTagCount: safeLength(request.tags),
     imageBirthtime: dbItem && dbItem.birthtime || request.birthtime,
     imageCreatedAt: dbItem && dbItem.createdAt,
-    imageFacesCount: safeLength(dbItem.faces),
+    imageFacesCount: dbItem && safeLength(dbItem.faces) || 0,
     imageFacesRaw: dbItem && JSON.stringify(dbItem.faces),
     imageFamilyGroup: fotopiaGroup,
     imageHeight: request.meta && request.meta.height,
     imageId: dbItem && dbItem.id,
     imageKey: request.img_key,
-    imageTagCount: safeLength(dbItem.tags),
+    imageMetaRaw: request.meta && JSON.stringify(request.meta),
+    imageTagCount: dbItem && safeLength(dbItem.tags) || 0,
     imageUpdatedAt: dbItem && dbItem.updatedAt,
     imageUserIdentityId: request.userIdentityId,
     imageUsername: request.username,
@@ -97,7 +100,10 @@ export function getDynamoDbParams(
   labels: DetectLabelsResponse,
 ): DocClient.PutItemInput {
   const timestamp: number = new Date().getTime();
-  const tags: string[] = [...data.tags, ...getTagsFromRekognitionLabels(labels)];
+  const rekLabels: string[] = getTagsFromRekognitionLabels(labels);
+  const tags: string[] = Array.isArray(data.tags) ?
+    [...data.tags, ...rekLabels] :
+    [...rekLabels];
   return {
     Item: {
       birthtime: new Date(data.birthtime).getTime(),
@@ -195,16 +201,18 @@ export function getInvokeFacesParams(
 
 export async function createItem(event: APIGatewayProxyEvent, context: Context, callback: Callback) {
   const startTime = Date.now();
-  const id = uuid.v1();
   const data: ICreateBody = event.body ? JSON.parse(event.body) : undefined;
+  const traceMeta: ITraceMeta | undefined = data ? data.traceMeta : undefined;
   const loggerBaseParams: ILoggerBaseParams = {
     id: uuid.v1(),
     name: "createItem",
-    parentId: "",
+    parentId: traceMeta && traceMeta!.parentId || "",
     startTime,
-    traceId: uuid.v1(),
+    traceId: traceMeta && traceMeta!.traceId || uuid.v1(),
   };
   try {
+
+    const id = uuidv5(data.img_key, uuidv5.DNS);
     const invokeParams = getInvokeThumbnailsParams(data, loggerBaseParams);
     const thumbPromise = lambda.invoke(invokeParams).promise();
     const facesPromise = getRekognitionFaceData(data, id);
@@ -223,7 +231,7 @@ export async function createItem(event: APIGatewayProxyEvent, context: Context, 
     logger(context, loggerBaseParams, getLogFields(data, ddbParams.Item, faces, labels));
     return callback(null, success(ddbParams.Item));
   } catch (err) {
-    logger(context, loggerBaseParams, { err, ...getLogFields(data, { id }) });
+    logger(context, loggerBaseParams, { err, ...getLogFields(data) });
     return callback(null, failure(err));
   }
 }

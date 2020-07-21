@@ -17,12 +17,12 @@ import {
   ILoggerBaseParams,
   ILoggerPeopleMergeParams,
   IPathParameters,
+  IPeopleMergeRequestBody,
   IPerson,
   IQueryBody,
   IQueryDBResponseItem,
   IQueryResponse,
   IUpdateBody,
-  IPeopleMergeRequestBody,
 } from "./types";
 
 export function mergePeopleObjects(mergePeopleIds: string[], existingPeople: IPerson[]): IPerson {
@@ -217,7 +217,7 @@ export async function mergePeople(event: APIGatewayProxyEvent, context: Context,
     traceId: uuid.v1(),
   };
   try {
-    const existingPeople = await invokeGetPeople();
+    const existingPeople = await invokeGetPeople(getTraceMeta(loggerBaseParams));
     const mergedPerson = mergePeopleObjects(mergePeopleIds, existingPeople);
     const deletePeople = getDeletePeople(mergePeopleIds, mergedPerson, existingPeople);
     const imagesWithAffectedPeople = await queryImagesByPeople(deletePeople, mergedPerson, loggerBaseParams, context);

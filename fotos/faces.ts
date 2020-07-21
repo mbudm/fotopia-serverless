@@ -251,7 +251,7 @@ export function getLogFields({
   newPeopleThatAreOkSize,
 }: ILoggerFacesParams) {
   return {
-    facesWithPeopleRaw: facesWithPeople,
+    facesWithPeopleCount: safeLength(facesWithPeople),
     imageBirthtime: newImage.birthtime,
     imageCreatedAt: newImage.createdAt,
     imageFaceMatchCount: updateBody && safeLength(updateBody.faceMatches),
@@ -287,7 +287,7 @@ export async function addToPerson(event: APIGatewayProxyEvent, context: Context,
     traceId: eventBodyObj.traceMeta && eventBodyObj.traceMeta.traceId,
   };
   try {
-    const existingPeople: IPerson[] = await invokeGetPeople();
+    const existingPeople: IPerson[] = await invokeGetPeople(getTraceMeta(logBaseParams));
     const facesWithPeople: IFaceWithPeople[] = await getPeopleForFaces(newImage, existingPeople, getFaceMatch);
     const newPeopleInThisImage: IPerson[] = getNewPeople(facesWithPeople);
     const newPeopleThatAreOkSize: IPerson[] = filterNewPeopleThatAreTooSmall(newPeopleInThisImage);

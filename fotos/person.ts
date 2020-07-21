@@ -59,7 +59,7 @@ export async function updatePerson(event: APIGatewayProxyEvent, context: Context
     traceId: uuid.v1(),
   };
   try {
-    const existingPeople: IPerson[] = await invokeGetPeople();
+    const existingPeople: IPerson[] = await invokeGetPeople(getTraceMeta(loggerBaseParams));
     const updatedPeople: IPerson[] = getUpdatedPeople(existingPeople, requestBody, pathParams);
     const putPeopleResponse: Promise<InvocationResponse> = invokePutPeople(
       updatedPeople,

@@ -1,3 +1,4 @@
+import { IQueryDBResponseItem } from ".";
 import { IFaceWithPeople } from "./faces";
 import {
   IImage,
@@ -6,7 +7,6 @@ import { IPerson } from "./people";
 import {
   IUpdateBody,
 } from "./update";
-import { IQueryDBResponseItem } from ".";
 
 export interface ILoggerBaseParams {
   id: string; // A unique ID for each span
@@ -46,6 +46,7 @@ export interface ILoggerCreateParams extends ILoggerImageParams {
   createIdentifiedFacesCount: number;
   createIdentifiedLabelsCount: number;
   createPayloadTagCount: number;
+  imageMetaRaw: string;
 }
 
 export interface ILoggerPeopleMergeParams {
