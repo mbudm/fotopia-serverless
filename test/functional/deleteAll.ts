@@ -70,41 +70,18 @@ export default function deleteAllNotJustTestData(setupData, api) {
     deleteImages = images;
 
     if (deleteImages.length > 0) {
-      deleteImages.forEach((image, idx, arr) => {
-        let retryCount = 0;
-        const retryableTest = {
-          args: [setupData.apiUrl, getEndpointPath(image)],
-          fn: api.del,
-        };
-        const retryableTestThen = (responseBody: any) => {
-          if (!responseBody.id) {
-            if (retryCount < retryStrategy.length) {
-              setTimeout(() => {
-                retryCount++;
-                t.comment(`Retry # ${retryCount} after ${retryStrategy[retryCount - 1]}ms`);
-                retry();
-              }, retryStrategy[retryCount]);
-            } else {
-              t.fail(`Failed - ${responseBody.img_key} people: ${responseBody.people} after ${retryCount} retries. ${JSON.stringify(image)}`);
-              if (idx === arr.length - 1) {
-                t.end();
-              }
-            }
-          } else {
-            t.equal(responseBody.id, image.id);
-            if (idx === arr.length - 1) {
-              t.end();
-            }
-          }
-        };
-        const retry = () => {
-          retryableTest.fn.apply(this, retryableTest.args)
-            .then(retryableTestThen)
-            .catch(formatError);
-        };
-
-        retry();
-      });
+      Promise.all(deleteImages.map((img) => {
+        const apiPath = getEndpointPath(img);
+        return api.del(setupData.apiUrl, apiPath);
+      }))
+        .then((responseBodies) => {
+          t.equal(
+            responseBodies.length,
+            deleteImages.length,
+            `resolved promises same length as delete images (${deleteImages.length})`);
+          t.end();
+        })
+        .catch(formatError);
     } else {
       t.end();
     }
